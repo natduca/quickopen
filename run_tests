@@ -28,6 +28,8 @@ def discover():
   
   for (dirpath, dirnames, filenames) in os.walk('quickopen'):
     for filename in [x for x in filenames if re.match('.*_test\.py$', x)]:
+      if filename.startswith('.') or filename.startswith('_'):
+        continue
       print filename
       fqn = dirpath.replace('/', '.') + '.' + re.match('(.+)\.py$', filename).group(1)
       __import__(fqn)
@@ -36,6 +38,9 @@ def discover():
   return unittest.TestSuite(subsuites)
 
 if __name__ == "__main__":
+  # make sure cwd is the base quickopen directory!
+  os.chdir(os.path.dirname(__file__))
+
   suites = discover()
   r = unittest.TextTestRunner()
   r.run(suites)

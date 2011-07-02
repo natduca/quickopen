@@ -1,0 +1,22 @@
+#!/usr/bin/env python2.6
+import sys
+import optparse
+
+import quickopen.daemon
+import quickopen.db
+import quickopen.settings
+
+if __name__ == '__main__':
+  parser = optparse.OptionParser()
+  parser.add_option('--host', dest='host', action='store', default='', help='Hostname to listen on')
+  parser.add_option('--port', dest='port', action='store', default=10248, help='Port to run on')
+  parser.add_option('--settings', dest='settings', action='store', default='~/.quickopend', help='Settings file to use')
+  (options, args) = parser.parse_args()
+  options.port = int(options.port)
+
+  settings = quickopen.settings.Settings(options.settings)
+  db = quickopen.db.DB(settings)
+
+  daemon = quickopen.daemon.create(db, options.host, options.port)
+  daemon.run()
+  sys.exit(0)

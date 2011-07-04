@@ -11,19 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import unittest
+import db
 import tempfile
+import unittest
 
-import quickopen.settings as settings
-import quickopen.db_stub as db_stub
 
-class DBStubTest(unittest.TestCase):
+class DBTest_EmptySettings(unittest.TestCase):
   def setUp(self):
-    self.settings_file_ = tempfile.NamedTemporaryFile()
-    self.db_ = db_stub.DBStub(settings.Settings(self.settings_file_.name))
-
-  def test_init(self):
-    assert self.db_
+    self.settings_file = tempfile.NamedTemporaryFile()
+    self.db_ = db_stub.DB(settings.Settings(self.settings_file.name))
 
   def tearDown(self):
-    self.settings_file_.close()
+    self.settings_file.close()
+
+  def test_add_nested_dir():

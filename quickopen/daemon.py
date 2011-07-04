@@ -8,6 +8,14 @@ import BaseHTTPServer
 
 from db import DB
 
+"""
+Exception that you can throw in a handler that will not get logged, but 
+that will trigger a 500 response.
+"""
+class SilentException(Exception):
+  def __init__(self,*args):
+    Exception.__init__(self, *args)
+
 class _RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
   def __init__(self, request, client_address, server):
     BaseHTTPServer.BaseHTTPRequestHandler.__init__(self, request, client_address, server)
@@ -32,69 +40,51 @@ class _RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     else:
       raise Exception('Unrecognized output type: ' + route.output)
 
-  def do_GET(self):
+  def handleRequest(self, verb):
+    
     path = urlparse.urlsplit(self.path)[2]
+
+    if 'Content-Length' in self.headers:
+      cl = int(self.headers['Content-Length'])
+      text = self.rfile.read(cl)
+      obj = json.loads(text)
+    else:
+      obj = None
+
     if path == '/ping':
       self.send_json('pong')
       return
-    route = self.server.find_route_matching(path, 'GET')
+
+    (route,verb_ok,match) = self.server.find_route_matching(path, verb)
     if route:
-      try:
-        resp = route.handler(self, 'GET')
-        self.send_result(route, resp)
-      except:
-        traceback.print_exc()
-        self.send_response(500, 'Exception in handler')
+      if verb_ok:
+        try:
+          resp = route.handler(match, verb, obj)
+          self.send_result(route, resp)
+        except Exception, ex:
+          print ex
+          if not isinstance(ex,SilentException):
+            traceback.print_exc()
+          self.send_response(500, 'Exception in handler')
+          self.send_header('Content-Length', 0)
+          self.end_headers()
+      else:
+        self.send_response(405, 'Method Not Allowed')
         self.send_header('Content-Length', 0)
         self.end_headers()
-      return
     else:
-      self.send_response(404, 'Illegal')
+      self.send_response(404, 'Not Found')
       self.send_header('Content-Length', 0)
       self.end_headers()
+
+  def do_GET(self):
+    self.handleRequest('GET')
 
   def do_DELETE(self):
-    path = urlparse.urlsplit(self.path)[2]
-    route = self.server.find_route_matching(path, 'DELETE')
-    if route:
-      try:
-        resp = route.handler(self, 'DELETE')
-        self.send_result(route, resp)
-      except:
-        traceback.print_exc()
-        self.send_response(500, 'Exception in handler')
-        self.send_header('Content-Length', 0)
-        self.end_headers()
-      return
-    else:
-      self.send_response(404, 'Illegal')
-      self.send_header('Content-Length', 0)
-      self.end_headers()
+    self.handleRequest('DELETE')
 
   def do_POST(self):
-    path = urlparse.urlsplit(self.path)[2]
-    route = self.server.find_route_matching(path, 'GET')
-    if route:
-      if 'Content-Length' in self.headers:
-        cl = int(self.headers['Content-Length'])
-        text = self.rfile.read(cl)
-        obj = json.loads(text)
-      else:
-        obj = None
-
-      try:
-        resp = route.handler(self, 'POST', obj)
-        self.send_result(route, resp)
-      except:
-        traceback.print_exc()
-        self.send_response(500, 'Exception in handler')
-        self.send_header('Content-Length', 0)
-        self.end_headers()
-      return
-
-    self.send_response(404, 'Illegal')
-    self.send_header('Content-Length', 0)
-    self.end_headers()
+    self.handleRequest('POST')
 
 class Route(object):
   def __init__(self, path_regex, output, handler, allowed_verbs):
@@ -115,13 +105,21 @@ class Daemon(BaseHTTPServer.HTTPServer):
       daemon_test.add_test_handlers_to_daemon(self)
 
   def add_json_route(self, path_regex, handler, allowed_verbs):
+    re.compile(path_regex)
     self.routes.append(Route(path_regex, 'json', handler, allowed_verbs))
 
   def find_route_matching(self, path, verb):
+    found_route = None
+
     for r in self.routes:
-      if verb in r.allowed_verbs and re.match(r.path_regex, path):
-        return r
-    return None
+      m = re.match(r.path_regex, path)
+      if m:
+        found_route = r
+        if verb in r.allowed_verbs:
+          return (r, True, m)
+    if found_route:
+      return (r, False, m)
+    return (None, None, None)
 
   def serve_forever(self):
     self.is_running_ = True
@@ -133,9 +131,9 @@ class Daemon(BaseHTTPServer.HTTPServer):
     return 1
 
   def run(self):
-    logging.warning("Starting quickopen daemon on port %d", self.port_)
+    logging.warning('Starting quickopen daemon on port %d', self.port_)
     self.serve_forever()
-    logging.warning("Shutting down quickopen daemon on port %d", self.port_)
+    logging.warning('Shutting down quickopen daemon on port %d', self.port_)
 
 def create(db, host, port, test):
   return Daemon(db, test, (host,port), _RequestHandler)

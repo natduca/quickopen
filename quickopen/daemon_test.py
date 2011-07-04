@@ -1,13 +1,13 @@
 # Copyright 2011 Google Inc.
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
+# Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
 #      http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
+# distributed under the License is distributed on an 'AS IS' BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
@@ -17,6 +17,7 @@ import tempfile
 import unittest
 import time
 import json
+import daemon as daemon_module
 
 TEST_PORT=12345
 
@@ -36,7 +37,7 @@ class DaemonTest(unittest.TestCase):
     self.assertEquals(json.loads(res.read()), 'pong')
     conn.close()
 
-  def test_illegal(self):
+  def test_missing(self):
     conn = httplib.HTTPConnection('localhost', TEST_PORT, True)
     conn.request('GET', '/xxx')
     res = conn.getresponse()
@@ -70,11 +71,11 @@ class DaemonTest(unittest.TestCase):
     self.conn = httplib.HTTPConnection('localhost', TEST_PORT, True)
     self.conn.request('DELETE', '/test_simple')
     res = self.conn.getresponse()
-    self.assertEquals(res.status, 404)
+    self.assertEquals(res.status, 405)
 
   def test_complex_handler(self):
-    self.assertEquals(self.get_json('/test_complex/2'), 'complex_ok')
-    self.assertEquals(self.post_json('/test_complex/2', 'complex_ok'), 'complex_ok')
+    self.assertEquals(self.get_json('/test_complex/2'), 2)
+    self.assertEquals(self.post_json('/test_complex/2', 'complex_ok'), 2)
 
   def test_handler_with_exception_handler(self):
     self.conn = httplib.HTTPConnection('localhost', TEST_PORT, True)
@@ -103,24 +104,25 @@ class DaemonTest(unittest.TestCase):
 
 
 def add_test_handlers_to_daemon(daemon):
-  def handler_for_simple(req, verb, data = None):
+  def handler_for_simple(m, verb, data = None):
     if verb == 'POST':
       assert data == 'simple_ok'
-    return "simple_ok"
+    return 'simple_ok'
   daemon.add_json_route('/test_simple', handler_for_simple, ['GET','POST'])
 
-  def handler_for_complex(req, verb, data = None):
+  def handler_for_complex(m, verb, data = None):
     if verb == 'POST':
       assert data == 'complex_ok'
-    return "complex_ok"
-  daemon.add_json_route('/test_complex.*', handler_for_complex, ['GET', 'POST'])
+    assert int(m.group(1)) == 2
+    return 2
+  daemon.add_json_route('/test_complex/(\d+)', handler_for_complex, ['GET', 'POST'])
 
-  def handler_for_server_exception(req, verb, data = None):
-    raise Exception("Server side error")
+  def handler_for_server_exception(m, verb, data = None):
+    raise daemon_module.SilentException('Server side error')
   daemon.add_json_route('/test_server_exception', handler_for_server_exception, ['GET', 'POST'])
 
-  def handler_for_delete(req, verb, data = None):
+  def handler_for_delete(m, verb, data = None):
     assert verb == 'DELETE'
-    return "OK"
+    return 'OK'
   daemon.add_json_route('/test_delete', handler_for_delete, ['DELETE'])
 

@@ -18,7 +18,7 @@ import sys
 import types
 import unittest
 
-def discover():
+def discover(filters):
   if hasattr(unittest.TestLoader, 'discover'):
     return unittest.TestLoader().discover('quickopen')
 
@@ -30,17 +30,47 @@ def discover():
     for filename in [x for x in filenames if re.match('.*_test\.py$', x)]:
       if filename.startswith('.') or filename.startswith('_'):
         continue
-      print filename
       fqn = dirpath.replace('/', '.') + '.' + re.match('(.+)\.py$', filename).group(1)
-      __import__(fqn)
-      suite = loader.loadTestsFromModule(sys.modules[fqn])
-      subsuites.append(suite)
+
+      # load the test
+      try:
+        module = __import__(fqn,fromlist=[True])
+      except:
+        print "While importing [%s]\n" % fqn
+        traceback.print_exc()
+        continue
+
+      def test_is_selected(name):
+        for f in filters:
+          if re.search(f,name):
+            return True
+        return False
+
+      base_suite = loader.loadTestsFromModule(module)
+      new_suite = unittest.TestSuite()
+      for t in base_suite:
+        if isinstance(t, unittest.TestSuite):
+          for i in t:
+            if test_is_selected(i.id()):
+              new_suite.addTest(i)
+        elif isinstance(t, unittest.TestCase):
+          if test_is_selected(t.id()):
+            new_suite.addTest(t)
+        else:
+          raise Exception("Wtf, expected TestSuite or TestCase, got %s" % t)
+
+        if new_suite.countTestCases():
+          subsuites.append(new_suite)
+
   return unittest.TestSuite(subsuites)
 
 if __name__ == "__main__":
   # make sure cwd is the base quickopen directory!
   os.chdir(os.path.dirname(__file__))
 
-  suites = discover()
+  if len(sys.argv) > 1:
+    suites = discover(sys.argv[1:])
+  else:
+    suites = discover(['.*'])
   r = unittest.TextTestRunner()
   r.run(suites)

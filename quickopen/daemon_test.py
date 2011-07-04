@@ -19,7 +19,22 @@ import time
 import json
 import daemon as daemon_module
 
+def is_port_available(port):
+  import socket
+  s = socket.socket()
+  try:
+    s.connect(('localhsot', port))
+  except socket.error:
+    return True
+  s.close()
+  return False
+
 TEST_PORT=12345
+
+# Import should fail if a daemon is running
+if not is_port_available(TEST_PORT):
+  raise Exception("DaemonRunning")
+
 
 class DaemonTest(unittest.TestCase):
   def setUp(self):

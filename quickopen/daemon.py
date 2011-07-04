@@ -62,7 +62,6 @@ class _RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
           resp = route.handler(match, verb, obj)
           self.send_result(route, resp)
         except Exception, ex:
-          print ex
           if not isinstance(ex,SilentException):
             traceback.print_exc()
           self.send_response(500, 'Exception in handler')

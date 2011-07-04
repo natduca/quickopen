@@ -11,12 +11,13 @@ if __name__ == '__main__':
   parser.add_option('--host', dest='host', action='store', default='', help='Hostname to listen on')
   parser.add_option('--port', dest='port', action='store', default=10248, help='Port to run on')
   parser.add_option('--settings', dest='settings', action='store', default='~/.quickopend', help='Settings file to use')
+  parser.add_option('--test', dest='test', action='store_true', default=False, help='Adds test hooks')
   (options, args) = parser.parse_args()
   options.port = int(options.port)
 
   settings = quickopen.settings.Settings(options.settings)
   db = quickopen.db.DB(settings)
 
-  daemon = quickopen.daemon.create(db, options.host, options.port)
+  daemon = quickopen.daemon.create(db, options.host, options.port, options.test)
   daemon.run()
   sys.exit(0)

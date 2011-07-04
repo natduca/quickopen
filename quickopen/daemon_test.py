@@ -22,17 +22,18 @@ TEST_PORT=12345
 
 class DaemonTest(unittest.TestCase):
   def setUp(self):
-    self.settings_file_ = tempfile.NamedTemporaryFile()
-    self.proc_ = subprocess.Popen(['./quickopend', '--settings', self.settings_file_.name, '--port', str(TEST_PORT)])
+    self.settings_file = tempfile.NamedTemporaryFile()
+    self.proc = subprocess.Popen(['./quickopend', '--settings', self.settings_file.name, '--port', str(TEST_PORT), '--test'])
     time.sleep(0.1) # let it come up...
+    self.conn = None
 
+  # basics
   def test_responding(self):
     conn = httplib.HTTPConnection('localhost', TEST_PORT, True)
     conn.request('GET', '/test')
     res = conn.getresponse()
     self.assertEquals(res.status, 200)
     self.assertEquals(json.loads(res.read()), 'OK')
-    print res.read()
     conn.close()
 
   def test_illegal(self):
@@ -42,6 +43,64 @@ class DaemonTest(unittest.TestCase):
     self.assertEquals(res.status, 404)
     conn.close()
 
+  # GET requests via handlers
+  def get_json(self, path):
+    if self.conn == None:
+      self.conn = httplib.HTTPConnection('localhost', TEST_PORT, True)
+    self.conn.request('GET', path)
+    res = self.conn.getresponse()
+    self.assertEquals(res.status, 200)
+    res = json.loads(res.read())
+    return res
+
+  def post_json(self, path, data):
+    if self.conn == None:
+      self.conn = httplib.HTTPConnection('localhost', TEST_PORT, True)
+    self.conn.request('POST', path, json.dumps(data))
+    res = self.conn.getresponse()
+    self.assertEquals(res.status, 200)
+    res = json.loads(res.read())
+    return res
+
+  def test_simple_handler(self):
+    self.assertEquals(self.get_json('/test_simple'), 'simple_ok')
+    self.assertEquals(self.post_json('/test_simple', 'simple_ok'), 'simple_ok')
+
+  def test_complex_handler(self):
+    self.assertEquals(self.get_json('/test_complex/2'), 'complex_ok')
+    self.assertEquals(self.post_json('/test_complex/2', 'complex_ok'), 'complex_ok')
+
+  def test_handler_with_exception_handler(self):
+    self.conn = httplib.HTTPConnection('localhost', TEST_PORT, True)
+    self.conn.request('GET', '/test_server_exception')
+    res = self.conn.getresponse()
+    self.assertEquals(res.status, 500)
+
+    self.conn.request('POST', '/test_server_exception')
+    res = self.conn.getresponse()
+    self.assertEquals(res.status, 500)
+
   def tearDown(self):
-    self.proc_.kill()
-    self.settings_file_.close()
+    if self.conn:
+      self.conn.close()
+
+    self.proc.kill()
+    self.settings_file.close()
+
+
+def add_test_handlers_to_daemon(daemon):
+  def handler_for_simple(req, method, data = None):
+    if method == 'POST':
+      assert data == 'simple_ok'
+    return "simple_ok"
+  daemon.add_json_route('/test_simple', handler_for_simple)
+
+  def handler_for_complex(req, method, data = None):
+    if method == 'POST':
+      assert data == 'complex_ok'
+    return "complex_ok"
+  daemon.add_json_route('/test_complex.*', handler_for_complex)
+
+  def handler_for_server_exception(req, method, data = None):
+    raise Exception("Server side error")
+  daemon.add_json_route('/test_server_exception', handler_for_server_exception)

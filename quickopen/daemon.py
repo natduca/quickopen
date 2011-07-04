@@ -1,6 +1,8 @@
 import json
 import logging
+import re
 import sys
+import traceback
 import urlparse
 import BaseHTTPServer
 
@@ -9,11 +11,11 @@ from db import DB
 class _RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
   def __init__(self, request, client_address, server):
     BaseHTTPServer.BaseHTTPRequestHandler.__init__(self, request, client_address, server)
-    self.server_ = server
+    self.server = server
 
   @property
   def db(self):
-    return self.server_.db
+    return self.server.db
 
   def send_json(self, obj):
     text = json.dumps(obj)
@@ -24,40 +26,82 @@ class _RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     self.end_headers()
     self.wfile.write(text)
 
+  def send_result(self, route, obj):
+    if route.output == 'json':
+      self.send_json(obj)
+    else:
+      raise Exception('Unrecognized output type: ' + route.output)
+
   def do_GET(self):
-    (_, _, path, params, query) = urlparse.urlsplit(self.path)
+    path = urlparse.urlsplit(self.path)[2]
     if path == '/test':
       self.send_json('OK')
       return
     else:
-      if path in self.server_.json_routes_:
-        resp = self.server_.json_routes_[path](self)
-        self.send_json(resp)
-        return
-
+      route = self.server.find_route_matching(path)
+      if route:
+        try:
+          resp = route.handler(self, 'GET')
+          self.send_result(route, resp)
+        except:
+          traceback.print_exc()
+          self.send_response(500, 'Exception in handler')
+          self.send_header('Content-Length', 0)
+          self.end_headers()
     self.send_response(404, 'Illegal')
     self.send_header('Content-Length', 0)
     self.end_headers()
 
   def do_POST(self):
-    (_, _, path, params, query, fragment) = urlparse.urlsplit(self.path)
-    if path == '/add_dir':
+    path = urlparse.urlsplit(self.path)[2]
+    route = self.server.find_route_matching(path)
+    if route:
+      if 'Content-Length' in self.headers:
+        cl = int(self.headers['Content-Length'])
+        text = self.rfile.read(cl)
+        obj = json.loads(text)
+      else:
+        obj = None
+
+      try:
+        resp = route.handler(self, 'POST', obj)
+        self.send_result(route, resp)
+      except:
+        traceback.print_exc()
+        self.send_response(500, 'Exception in handler')
+        self.send_header('Content-Length', 0)
+        self.end_headers()
       return
 
     self.send_response(404, 'Illegal')
     self.send_header('Content-Length', 0)
     self.end_headers()
 
-class _QuittableHTTPServer(BaseHTTPServer.HTTPServer):
-  def __init__(self, db, *args):
+class Route(object):
+  def __init__(self, path_regex, output, handler):
+    self.path_regex = path_regex
+    self.output = output
+    self.handler = handler
+
+class Daemon(BaseHTTPServer.HTTPServer):
+  def __init__(self, db, test, *args):
     BaseHTTPServer.HTTPServer.__init__(self, *args)
     self.port_ = args[0][1]
     self.db_ = db
+    self.routes = []
     self.db_.on_bound_to_server(self)
-    self.json_routes_ = dict()
+    if test:
+      import daemon_test
+      daemon_test.add_test_handlers_to_daemon(self)
   
-  def add_json_route(self, path, handler):
-    self.json_routes_[path] = handler
+  def add_json_route(self, path_regex, handler):
+    self.routes.append(Route(path_regex, 'json', handler))
+
+  def find_route_matching(self, path):
+    for r in self.routes:
+      if re.match(r.path_regex, path):
+        return r
+    return None
 
   def serve_forever(self):
     self.is_running_ = True
@@ -69,10 +113,10 @@ class _QuittableHTTPServer(BaseHTTPServer.HTTPServer):
     return 1
 
   def run(self):
-    logging.warning("Starting local server on port %d", self.port_)
+    logging.warning("Starting quickopen daemon on port %d", self.port_)
     self.serve_forever()
-    logging.warning("Shutting down local server on port %d", self.port_)
+    logging.warning("Shutting down quickopen daemon on port %d", self.port_)
 
-def create(db, host, port):
-  return _QuittableHTTPServer(db, (host,port), _RequestHandler)
+def create(db, host, port, test):
+  return Daemon(db, test, (host,port), _RequestHandler)
 

@@ -15,15 +15,16 @@ class DB(object):
   def __init__(self, settings):
     self.settings_ = settings
 
-  def on_bound_to_server(sever):
+  def on_bound_to_server(self, server):
     server.add_json_route('/add_dir', self.add_dir)
     server.add_json_route('/list_dirs', self.list_dirs)
 
   def add_dir(self,dir):
+
     pass
 
   def list_dirs(self,query):
-    return ["~/"]
+    return []
 
   def search(self,query):
     return

@@ -11,8 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import unittest
+import db_proxy
 
-class DB(object):
-  def __init__(self, settings):
-    self.settings = settings
-    
+class DBProxyTest(unittest.TestCase):
+  def test_basic(self):
+    db_proxy.DBProxy('localhost', 10248)
+  

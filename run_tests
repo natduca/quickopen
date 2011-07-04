@@ -16,6 +16,7 @@ import os
 import re
 import sys
 import types
+import traceback
 import unittest
 
 def discover(filters):

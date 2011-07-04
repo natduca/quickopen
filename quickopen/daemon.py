@@ -34,27 +34,46 @@ class _RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
   def do_GET(self):
     path = urlparse.urlsplit(self.path)[2]
-    if path == '/test':
-      self.send_json('OK')
+    if path == '/ping':
+      self.send_json('pong')
+      return
+    route = self.server.find_route_matching(path, 'GET')
+    if route:
+      try:
+        resp = route.handler(self, 'GET')
+        self.send_result(route, resp)
+      except:
+        traceback.print_exc()
+        self.send_response(500, 'Exception in handler')
+        self.send_header('Content-Length', 0)
+        self.end_headers()
       return
     else:
-      route = self.server.find_route_matching(path)
-      if route:
-        try:
-          resp = route.handler(self, 'GET')
-          self.send_result(route, resp)
-        except:
-          traceback.print_exc()
-          self.send_response(500, 'Exception in handler')
-          self.send_header('Content-Length', 0)
-          self.end_headers()
-    self.send_response(404, 'Illegal')
-    self.send_header('Content-Length', 0)
-    self.end_headers()
+      self.send_response(404, 'Illegal')
+      self.send_header('Content-Length', 0)
+      self.end_headers()
+
+  def do_DELETE(self):
+    path = urlparse.urlsplit(self.path)[2]
+    route = self.server.find_route_matching(path, 'DELETE')
+    if route:
+      try:
+        resp = route.handler(self, 'DELETE')
+        self.send_result(route, resp)
+      except:
+        traceback.print_exc()
+        self.send_response(500, 'Exception in handler')
+        self.send_header('Content-Length', 0)
+        self.end_headers()
+      return
+    else:
+      self.send_response(404, 'Illegal')
+      self.send_header('Content-Length', 0)
+      self.end_headers()
 
   def do_POST(self):
     path = urlparse.urlsplit(self.path)[2]
-    route = self.server.find_route_matching(path)
+    route = self.server.find_route_matching(path, 'GET')
     if route:
       if 'Content-Length' in self.headers:
         cl = int(self.headers['Content-Length'])
@@ -78,7 +97,8 @@ class _RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     self.end_headers()
 
 class Route(object):
-  def __init__(self, path_regex, output, handler):
+  def __init__(self, path_regex, output, handler, allowed_verbs):
+    self.allowed_verbs = set(allowed_verbs)
     self.path_regex = path_regex
     self.output = output
     self.handler = handler
@@ -93,13 +113,13 @@ class Daemon(BaseHTTPServer.HTTPServer):
     if test:
       import daemon_test
       daemon_test.add_test_handlers_to_daemon(self)
-  
-  def add_json_route(self, path_regex, handler):
-    self.routes.append(Route(path_regex, 'json', handler))
 
-  def find_route_matching(self, path):
+  def add_json_route(self, path_regex, handler, allowed_verbs):
+    self.routes.append(Route(path_regex, 'json', handler, allowed_verbs))
+
+  def find_route_matching(self, path, verb):
     for r in self.routes:
-      if re.match(r.path_regex, path):
+      if verb in r.allowed_verbs and re.match(r.path_regex, path):
         return r
     return None
 

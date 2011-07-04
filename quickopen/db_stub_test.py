@@ -15,12 +15,12 @@ import unittest
 import tempfile
 
 import quickopen.settings as settings
-import quickopen.db as db
+import quickopen.db_stub as db_stub
 
-class DBTest(unittest.TestCase):
+class DBStubTest(unittest.TestCase):
   def setUp(self):
     self.settings_file_ = tempfile.NamedTemporaryFile()
-    self.db_ = db.DB(settings.Settings(self.settings_file_.name))
+    self.db_ = db_stub.DBStub(settings.Settings(self.settings_file_.name))
 
   def test_init(self):
     assert self.db_

@@ -3,7 +3,7 @@ import sys
 import optparse
 
 import quickopen.daemon
-import quickopen.db
+import quickopen.db_stub
 import quickopen.settings
 
 if __name__ == '__main__':
@@ -16,8 +16,8 @@ if __name__ == '__main__':
   options.port = int(options.port)
 
   settings = quickopen.settings.Settings(options.settings)
-  db = quickopen.db.DB(settings)
+  db_stub = quickopen.db_stub.DBStub(settings)
 
-  daemon = quickopen.daemon.create(db, options.host, options.port, options.test)
+  daemon = quickopen.daemon.create(db_stub, options.host, options.port, options.test)
   daemon.run()
   sys.exit(0)

@@ -30,10 +30,10 @@ class DaemonTest(unittest.TestCase):
   # basics
   def test_responding(self):
     conn = httplib.HTTPConnection('localhost', TEST_PORT, True)
-    conn.request('GET', '/test')
+    conn.request('GET', '/ping')
     res = conn.getresponse()
     self.assertEquals(res.status, 200)
-    self.assertEquals(json.loads(res.read()), 'OK')
+    self.assertEquals(json.loads(res.read()), 'pong')
     conn.close()
 
   def test_illegal(self):
@@ -66,6 +66,12 @@ class DaemonTest(unittest.TestCase):
     self.assertEquals(self.get_json('/test_simple'), 'simple_ok')
     self.assertEquals(self.post_json('/test_simple', 'simple_ok'), 'simple_ok')
 
+  def test_invalid_verb_on_simple(self):
+    self.conn = httplib.HTTPConnection('localhost', TEST_PORT, True)
+    self.conn.request('DELETE', '/test_simple')
+    res = self.conn.getresponse()
+    self.assertEquals(res.status, 404)
+
   def test_complex_handler(self):
     self.assertEquals(self.get_json('/test_complex/2'), 'complex_ok')
     self.assertEquals(self.post_json('/test_complex/2', 'complex_ok'), 'complex_ok')
@@ -80,6 +86,14 @@ class DaemonTest(unittest.TestCase):
     res = self.conn.getresponse()
     self.assertEquals(res.status, 500)
 
+  def test_delete(self):
+    conn = httplib.HTTPConnection('localhost', TEST_PORT, True)
+    conn.request('DELETE', '/test_delete')
+    res = conn.getresponse()
+    self.assertEquals(res.status, 200)
+    self.assertEquals(json.loads(res.read()), 'OK')
+    conn.close()
+
   def tearDown(self):
     if self.conn:
       self.conn.close()
@@ -89,18 +103,24 @@ class DaemonTest(unittest.TestCase):
 
 
 def add_test_handlers_to_daemon(daemon):
-  def handler_for_simple(req, method, data = None):
-    if method == 'POST':
+  def handler_for_simple(req, verb, data = None):
+    if verb == 'POST':
       assert data == 'simple_ok'
     return "simple_ok"
-  daemon.add_json_route('/test_simple', handler_for_simple)
+  daemon.add_json_route('/test_simple', handler_for_simple, ['GET','POST'])
 
-  def handler_for_complex(req, method, data = None):
-    if method == 'POST':
+  def handler_for_complex(req, verb, data = None):
+    if verb == 'POST':
       assert data == 'complex_ok'
     return "complex_ok"
-  daemon.add_json_route('/test_complex.*', handler_for_complex)
+  daemon.add_json_route('/test_complex.*', handler_for_complex, ['GET', 'POST'])
 
-  def handler_for_server_exception(req, method, data = None):
+  def handler_for_server_exception(req, verb, data = None):
     raise Exception("Server side error")
-  daemon.add_json_route('/test_server_exception', handler_for_server_exception)
+  daemon.add_json_route('/test_server_exception', handler_for_server_exception, ['GET', 'POST'])
+
+  def handler_for_delete(req, verb, data = None):
+    assert verb == 'DELETE'
+    return "OK"
+  daemon.add_json_route('/test_delete', handler_for_delete, ['DELETE'])
+

@@ -17,7 +17,7 @@ import settings
 import tempfile
 import unittest
 
-class DBTest(unittest.TestCase):
+class DBTestBase():
   def setUp(self):
     self.settings_file = tempfile.NamedTemporaryFile()
     self.settings = settings.Settings(self.settings_file.name)
@@ -82,3 +82,6 @@ class DBTest(unittest.TestCase):
     # not implemented
     pass
 
+
+class DBTest(DBTestBase, unittest.TestCase):
+  pass

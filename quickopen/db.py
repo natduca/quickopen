@@ -119,7 +119,6 @@ class _DBSync(object):
       if os.path.isdir(ent):
         self.enqueue_dir(ent)
       else:
-        print "found %s" % ent
         self.files.add(ent)
     
   def run(self):

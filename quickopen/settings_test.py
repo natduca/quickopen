@@ -103,9 +103,65 @@ class SettingsTest(unittest.TestCase):
 
     f.close()
 
-  def test_dup_setting(self):
+  def test_dup_setting_that_matches_succeeds(self):
     f = tempfile.NamedTemporaryFile()
     s = settings.Settings(f.name)
-    s.register("foo",str,3)
-    s.register("foo",str,3)
+    s.register("foo",int,3)
+    s.register("foo",int,3)
     f.close()
+
+  def test_register_with_mismatch_type_and_default(self):
+    f = tempfile.NamedTemporaryFile()
+    s = settings.Settings(f.name)
+    self.assertRaises(Exception, lambda: s.register("foo",str,3))
+    f.close()
+    
+  # tests for the change_fn feature
+  def test_register_empty_doesnt_fire_change(self):
+    f = tempfile.NamedTemporaryFile()
+    s = settings.Settings(f.name)
+    def on_change(old,new):
+      raise Exception("Should never get called")
+    s.register("foo",int,3,on_change)
+    f.close()
+
+  def test_register_nonempty_doesnt_fire_change(self):
+    f = tempfile.NamedTemporaryFile()
+    t = open(f.name,"w")
+    t.write("""{"foo" : True}""")
+    t.close()
+
+    s = settings.Settings(f.name)
+    def on_change(old,new):
+      raise Exception("Should never get called")
+    s.register("foo",int,3,on_change)
+    f.close()
+
+  def test_changing_empty_fires_change(self):
+    f = tempfile.NamedTemporaryFile()
+    s = settings.Settings(f.name)
+    def on_change(old,new):
+      self.assertEquals(3, old)
+      self.assertEquals(4, new)
+    s.register("foo",int,3,on_change)
+    s.foo = 4
+    f.close()
+
+  def test_changing_setting_from_File(self):
+    f = tempfile.NamedTemporaryFile()
+    t = open(f.name,"w")
+    t.write("""{"foo" : 3}""")
+    t.close()
+    s = settings.Settings(f.name)
+    fired = [False]
+    def on_change(old,new):
+      self.assertEquals(3, old)
+      self.assertEquals(4, new)
+      fired[0] = True
+    s.register("foo",int,3,on_change)
+    s.foo = 3
+    self.assertFalse(fired[0])
+    s.foo = 4
+    self.assertTrue(fired[0])
+    f.close()
+

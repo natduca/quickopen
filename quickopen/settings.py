@@ -27,6 +27,7 @@ class Settings(object):
   def __init__(self,settings_file):
     self._types = {}
     self._values = {}
+    self._change_fns = {}
     self._temp_values = {}
     self._used_default = set()
     self._unresolved_values = None
@@ -106,12 +107,15 @@ class Settings(object):
   def has_setting(self, k):
     return self._types.has_key(k)
 
-  def register(self,k,type,default):
+  def register(self,k,ty,default,change_fn=None):
     if self._types.has_key(k):
-      if self._types[k] != type:
-        raise Exception("Setting %s is already registered as type %s" % (k, type))
+      if self._types[k] != ty:
+        raise Exception("Setting %s is already registered as type %s" % (k, ty))
       return
-    self._types[k] = type
+    if default != None and type(default) != ty:
+      raise Exception("type %s is not the same as default's type %s" % (ty, type(default)))
+    self._types[k] = ty
+    self._change_fns[k] = change_fn
     assert(not self._values.has_key(k))
     if self._unresolved_values.has_key(k):
       v = self._unresolved_values[k]
@@ -154,10 +158,15 @@ class Settings(object):
         raise SettingDoesntExistException(k)
       if type(v) != self._types[k]:
         raise TypeError()
+      changed = self._values[k] != v
+      if changed:
+        old = self._values[k]
       self._values[k] = v
       if k in self._used_default:
         self._used_default.remove(k)
       self._set_dirty()
+      if changed and self._change_fns[k]:
+        self._change_fns[k](old,v)
 
   def __getitem__(self,k):
     return self.__getattr__(k)
@@ -167,7 +176,6 @@ class Settings(object):
 
   def set(self,k,v):
     self.__setattr__(k,v)
-
 
   def set_temporarily(self,k,v):
     if self._types.has_key(k) == False:

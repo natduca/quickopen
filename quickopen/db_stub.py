@@ -19,17 +19,18 @@ class DBStub(object):
 
   def on_bound_to_server(self, server):
     server.add_json_route('/dirs/new', self.new_dir, ['POST'])
-    server.add_json_route('/dirs', self.dirs, ['GET'])
-    server.add_json_route('/dirs/(\d+)', self.dirN, ['GET','DELETE'])
+    server.add_json_route('/dirs', self.list_dirs, ['GET'])
+    server.add_json_route('/dirs/(\d+)', self.get_dir, ['GET'])
+    server.add_json_route('/dirs/(\d+)', self.delete_dir, ['DELETE'])
     server.add_json_route('/search', self.search, ['POST'])
 
-  def dirN(self, req, verb, data):
+  def new_dir(self, m, verb, data):
+    self.db.add_dir(data.path)
+
+  def dirN(self, m, verb, data):
     pass
 
-  def dirs(self, req, verb, data):
-    pass
-
-  def new_dir(self, req, verb, data):
+  def dirs(self, m, verb, data):
     pass
 
   def search(self,query):

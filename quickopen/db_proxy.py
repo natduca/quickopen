@@ -13,35 +13,40 @@
 # limitations under the License.
 import httplib
 
+class DBDirProxy(object):
+  def __init__(self, obj):
+    self.path = obj.path
+    self.id = obj.id
+
 class DBProxy(object):
-  def __init__(self, host, port):
+  def __init__(self, host, port, start_if_needed = False):
+    if start_if_needed:
+      raise Exception("Not implemented")
     self.conn_ = httplib.HTTPConnection(host, port, True)
 
-  def _get(self, path):
-    if self.conn == None:
-      self.conn = httplib.HTTPConnection('localhost', TEST_PORT, True)
-    self.conn.request('GET', path)
+  def _req(self, method, path, data):
+    if data:
+      data = json.dumps(data)
+    self.conn.request(method, path, data)
     res = self.conn.getresponse()
     self.assertEquals(res.status, 200)
     res = json.loads(res.read())
     return res
 
-  def _post(self, path, data):
-    if self.conn == None:
-      self.conn = httplib.HTTPConnection('localhost', TEST_PORT, True)
-    self.conn.request('POST', path, json.dumps(data))
-    res = self.conn.getresponse()
-    self.assertEquals(res.status, 200)
-    res = json.loads(res.read())
-    return res
+  @property
+  def dirs(self):
+    ret = self._req('GET', '/dirs')
+    assert ret.status == 'OK'
+    return map(lambda x: DBDirProxy(x.id, x.path), ret.dirs)
 
+  def add_dir(self, d):
+    ret = self._req('POST', '/dirs/new', d)
+    assert ret.status == 'OK'
+    self._dirs = None
+    return ret.dir_id
 
-  def dir(self, dir):
-    self.conn_.request('POST', '/dirs')
-    res = conn.getresponse()
-    self.assertEquals(res.status, 200)
-    self.assertEquals(json.loads(res.read()), 'OK')
-    conn.close()
-
-    # POST xxx
-
+  def del_dir(self, d):
+    if type(d) != DBDirProxy:
+      raise Exception("Expected DBDirProxy")
+    ret = self._req('POST', '/dirs/%s', d.id)
+    assert ret.status == 'OK'

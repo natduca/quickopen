@@ -14,29 +14,59 @@
 import collections
 import os
 import re
+import hashlib
+
+class DBDir(object):
+  def __init__(self, d):
+    self.path = d
+    self.id = hashlib.md5(d).hexdigest()
+
+  def __repr__(self):
+    return "DBDir(%s)" % self.path
+
+  def __cmp__(self, other):
+    if type(other) != DBDir:
+      return 1
+    return cmp(self.path, other.path)
 
 class DB(object):
   def __init__(self, settings):
     self.settings = settings
-    self.settings.register('dirs', list, [])
+    self.settings.register('dirs', list, [], self._on_settings_dirs_changed)
     self._dir_cache = _DirCache()
     self._dirty = True
+    self._last_settings_dir = None
+    self._on_settings_dirs_changed(None, self.settings.dirs)
 
-  @property
-  def dirs(self):
-    return list(self.settings.dirs)
-
-  def add_dir(self, dir):
-    cur = list(self.settings.dirs)
-    if dir in cur:
-      return
-    # commit change
-    cur.append(dir)
-    self.settings.dirs = cur
+  def _on_settings_dirs_changed(self, old, new):
+    self._dirs = map(lambda d: DBDir(d), new)
     self._set_dirty()
 
   def _set_dirty(self):
     self._dirty = True
+
+  @property
+  def dirs(self):
+    return list(self._dirs)
+
+  def add_dir(self, d):
+    cur = list(self.settings.dirs)
+    if d in cur:
+      return
+
+    # commit change
+    cur.append(d)
+    self.settings.dirs = cur
+    return self.dirs[-1]
+
+  def del_dir(self, d):
+    if type(d) != DBDir:
+      raise Exception("Expected DBDir")
+    cur = list(self.settings.dirs)
+    if d.path not in cur:
+      raise Exception("not found")
+    cur.remove(d.path)
+    self.settings.dirs = cur
 
   def sync(self):
     """Ensures database index is up-to-date"""

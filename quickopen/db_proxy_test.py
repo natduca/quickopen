@@ -13,8 +13,37 @@
 # limitations under the License.
 import unittest
 import db_proxy
+import db_test_base
+import subprocess
+import tempfile
+import time
 
-class DBProxyTest(unittest.TestCase):
-  def test_basic(self):
-    db_proxy.DBProxy('localhost', 10248)
+def is_port_available(port):
+  import socket
+  s = socket.socket()
+  try:
+    s.connect(('localhsot', port))
+  except socket.error:
+    return True
+  s.close()
+  return False
+
+TEST_PORT=12345
+
+# Import should fail if a daemon is running
+if not is_port_available(TEST_PORT):
+  raise Exception("DaemonRunning")
+
+class DBProxyTest(db_test_base.DBTestBase, unittest.TestCase):
+  def setUp(self):
+    self.settings_file = tempfile.NamedTemporaryFile()
+    self.proc = subprocess.Popen(['./quickopend', '--settings', self.settings_file.name, '--port', str(TEST_PORT), '--test'])
+    time.sleep(0.1) # let it come up...
+    self.db = db_proxy.DBProxy('localhost', TEST_PORT)
+
+  def tearDown(self):
+    self.proc.kill()
+    self.settings_file.close()
+
+
   

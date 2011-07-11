@@ -1,3 +1,17 @@
+# Copyright 2011 Google Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+from dyn_object import *
 import json
 import logging
 import re
@@ -26,7 +40,10 @@ class _RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     return self.server.db
 
   def send_json(self, obj):
-    text = json.dumps(obj)
+    if type(obj) == DynObject:
+      text = obj.as_json()
+    else:
+      text = json.dumps(obj)
     self.send_response(200, 'OK')
     self.send_header('Cache-Control', 'no-cache')
     self.send_header('Content-Type', 'applicaiton/json')
@@ -47,7 +64,7 @@ class _RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     if 'Content-Length' in self.headers:
       cl = int(self.headers['Content-Length'])
       text = self.rfile.read(cl)
-      obj = json.loads(text)
+      obj = DynObject(text)
     else:
       obj = None
 

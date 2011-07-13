@@ -22,14 +22,22 @@ class DynObjectTest(unittest.TestCase):
     o.y = 2
     self.assertEqual(1, o.x)
     self.assertEqual(2, o.y)
-    d = o.as_dict()
 
+  def test_dict(self):
+    o = DynObject()
+    o.x = 1
+    o.y = 2
+    d = o.as_dict()
     self.assertEqual(1, d['x'])
     self.assertEqual(2, d['y'])
+
+  def test_json(self):
+    o = DynObject()
+    o.x = 1
+    o.y = 2
     o_ = DynObject(o.as_json())
     self.assertEqual(1, o.x)
     self.assertEqual(2, o.y)
-
     
   def test_cons(self):
     o = DynObject({'x': 1, 'y': 2})

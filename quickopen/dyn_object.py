@@ -43,7 +43,7 @@ class DynObject(object):
     return str(self.as_dict())
 
   def __repr__(self):
-    return repr(self.as_dict())
+    return "DynObject(%s)" % repr(self.as_dict())
 
   def __getattr__(self,name):
     raise AttributeError("Object has no attribute %s" % name)

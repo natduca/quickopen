@@ -23,6 +23,13 @@ import BaseHTTPServer
 from db import DB
 
 """
+Exception that you can throw in a handler that will trigger a 404 response.
+"""
+class NotFoundException(Exception):
+  def __init__(self,*args):
+    Exception.__init__(self, *args)
+
+"""
 Exception that you can throw in a handler that will not get logged, but 
 that will trigger a 500 response.
 """
@@ -81,7 +88,10 @@ class _RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         except Exception, ex:
           if not isinstance(ex,SilentException):
             traceback.print_exc()
-          self.send_response(500, 'Exception in handler')
+          if isinstance(ex,NotFoundException):
+            self.send_response(404, 'NotFound')
+          else:
+            self.send_response(500, 'Exception in handler')
           self.send_header('Content-Length', 0)
           self.end_headers()
       else:

@@ -26,8 +26,18 @@ class DynObject(object):
         setattr(self,k,d[k])
     elif d and type(d) == str:
       o = json.loads(d)
+      if not getattr(o,'keys'):
+        raise Exception("Not a dict, cannot convert to dynobj")
       for k in o.keys():
         setattr(self,k,o[k])
+
+  @staticmethod
+  def loads(s):
+    o = json.loads(s)
+    if isinstance(o, dict):
+      return DynObject(o)
+    else:
+      return o
 
   def as_dict(self):
     d = dict()

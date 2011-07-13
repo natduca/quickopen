@@ -46,3 +46,11 @@ class DynObjectTest(unittest.TestCase):
     o.x = 2
     self.assertEqual(2, o.x)
     o.z = 3
+
+    self.assertRaises(Exception, lambda: DynObject("1"))
+
+  def test_loads(self):
+    self.assertEqual(DynObject.loads("1"), 1)
+    self.assertEqual(DynObject.loads("[]"), [])
+    self.assertEqual(DynObject.loads("[1]"), [1])
+    self.assertEqual(DynObject.loads('{"x": 1}').x, 1)

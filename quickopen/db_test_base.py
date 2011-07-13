@@ -50,13 +50,13 @@ class DBTestBase(object):
     d2_ = self.db.add_dir(d2)
     self.assertEquals([d1_, d2_], self.db.dirs)
 
-    self.db.del_dir(d1_)
+    self.db.delete_dir(d1_)
     self.assertEquals([d2_], self.db.dirs)
 
     d3_ = self.db.add_dir(d3)
     self.assertEquals([d2_, d3_], self.db.dirs)
 
-    self.db.del_dir(d3_)
+    self.db.delete_dir(d3_)
     self.assertEquals([d2_], self.db.dirs)
 
   def test_nonexistant_dir(self):

@@ -24,6 +24,10 @@ class DBDir(object):
   def __repr__(self):
     return "DBDir(%s)" % self.path
 
+  def __getstate__(self):
+    return {"id": self.id,
+            "path": self.path}
+
   def __cmp__(self, other):
     if type(other) != DBDir:
       return 1
@@ -59,7 +63,7 @@ class DB(object):
     self.settings.dirs = cur
     return self.dirs[-1]
 
-  def del_dir(self, d):
+  def delete_dir(self, d):
     if type(d) != DBDir:
       raise Exception("Expected DBDir")
     cur = list(self.settings.dirs)

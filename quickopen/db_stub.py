@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import db
+import re
 from dyn_object import *
 
 # TODO(nduca): is Stub the right word for this class? Mehh
@@ -24,6 +25,7 @@ class DBStub(object):
     server.add_json_route('/dirs', self.list_dirs, ['GET'])
     server.add_json_route('/dirs/([a-zA-Z0-9]+)', self.get_dir, ['GET'])
     server.add_json_route('/dirs/([a-zA-Z0-9]+)', self.delete_dir, ['DELETE'])
+    server.add_json_route('/sync', self.sync, ['POST'])
     server.add_json_route('/search', self.search, ['POST'])
 
   def add_dir(self, m, verb, data):
@@ -49,6 +51,11 @@ class DBStub(object):
         return {"status": 'OK'}
     raise daemon.NotFoundException()    
 
-  def search(self,query):
-    res = self.db.search(query)
+  def search(self, m, verb, data):
+    q = re.compile(data)
+    res = self.db.search(data)
     return res
+
+  def sync(self, m, verb, data):
+    self.db.sync()
+    return {"status": "OK"}

@@ -60,3 +60,10 @@ class DBProxy(object):
       raise Exception("Expected DBDirProxy")
     ret = self._req('DELETE', '/dirs/%s' % d.id)
     assert ret.status == 'OK'
+
+  def search(self, q):
+    ret = self._req('POST', '/search', q)
+    return ret
+
+  def sync(self):
+    ret = self._req('POST', '/sync')

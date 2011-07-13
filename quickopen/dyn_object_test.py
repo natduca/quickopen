@@ -35,7 +35,7 @@ class DynObjectTest(unittest.TestCase):
     o = DynObject()
     o.x = 1
     o.y = 2
-    o_ = DynObject(o.as_json())
+    o_ = DynObject.loads(o.as_json())
     self.assertEqual(1, o.x)
     self.assertEqual(2, o.y)
     
@@ -54,3 +54,7 @@ class DynObjectTest(unittest.TestCase):
     self.assertEqual(DynObject.loads("[]"), [])
     self.assertEqual(DynObject.loads("[1]"), [1])
     self.assertEqual(DynObject.loads('{"x": 1}').x, 1)
+
+  def test_nested(self):
+    o = DynObject.loads('{"x": {"y": 2}}')
+    self.assertEqual(2, o.x.y)

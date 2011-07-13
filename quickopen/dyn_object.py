@@ -21,15 +21,22 @@ class DynObject(object):
   d may be a dict or a json-formatted string
   """
   def __init__(self,d=None):
-    if d and type(d) == dict:
+    if d:
+      if type(d) not in (dict, basestring):
+          raise Exception("d shoudl be a str/unicode or a dict. Try DynObj.loads if this is json.")
+
+      if type(d) == str:
+        x = json.loads(d)
+        print x
+        if not hasattr(x,'keys'):
+          raise Exception("Not a dict, cannot convert to dynobj, try DynObj.loads")
+        d = x
+
       for k in d.keys():
-        setattr(self,k,d[k])
-    elif d and type(d) == str:
-      o = json.loads(d)
-      if not getattr(o,'keys'):
-        raise Exception("Not a dict, cannot convert to dynobj")
-      for k in o.keys():
-        setattr(self,k,o[k])
+        if type(d[k]) == dict:
+          setattr(self,k,DynObject(d[k]))
+        else:
+          setattr(self,k,d[k])
 
   @staticmethod
   def loads(s):

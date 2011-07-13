@@ -45,7 +45,7 @@ def _dumps_flat(obj):
     return "%f" % obj
   elif isinstance(obj,int):
     return "%i" % obj
-  elif isinstance(obj,str):
+  elif isinstance(obj,basestring):
     return "\"%s\"" % obj
   else:
     raise PSONException("Unrecognized type %s" % type(obj))

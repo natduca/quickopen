@@ -64,7 +64,7 @@ class _RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     if 'Content-Length' in self.headers:
       cl = int(self.headers['Content-Length'])
       text = self.rfile.read(cl)
-      obj = json.loads(text)
+      obj = DynObject.loads(text)
     else:
       obj = None
 

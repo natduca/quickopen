@@ -18,6 +18,7 @@ import unittest
 import time
 import json
 import daemon as daemon_module
+from dyn_object import *
 
 def is_port_available(port):
   import socket
@@ -110,6 +111,15 @@ class DaemonTest(unittest.TestCase):
     self.assertEquals(json.loads(res.read()), 'OK')
     conn.close()
 
+  def test_dyn_obj(self):
+    conn = httplib.HTTPConnection('localhost', TEST_PORT, True)
+    conn.request('GET', '/test_dyn_obj')
+    res = conn.getresponse()
+    self.assertEquals(res.status, 200)
+    x = DynObject.loads(res.read())
+    self.assertEquals(x.status, 'OK')
+    conn.close()
+
   def tearDown(self):
     if self.conn:
       self.conn.close()
@@ -141,3 +151,8 @@ def add_test_handlers_to_daemon(daemon):
     return 'OK'
   daemon.add_json_route('/test_delete', handler_for_delete, ['DELETE'])
 
+  def handler_for_dynobj(m, verb, data):
+    x = DynObject()
+    x.status = 'OK'
+    return x
+  daemon.add_json_route('/test_dyn_obj', handler_for_dynobj, ['GET'])

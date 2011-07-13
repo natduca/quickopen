@@ -12,41 +12,51 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import httplib
+from dyn_object import *
 
 class DBDirProxy(object):
-  def __init__(self, obj):
-    self.path = obj.path
-    self.id = obj.id
+  def __init__(self, id, path):
+    self.id = id
+    self.path = path
 
 class DBProxy(object):
   def __init__(self, host, port, start_if_needed = False):
     if start_if_needed:
       raise Exception("Not implemented")
-    self.conn_ = httplib.HTTPConnection(host, port, True)
+    self.conn = httplib.HTTPConnection(host, port, True)
+    self._dir_lut = {}
 
-  def _req(self, method, path, data):
+  def _req(self, method, path, data = None):
     if data:
-      data = json.dumps(data)
+      if type(data) == DynObject:
+        data = data.as_json()
+      else:
+        data = json.dumps(data)
     self.conn.request(method, path, data)
     res = self.conn.getresponse()
-    self.assertEquals(res.status, 200)
-    res = json.loads(res.read())
+    if res.status != 200:
+      raise Exception("On %s, got %s" % (path, res.status))
+    res = DynObject.loads(res.read())
     return res
 
+  def _get_dir(self, id, path):
+    if id not in self._dir_lut:
+      self._dir_lut[id] = DBDirProxy(id, path)
+    assert self._dir_lut[id].path== path
+    return self._dir_lut[id]
+    
   @property
   def dirs(self):
     ret = self._req('GET', '/dirs')
-    assert ret.status == 'OK'
-    return map(lambda x: DBDirProxy(x.id, x.path), ret.dirs)
+    return map(lambda x: self._get_dir(x["id"], x["path"]), ret)
 
   def add_dir(self, d):
-    ret = self._req('POST', '/dirs/new', d)
+    ret = self._req('POST', '/dirs/add', {"path": d})
     assert ret.status == 'OK'
-    self._dirs = None
-    return ret.dir_id
+    return self._get_dir(ret.id, d)
 
-  def del_dir(self, d):
+  def delete_dir(self, d):
     if type(d) != DBDirProxy:
       raise Exception("Expected DBDirProxy")
-    ret = self._req('POST', '/dirs/%s', d.id)
+    ret = self._req('DELETE', '/dirs/%s' % d.id)
     assert ret.status == 'OK'

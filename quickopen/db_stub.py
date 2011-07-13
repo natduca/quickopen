@@ -12,26 +12,43 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import db
+from dyn_object import *
 
+# TODO(nduca): is Stub the right word for this class? Mehh
 class DBStub(object):
   def __init__(self, settings):
     self.db = db.DB(settings)
 
   def on_bound_to_server(self, server):
-    server.add_json_route('/dirs/new', self.new_dir, ['POST'])
+    server.add_json_route('/dirs/add', self.add_dir, ['POST'])
     server.add_json_route('/dirs', self.list_dirs, ['GET'])
-    server.add_json_route('/dirs/(\d+)', self.get_dir, ['GET'])
-    server.add_json_route('/dirs/(\d+)', self.delete_dir, ['DELETE'])
+    server.add_json_route('/dirs/([a-zA-Z0-9]+)', self.get_dir, ['GET'])
+    server.add_json_route('/dirs/([a-zA-Z0-9]+)', self.delete_dir, ['DELETE'])
     server.add_json_route('/search', self.search, ['POST'])
 
-  def new_dir(self, m, verb, data):
-    self.db.add_dir(data.path)
+  def add_dir(self, m, verb, data):
+    d = self.db.add_dir(data.path)
+    return {"id": d.id,
+            "status": 'OK'}
 
-  def dirN(self, m, verb, data):
-    pass
+  def list_dirs(self, m, verb, data):
+    return map(lambda d: d.__getstate__(), self.db.dirs)
 
-  def dirs(self, m, verb, data):
-    pass
+  def get_dir(self, m, verb, data):
+    id = m.group(1)
+    for d in self.db.dirs:
+      if d.id == id:
+        return d.__getstate__()
+    raise daemon.NotFoundException()
+
+  def delete_dir(self, m, verb, data):
+    id = m.group(1)
+    for d in self.db.dirs:
+      if d.id == id:
+        self.db.delete_dir(d)
+        return {"status": 'OK'}
+    raise daemon.NotFoundException()    
 
   def search(self,query):
-    return
+    res = self.db.search(query)
+    return res

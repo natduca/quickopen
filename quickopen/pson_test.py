@@ -33,6 +33,7 @@ class PSONTest(unittest.TestCase):
     add(True, "True")
     add(False, "False")
     add("Foo", "\"Foo\"")
+    add(u"Foo", u"\"Foo\"")
     add(1, "1")
     add([], "[]")
     add({}, "{}")

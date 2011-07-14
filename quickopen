@@ -1,4 +1,4 @@
-#!/usr/bin/env VERSIONER_PYTHON_PREFER_32_BIT=yes python2.6
+#!/usr/bin/env VERSIONER_PYTHON_PREFER_32_BIT=yes python
 import sys
 import optparse
 
@@ -12,14 +12,14 @@ def load_settings(options):
   return settings
 
 def open_db(settings,options):
-  if not hasattr(options, 'host'):
+  if not options.host:
     options.host = settings.host
-  if not hasattr(options, 'port'):
+  if not options.port:
     options.port = settings.port
   db = src.db_proxy.DBProxy(options.host, options.port)
   return db
 
-def main(argv):
+def main():
   parser = optparse.OptionParser()
   parser.add_option('--host', dest='host', action='store', help='Hostname of quickopend server')
   parser.add_option('--port', dest='port', action='store', help='Port for quickopend')
@@ -27,21 +27,21 @@ def main(argv):
   (options, args) = parser.parse_args()
   settings = load_settings(options)
   db = open_db(settings, options)
-  
-def run_ui(settings, db):
+
   has_gtk = False
   has_wx = False
   try:
     import pygtk
     pygtk.require('2.0')
     has_gtk = True
-  except:
+  except ImportError:
     pass
 
+  import wx
   try:    
     import wx
     has_wx = True
-  except:
+  except ImportError:
     pass
   
   if has_gtk:

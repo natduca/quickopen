@@ -74,7 +74,9 @@ def CMDsearch(parser, args):
     pass
 
   if has_wx:
-    raise Exception("WX UI not implemented yet.")
+    import src.open_dialog_wx
+    src.open_dialog_wx.run(settings, db)
+    return 0
 
   # give up
   raise Exception("No supported UI detected.")

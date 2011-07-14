@@ -11,59 +11,34 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import httplib
-import subprocess
-import tempfile
-import unittest
-import time
-import json
 import daemon as daemon_module
+import httplib
+import json
+import temporary_daemon
+import time
+import unittest
+
 from dyn_object import *
-
-def is_port_available(port):
-  import socket
-  s = socket.socket()
-  try:
-    s.connect(('localhost', port))
-  except socket.error:
-    return True
-  s.close()
-  return False
-
-TEST_PORT=12345
-
-# Import should fail if a daemon is running
-if not is_port_available(TEST_PORT):
-  raise Exception("DaemonRunning")
-
 
 class DaemonTest(unittest.TestCase):
   def setUp(self):
-    self.settings_file = tempfile.NamedTemporaryFile()
-    self.proc = subprocess.Popen(['./quickopend', '--settings', self.settings_file.name, '--port', str(TEST_PORT), '--test'])
-    time.sleep(0.1) # let it come up...
-    self.conn = None
+    self.daemon = temporary_daemon.TemporaryDaemon()
+    self.conn = self.daemon.conn
 
   # basics
   def test_responding(self):
-    conn = httplib.HTTPConnection('localhost', TEST_PORT, True)
-    conn.request('GET', '/ping')
-    res = conn.getresponse()
+    self.conn.request('GET', '/ping')
+    res = self.conn.getresponse()
     self.assertEquals(res.status, 200)
     self.assertEquals(json.loads(res.read()), 'pong')
-    conn.close()
 
   def test_missing(self):
-    conn = httplib.HTTPConnection('localhost', TEST_PORT, True)
-    conn.request('GET', '/xxx')
-    res = conn.getresponse()
+    self.conn.request('GET', '/xxx')
+    res = self.conn.getresponse()
     self.assertEquals(res.status, 404)
-    conn.close()
 
   # GET requests via handlers
   def get_json(self, path):
-    if self.conn == None:
-      self.conn = httplib.HTTPConnection('localhost', TEST_PORT, True)
     self.conn.request('GET', path)
     res = self.conn.getresponse()
     self.assertEquals(res.status, 200)
@@ -71,8 +46,6 @@ class DaemonTest(unittest.TestCase):
     return res
 
   def post_json(self, path, data):
-    if self.conn == None:
-      self.conn = httplib.HTTPConnection('localhost', TEST_PORT, True)
     self.conn.request('POST', path, json.dumps(data))
     res = self.conn.getresponse()
     self.assertEquals(res.status, 200)
@@ -84,7 +57,6 @@ class DaemonTest(unittest.TestCase):
     self.assertEquals(self.post_json('/test_simple', 'simple_ok'), 'simple_ok')
 
   def test_invalid_verb_on_simple(self):
-    self.conn = httplib.HTTPConnection('localhost', TEST_PORT, True)
     self.conn.request('DELETE', '/test_simple')
     res = self.conn.getresponse()
     self.assertEquals(res.status, 405)
@@ -94,7 +66,6 @@ class DaemonTest(unittest.TestCase):
     self.assertEquals(self.post_json('/test_complex/2', 'complex_ok'), 2)
 
   def test_handler_with_exception_handler(self):
-    self.conn = httplib.HTTPConnection('localhost', TEST_PORT, True)
     self.conn.request('GET', '/test_server_exception')
     res = self.conn.getresponse()
     self.assertEquals(res.status, 500)
@@ -104,28 +75,22 @@ class DaemonTest(unittest.TestCase):
     self.assertEquals(res.status, 500)
 
   def test_delete(self):
-    conn = httplib.HTTPConnection('localhost', TEST_PORT, True)
-    conn.request('DELETE', '/test_delete')
-    res = conn.getresponse()
+    self.conn.request('DELETE', '/test_delete')
+    res = self.conn.getresponse()
     self.assertEquals(res.status, 200)
     self.assertEquals(json.loads(res.read()), 'OK')
-    conn.close()
 
   def test_dyn_obj(self):
-    conn = httplib.HTTPConnection('localhost', TEST_PORT, True)
-    conn.request('GET', '/test_dyn_obj')
-    res = conn.getresponse()
+    self.conn.request('GET', '/test_dyn_obj')
+    res = self.conn.getresponse()
     self.assertEquals(res.status, 200)
     x = DynObject.loads(res.read())
     self.assertEquals(x.status, 'OK')
-    conn.close()
 
   def tearDown(self):
     if self.conn:
       self.conn.close()
-
-    self.proc.kill()
-    self.settings_file.close()
+    self.daemon.close()
 
 
 def add_test_handlers_to_daemon(daemon):

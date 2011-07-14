@@ -65,7 +65,6 @@ class _RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
       raise Exception('Unrecognized output type: ' + route.output)
 
   def handleRequest(self, verb):
-    
     path = urlparse.urlsplit(self.path)[2]
 
     if 'Content-Length' in self.headers:
@@ -127,8 +126,13 @@ class Daemon(BaseHTTPServer.HTTPServer):
     self.routes = []
     self.db_.on_bound_to_server(self)
     if test:
+      self.add_json_route('/exit', self.on_exit, ['POST', 'GET'])
       import daemon_test
       daemon_test.add_test_handlers_to_daemon(self)
+
+  def on_exit(self, m, verb, data):
+    logging.info("Exiting upon request.")
+    self.shutdown()
 
   def add_json_route(self, path_regex, handler, allowed_verbs):
     re.compile(path_regex)

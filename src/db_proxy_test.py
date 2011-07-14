@@ -16,33 +16,15 @@ import db_proxy
 import db_test_base
 import subprocess
 import tempfile
+import temporary_daemon
 import time
-
-def is_port_available(port):
-  import socket
-  s = socket.socket()
-  try:
-    s.connect(('localhost', port))
-  except socket.error:
-    return True
-  s.close()
-  return False
-
-TEST_PORT=12345
-
-# Import should fail if a daemon is running
-if not is_port_available(TEST_PORT):
-  raise Exception("DaemonRunning")
 
 class DBProxyTest(db_test_base.DBTestBase, unittest.TestCase):
   def setUp(self):
     db_test_base.DBTestBase.setUp(self)
-    self.settings_file = tempfile.NamedTemporaryFile()
-    self.proc = subprocess.Popen(['./quickopend', '--settings', self.settings_file.name, '--port', str(TEST_PORT), '--test'])
-    time.sleep(0.2) # let it come up...
-    self.db = db_proxy.DBProxy('localhost', TEST_PORT)
+    self.daemon = temporary_daemon.TemporaryDaemon()
+    self.db = self.daemon.db_proxy
 
   def tearDown(self):
-    self.proc.kill()
-    self.settings_file.close()
+    self.daemon.close()
     db_test_base.DBTestBase.tearDown(self)

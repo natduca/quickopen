@@ -27,6 +27,15 @@ class DBTest(DBTestBase, unittest.TestCase):
     self.db = db.DB(self.settings)
     DBTestBase.setUp(self)
 
+  def test_dir_persistence(self):
+    d1 = os.path.join(self.test_data_dir, 'project1')
+    self.db.add_dir(d1)
+    self.db.sync()
+
+    settings2 = settings.Settings(self.settings_file.name)
+    db2 = db.DB(settings2)
+    self.assertEquals([d1], map(lambda d: d.path, db2.dirs))
+
   def tearDown(self):
     DBTestBase.tearDown(self)
     self.settings_file.close()

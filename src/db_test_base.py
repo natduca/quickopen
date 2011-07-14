@@ -12,32 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-import tempfile
+import test_data
 
 class DBTestBase(object):
   def setUp(self):
-    # create a directory hierarchy to do tests in
-    self.test_data_dir = os.path.realpath(os.path.join(tempfile.gettempdir(), 'db_test'))
-    if os.path.exists(self.test_data_dir):
-      os.system('rm -rf %s' % self.test_data_dir)
-    os.system('cp -r ./test_data/ %s' % self.test_data_dir)
-
-    # dir symlink project1_symlink to project1
-    src = os.path.join(self.test_data_dir, 'project1')
-    dst = os.path.join(self.test_data_dir, 'project1_symlink')
-    ret = os.system('ln -s %s %s' % (src, dst))
-    self.assertEquals(0, ret)
-
-    # file symlink something/foo.txt to project1/something/foo.txt
-    src = os.path.join(self.test_data_dir, 'project1/foo.txt')
-    dst = os.path.join(self.test_data_dir, 'something/foo.txt')
-    ret = os.system('ln -s %s %s' % (src, dst))
-    self.assertEquals(0, ret)
-
+    self.test_data = test_data.TestData()
+    self.test_data_dir = self.test_data.test_data_dir
 
   def tearDown(self):
-    if os.path.exists(self.test_data_dir):
-      os.system('rm -rf %s' % self.test_data_dir)
+    self.test_data.close()
 
   def test_dirs(self):
     d1 = os.path.join(self.test_data_dir, 'project1')

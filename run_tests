@@ -26,7 +26,7 @@ def discover(filters):
   # poor mans unittest.discover
   loader = unittest.TestLoader()
   subsuites = []
-  
+
   for (dirpath, dirnames, filenames) in os.walk('src'):
     for filename in [x for x in filenames if re.match('.*_test\.py$', x)]:
       if filename.startswith('.') or filename.startswith('_'):

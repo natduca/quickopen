@@ -17,7 +17,7 @@ import pango
 from event import *
 
 
-class InfoBar(gtk.EventBox):
+class InfoBarGtk(gtk.EventBox):
   """Represents a single horizontal bar of text, possibly with an
   icon, textual buttons, and a close button. Always visible."""
   def __init__(self, text = ""):
@@ -115,7 +115,7 @@ class _BSeparator(gtk.EventBox):
     self.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#FBE99C"))
     self.add(gtk.HSeparator())
 
-class InfoBarCollection(gtk.VBox):
+class InfoBarGtkCollection(gtk.VBox):
   """A collection of butter bars"""
   def __init__(self):
     gtk.VBox.__init__(self)
@@ -136,7 +136,7 @@ class InfoBarCollection(gtk.VBox):
         grp0.remove(c0)
 
   def add_bar(self, bar):
-    assert isinstance(bar,InfoBar)
+    assert isinstance(bar,InfoBarGtk)
     if bar.has_close_button == False:
       bar.add_close_button(lambda: True)
 
@@ -159,7 +159,7 @@ class InfoBarCollection(gtk.VBox):
     return self._num_bars
   def __getitem__(self,i):
     grp = self.get_children()[i]
-    if isinstance(grp.get_children()[0], InfoBar):
+    if isinstance(grp.get_children()[0], InfoBarGtk):
       return grp.get_children()[0]
     else:
       return grp.get_children()[1]
@@ -167,7 +167,7 @@ class InfoBarCollection(gtk.VBox):
 if __name__ == "__main__" and False:
   w = gtk.Window()
   w.set_size_request(400,-1)
-  b = InfoBar()
+  b = InfoBarGtk()
   b.text = "blah blah blah"
   w.add(b)
   w.show_all()
@@ -176,24 +176,24 @@ if __name__ == "__main__" and False:
 if __name__ == "__main__" and True:
   w = gtk.Window()
   w.set_size_request(400,-1)
-  bbc = InfoBarCollection()
+  bbc = InfoBarGtkCollection()
 
   # bb1
-  bb = InfoBar("blah blah blah")
+  bb = InfoBarGtk("blah blah blah")
   bbc.add_bar(bb)
 
   # bb1
-  bb = InfoBar("this is informational")
+  bb = InfoBarGtk("this is informational")
   bb.set_stock_icon(gtk.STOCK_DIALOG_INFO)
   bbc.add_bar(bb)
 
   # bb1
-  bb = InfoBar("blah blah blah")
+  bb = InfoBarGtk("blah blah blah")
   bb.add_button("Accept", lambda: True)
   bbc.add_bar(bb)
 
   # bb1
-  bb = InfoBar("OMG you need to do somethnig")
+  bb = InfoBarGtk("OMG you need to do somethnig")
   bb.set_stock_icon(gtk.STOCK_DIALOG_WARNING)
   bb.add_button("Accept", lambda: True)
   bb.add_close_button(lambda: True)

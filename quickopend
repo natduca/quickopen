@@ -2,9 +2,9 @@
 import sys
 import optparse
 
-import quickopen.daemon
-import quickopen.db_stub
-import quickopen.settings
+import src.daemon
+import src.db_stub
+import src.settings
 
 if __name__ == '__main__':
   parser = optparse.OptionParser()
@@ -15,9 +15,9 @@ if __name__ == '__main__':
   (options, args) = parser.parse_args()
   options.port = int(options.port)
 
-  settings = quickopen.settings.Settings(options.settings)
-  db_stub = quickopen.db_stub.DBStub(settings)
+  settings = src.settings.Settings(options.settings)
+  db_stub = src.db_stub.DBStub(settings)
 
-  daemon = quickopen.daemon.create(db_stub, options.host, options.port, options.test)
+  daemon = src.daemon.create(db_stub, options.host, options.port, options.test)
   daemon.run()
   sys.exit(0)

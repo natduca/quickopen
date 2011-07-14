@@ -48,6 +48,7 @@ def main():
     has_gtk = True
   except ImportError:
     pass
+
   if has_gtk:
     import src.open_dialog_gtk
     src.open_dialog_gtk.run(settings, db)

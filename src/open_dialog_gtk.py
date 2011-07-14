@@ -20,13 +20,13 @@ import os
 
 from info_bar_gtk import *
 
-class OpenDialogGtk(gtk.Dialog):
+from open_dialog_base import OpenDialogBase
+
+class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
   def __init__(self, settings, db):
     gtk.Dialog.__init__(self)
-    settings.register("filter_text", str, "")
-    self._filter_text = settings.filter_text
-    self._settings = settings
-    self._db = db
+    OpenDialogBase.__init__(self, settings, db)
+
     self.set_title("Quick open...")
     self.set_size_request(1000,400)
     self.add_button("_Open",gtk.RESPONSE_OK)
@@ -100,7 +100,7 @@ class OpenDialogGtk(gtk.Dialog):
     self.refresh()
 
   def response(self, arg):
-    self._settings.filter_text = self._filter_text
+    self.just_before_closed()
     gtk.Dialog.response(self, arg)
 
   def on_destroy(self, *args):
@@ -128,12 +128,7 @@ class OpenDialogGtk(gtk.Dialog):
 
   def _on_filter_text_changed(self,entry):
     text = entry.get_text()
-    try:
-      re.compile(text)
-    except Exception, ex:
-      logging.error("Regexp error: %s", str(ex))
-    self._filter_text = text # TODO(nduca): using settings to move filter text around is bad because it always saves
-    self.refresh()
+    self.set_filter_text(text)
 
 #  def _update_stats(self,stats_label):
 #    w = self._db.call_async_waitable.get_stats()
@@ -146,7 +141,6 @@ class OpenDialogGtk(gtk.Dialog):
 
   def refresh(self):
     # TODO(nduca) save the selection
-
     if self._filter_text != "":
       ft = str(self._filter_text)
       res = self._db.search(ft)

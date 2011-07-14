@@ -38,12 +38,12 @@ def main():
     pass
 
   import wx
-  try:    
+  try:
     import wx
     has_wx = True
   except ImportError:
     pass
-  
+
   if has_gtk:
     print "GTK UI not implemented yet."
   elif has_wx:

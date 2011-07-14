@@ -25,12 +25,14 @@ class DBTestBase(object):
     # dir symlink project1_symlink to project1
     src = os.path.join(self.test_data_dir, 'project1')
     dst = os.path.join(self.test_data_dir, 'project1_symlink')
-    os.system('ln -s %s %s' % (src, dst))
+    ret = os.system('ln -s %s %s' % (src, dst))
+    self.assertEquals(0, ret)
 
     # file symlink something/foo.txt to project1/something/foo.txt
     src = os.path.join(self.test_data_dir, 'project1/foo.txt')
     dst = os.path.join(self.test_data_dir, 'something/foo.txt')
-    os.system('ln -s %s %s' % (src, dst))
+    ret = os.system('ln -s %s %s' % (src, dst))
+    self.assertEquals(0, ret)
 
 
   def tearDown(self):

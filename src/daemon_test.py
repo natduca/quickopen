@@ -24,7 +24,7 @@ def is_port_available(port):
   import socket
   s = socket.socket()
   try:
-    s.connect(('localhsot', port))
+    s.connect(('localhost', port))
   except socket.error:
     return True
   s.close()

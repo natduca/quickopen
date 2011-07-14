@@ -22,7 +22,7 @@ def is_port_available(port):
   import socket
   s = socket.socket()
   try:
-    s.connect(('localhsot', port))
+    s.connect(('localhost', port))
   except socket.error:
     return True
   s.close()
@@ -39,12 +39,10 @@ class DBProxyTest(db_test_base.DBTestBase, unittest.TestCase):
     db_test_base.DBTestBase.setUp(self)
     self.settings_file = tempfile.NamedTemporaryFile()
     self.proc = subprocess.Popen(['./quickopend', '--settings', self.settings_file.name, '--port', str(TEST_PORT), '--test'])
-    time.sleep(0.1) # let it come up...
+    time.sleep(0.2) # let it come up...
     self.db = db_proxy.DBProxy('localhost', TEST_PORT)
 
   def tearDown(self):
     self.proc.kill()
     self.settings_file.close()
     db_test_base.DBTestBase.tearDown(self)
-
-  

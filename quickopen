@@ -1,0 +1,56 @@
+#!/usr/bin/env VERSIONER_PYTHON_PREFER_32_BIT=yes python2.6
+import sys
+import optparse
+
+import src.settings
+import src.db_proxy
+
+def load_settings(options):
+  settings = src.settings.Settings(options.settings)
+  settings.register('host', str, 'localhost')
+  settings.register('port', int, 10248)
+  return settings
+
+def open_db(settings,options):
+  if not hasattr(options, 'host'):
+    options.host = settings.host
+  if not hasattr(options, 'port'):
+    options.port = settings.port
+  db = src.db_proxy.DBProxy(options.host, options.port)
+  return db
+
+def main(argv):
+  parser = optparse.OptionParser()
+  parser.add_option('--host', dest='host', action='store', help='Hostname of quickopend server')
+  parser.add_option('--port', dest='port', action='store', help='Port for quickopend')
+  parser.add_option('--settings', dest='settings', action='store', default='~/.quickopen', help='Settings file to use, ~/.quickopen by default')
+  (options, args) = parser.parse_args()
+  settings = load_settings(options)
+  db = open_db(settings, options)
+  
+def run_ui(settings, db):
+  has_gtk = False
+  has_wx = False
+  try:
+    import pygtk
+    pygtk.require('2.0')
+    has_gtk = True
+  except:
+    pass
+
+  try:    
+    import wx
+    has_wx = True
+  except:
+    pass
+  
+  if has_gtk:
+    print "GTK UI not implemented yet."
+  elif has_wx:
+    print "WX UI not implemented yet."
+  else:
+    print "No supported UI detected."
+
+if __name__ == '__main__':
+  main()
+  sys.exit(0)

@@ -6,7 +6,7 @@ import src.daemon
 import src.db_stub
 import src.settings
 
-if __name__ == '__main__':
+def main():
   parser = optparse.OptionParser()
   parser.add_option('--host', dest='host', action='store', default='', help='Hostname to listen on')
   parser.add_option('--port', dest='port', action='store', default=10248, help='Port to run on')
@@ -20,4 +20,7 @@ if __name__ == '__main__':
 
   daemon = src.daemon.create(db_stub, options.host, options.port, options.test)
   daemon.run()
+
+if __name__ == '__main__':
+  main()
   sys.exit(0)

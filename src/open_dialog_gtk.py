@@ -16,6 +16,7 @@ import gtk
 import re
 import time
 import logging
+import os
 
 from info_bar_gtk import *
 
@@ -23,6 +24,7 @@ class OpenDialogGtk(gtk.Dialog):
   def __init__(self, settings, db):
     gtk.Dialog.__init__(self)
     settings.register("filter_text", str, "")
+    self._filter_text = settings.filter_text
     self._settings = settings
     self._db = db
     self.set_title("Quick open...")
@@ -46,9 +48,7 @@ class OpenDialogGtk(gtk.Dialog):
     add_column("File",lambda obj: os.path.basename(obj))
     add_column("Path",lambda obj: os.path.dirname(obj))
 
-    def on_destroy(*args):
-      self.response(gtk.RESPONSE_CANCEL)
-    self.connect('destroy', on_destroy)
+    self.connect('destroy', self.on_destroy)
 
     truncated_bar = InfoBarGtk()
     refresh_button = gtk.Button("_Refresh")
@@ -59,12 +59,12 @@ class OpenDialogGtk(gtk.Dialog):
 
 
     stats_label = gtk.Label()
-    def do_update_stats():
-      self._update_stats(stats_label)
-    glib.timeout_add(250, self._update_stats)
+#    def do_update_stats():
+#      self._update_stats(stats_label)
+#    glib.timeout_add(250, self._update_stats)
 
     filter_entry = gtk.Entry()
-    filter_entry.set_text(self._settings.filter_text)
+    filter_entry.set_text(self._filter_text)
     filter_entry.connect('key_press_event', self._on_filter_entry_keypress)
     filter_entry.connect('changed', self._on_filter_text_changed)
 
@@ -99,6 +99,13 @@ class OpenDialogGtk(gtk.Dialog):
 
     self.refresh()
 
+  def response(self, arg):
+    self.settings.filter_text = self._filter_text
+    gtk.Dialog.response(self, arg)
+
+  def on_destroy(self, *args):
+    self.response(gtk.RESPONSE_CANCEL)
+
   def _on_filter_entry_keypress(self,entry,event):
     keyname = gtk.gdk.keyval_name(event.keyval)
 
@@ -123,62 +130,57 @@ class OpenDialogGtk(gtk.Dialog):
     text = entry.get_text()
     try:
       re.compile(text)
-      self._settings.filter_text = text
+      self._filter_text = text # TODO(nduca): using settings to move filter text around is bad because it always saves
       self.refresh()
     except Exception, ex:
-      logging.error("Regexp error: %s", str(ex)) # TODO(nduca) put up a warning that this isn't a valid regex
+      logging.error("Regexp error: %s", str(ex))
 
-
-  def _update_stats(self,stats_label):
-    w = self._db.call_async_waitable.get_stats()
-    w.when_done(lambda v: stats_label.set_text(v))
-    return self.get_property('visible')
+#  def _update_stats(self,stats_label):
+#    w = self._db.call_async_waitable.get_stats()
+#    w.when_done(lambda v: stats_label.set_text(v))
+#    return self.get_property('visible')
 
   def _reset_database(self):
-    self._db.call.reset()
+    self._db.sync()
     self.refresh()
 
   def refresh(self):
     # TODO(nduca) save the selection
 
-    # update the model based on result
-    def on_result(files):
-      start_time = time.time()
-      self._treeview.freeze_child_notify()
-      self._treeview.set_model(None)
-
-      self._model.clear()
-
-      for f in files:
-        row = self._model.append()
-        self._model.set(row, 0, f)
-
-      self._treeview.set_model(self._model)
-      self._treeview.thaw_child_notify()
-
-      truncated = False
-      if truncated:
-        self._truncated_bar.text = "Search was truncated at %i items" % len(files)
-        self._truncated_bar.show()
-      else:
-        self._truncated_bar.hide()
-
-      elapsed = time.time() - start_time
-
-      if len(self._model) > 0:
-        if self._treeview.get_selection():
-          self._treeview.get_selection().select_path((0,))
-
-    if self._settings.filter_text != "":
-      ft = str(self._settings.filter_text)
-      w = self._db.call_async_waitable.find_files_matching(ft)
-      w.when_done(on_result)
-
-#      res = self._db.call.find_files_matching(ft)
-#      on_result(res)
+    if self._filter_text != "":
+      ft = str(self._filter_text)
+      res = self._db.search(ft)
+      self.on_result(res)
     else:
       self._model.clear()
 
+  # update the model based on result
+  def on_result(self, files):
+    start_time = time.time()
+    self._treeview.freeze_child_notify()
+    self._treeview.set_model(None)
+
+    self._model.clear()
+
+    for f in files:
+      row = self._model.append()
+      self._model.set(row, 0, f)
+
+    self._treeview.set_model(self._model)
+    self._treeview.thaw_child_notify()
+
+    truncated = False
+    if truncated:
+      self._truncated_bar.text = "Search was truncated at %i items" % len(files)
+      self._truncated_bar.show()
+    else:
+      self._truncated_bar.hide()
+
+    elapsed = time.time() - start_time
+
+    if len(self._model) > 0:
+      if self._treeview.get_selection():
+        self._treeview.get_selection().select_path((0,))
 
   def _on_treeview_selection_changed(self, selection):
     self.set_response_sensitive(gtk.RESPONSE_OK,selection.count_selected_rows() != 0)

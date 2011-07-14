@@ -159,11 +159,10 @@ def main(argv):
       return command(parser, argv[1:])
     # Not a known command. Default to help.
     GenUsage(parser, 'help')
-   return CMDhelp(parser, argv)
+    return CMDhelp(parser, argv)
   else: # default command
     GenUsage(parser, 'search')
     return CMDsearch(parser, argv)
-    
 
 if __name__ == '__main__':
   sys.exit(main(sys.argv[1:]))

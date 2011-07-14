@@ -1,6 +1,7 @@
 #!/usr/bin/env python2.6
 import sys
 import optparse
+import os
 
 import src.daemon
 import src.db_stub
@@ -15,7 +16,8 @@ def main():
   (options, args) = parser.parse_args()
   options.port = int(options.port)
 
-  settings = src.settings.Settings(options.settings)
+  settings_file = os.path.expanduser(options.settings)
+  settings = src.settings.Settings(settings_file)
   db_stub = src.db_stub.DBStub(settings)
 
   daemon = src.daemon.create(db_stub, options.host, options.port, options.test)

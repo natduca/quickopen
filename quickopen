@@ -14,6 +14,7 @@
 # limitations under the License.
 import logging
 import optparse
+import os
 import re
 import sys
 
@@ -22,10 +23,30 @@ import src.db_proxy
 
 ###########################################################################
 
+def CMDadd(parser, args):
+  """Adds a directory to the index"""
+  (options, args) = parser.parse_args(args)
+  settings = load_settings(options)
+  db = open_db(settings, options)
+  if len(args) == 0:
+    parser.error('Expected at least one directory')
+  for d in args:
+    db.add_dir(d)
+  return 0
+
+def CMDdirs(parser, args):
+  """Lists currently-indexed directories"""
+  (options, args) = parser.parse_args(args)
+  settings = load_settings(options)
+  db = open_db(settings, options)
+  if len(args):
+    parser.error('Unrecognized args: %s' % ' '.join(args))
+  print "\n".join([x.path for x in db.dirs])
+  return 0
+
 def CMDsearch(parser, args):
   """Search for a file"""
   (options, args) = parser.parse_args(args)
-
   settings = load_settings(options)
   db = open_db(settings, options)
 
@@ -59,7 +80,8 @@ def CMDsearch(parser, args):
 
 
 def load_settings(options):
-  settings = src.settings.Settings(options.settings)
+  settings_file = os.path.expanduser(options.settings)
+  settings = src.settings.Settings(settings_file)
   settings.register('host', str, 'localhost')
   settings.register('port', int, 10248)
   return settings
@@ -135,10 +157,13 @@ def main(argv):
       # "fix" the usage and the description now that we know the subcommand.
       GenUsage(parser, argv[0])
       return command(parser, argv[1:])
-
-  # Not a known command. Default to help.
-  GenUsage(parser, 'search')
-  return CMDsearch(parser, argv)
+    # Not a known command. Default to help.
+    GenUsage(parser, 'help')
+   return CMDhelp(parser, argv)
+  else: # default command
+    GenUsage(parser, 'search')
+    return CMDsearch(parser, argv)
+    
 
 if __name__ == '__main__':
   sys.exit(main(sys.argv[1:]))

@@ -12,11 +12,51 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import sys
+import logging
 import optparse
+import re
+import sys
 
 import src.settings
 import src.db_proxy
+
+###########################################################################
+
+def CMDsearch(parser, args):
+  """Search for a file"""
+  (options, args) = parser.parse_args(args)
+
+  settings = load_settings(options)
+  db = open_db(settings, options)
+
+  # try using gtk
+  has_gtk = False
+  try:
+    import pygtk
+    pygtk.require('2.0')
+    has_gtk = True
+  except ImportError:
+    pass
+
+  if has_gtk:
+    import src.open_dialog_gtk
+    src.open_dialog_gtk.run(settings, db)
+    return 0
+
+  # if that didn't work, try using wx
+  has_wx = False
+  try:
+    import wx
+    has_wx = True
+  except ImportError:
+    pass
+
+  if has_wx:
+    raise Exception("WX UI not implemented yet.")
+
+  # give up
+  raise Exception("No supported UI detected.")
+
 
 def load_settings(options):
   settings = src.settings.Settings(options.settings)
@@ -32,42 +72,73 @@ def open_db(settings,options):
   db = src.db_proxy.DBProxy(options.host, options.port)
   return db
 
-def main():
+# Subcommand addins to optparse, taken from git-cl.py, 
+# http://src.chromium.org/svn/trunk/tools/depot_tools/git_cl.py
+###########################################################################
+
+def Command(name):
+  return getattr(sys.modules[__name__], 'CMD' + name, None)
+
+
+def CMDhelp(parser, args):
+  """print list of commands or help for a specific command"""
+  _, args = parser.parse_args(args)
+  if len(args) == 1:
+    return main(args + ['--help'])
+  parser.print_help()
+  return 0
+
+
+def GenUsage(parser, command):
+  """Modify an OptParse object with the function's documentation."""
+  obj = Command(command)
+  more = getattr(obj, 'usage_more', '')
+  if command == 'help':
+    command = '<command>'
+  else:
+    # OptParser.description prefer nicely non-formatted strings.
+    parser.description = re.sub('[\r\n ]{2,}', ' ', obj.__doc__)
+  parser.set_usage('usage: %%prog %s [options] %s' % (command, more))
+
+
+def main(argv):
+  """Doesn't parse the arguments here, just find the right subcommand to
+  execute."""
+  # Do it late so all commands are listed.
+  CMDhelp.usage_more = ('\n\nCommands are:\n' + '\n'.join([
+      '  %-10s %s' % (fn[3:], Command(fn[3:]).__doc__.split('\n')[0].strip())
+      for fn in dir(sys.modules[__name__]) if fn.startswith('CMD')]))
+
+  # Create the option parse and add --verbose support.
   parser = optparse.OptionParser()
+  parser.add_option(
+      '-v', '--verbose', action='count', default=0,
+      help='Use 2 times for more debugging info')
   parser.add_option('--host', dest='host', action='store', help='Hostname of quickopend server')
   parser.add_option('--port', dest='port', action='store', help='Port for quickopend')
   parser.add_option('--settings', dest='settings', action='store', default='~/.quickopen', help='Settings file to use, ~/.quickopen by default')
-  (options, args) = parser.parse_args()
-  settings = load_settings(options)
-  db = open_db(settings, options)
+  old_parser_args = parser.parse_args
+  def Parse(args):
+    options, args = old_parser_args(args)
+    if options.verbose >= 2:
+      logging.basicConfig(level=logging.DEBUG)
+    elif options.verbose:
+      logging.basicConfig(level=logging.INFO)
+    else:
+      logging.basicConfig(level=logging.WARNING)
+    return options, args
+  parser.parse_args = Parse
 
-  # try using gtk
-  try:
-    import pygtk
-    pygtk.require('2.0')
-    has_gtk = True
-  except ImportError:
-    pass
+  if argv:
+    command = Command(argv[0])
+    if command:
+      # "fix" the usage and the description now that we know the subcommand.
+      GenUsage(parser, argv[0])
+      return command(parser, argv[1:])
 
-  if has_gtk:
-    import src.open_dialog_gtk
-    src.open_dialog_gtk.run(settings, db)
-    return
-
-  # if that didn't work, try using wx
-  import wx
-  try:
-    import wx
-    has_wx = True
-  except ImportError:
-    pass
-
-  if has_wx:
-    raise Exception("WX UI not implemented yet.")
-
-  # give up
-  raise Exception("No supported UI detected.")
+  # Not a known command. Default to help.
+  GenUsage(parser, 'search')
+  return CMDsearch(parser, argv)
 
 if __name__ == '__main__':
-  main()
-  sys.exit(0)
+  sys.exit(main(sys.argv[1:]))

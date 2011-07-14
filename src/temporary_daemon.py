@@ -51,8 +51,8 @@ class TemporaryDaemon(object):
     if is_port_listening(TEST_PORT):
       raise Exception("Daemon running")
 
-    self.settings_file = tempfile.NamedTemporaryFile()
-    args = ['./quickopend', '--settings', self.settings_file.name, '--port', str(TEST_PORT)]
+    self.daemon_settings_file = tempfile.NamedTemporaryFile()
+    args = ['./quickopend', '--settings', self.daemon_settings_file.name, '--port', str(TEST_PORT)]
     args.append('--test')
 
     self.proc = subprocess.Popen(args)
@@ -87,7 +87,7 @@ class TemporaryDaemon(object):
     except:
       pass
     self.proc.wait()
-    self.settings_file.close()
+    self.daemon_settings_file.close()
 
   @property
   def host(self):

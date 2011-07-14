@@ -210,6 +210,6 @@ if __name__ == "__main__":
   client_settings = settings.Settings(client_settings_file.name)
   db = daemon.db_proxy
   db.add_dir(db_test_base.test_data_dir)
-  main(client_settings, db)
+  run(client_settings, db)
   db_test_base.tearDown()
   client_settings_file.close()

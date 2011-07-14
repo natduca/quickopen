@@ -15,6 +15,7 @@
 import logging
 import optparse
 import os
+import platform
 import re
 import sys
 
@@ -165,4 +166,13 @@ def main(argv):
     return CMDsearch(parser, argv)
 
 if __name__ == '__main__':
-  sys.exit(main(sys.argv[1:]))
+  if platform.system() == 'Darwin':
+    if os.getenv('VERSIONER_PYTHON_PREFER_32_BIT') != 'yes':
+      os.putenv('VERSIONER_PYTHON_PREFER_32_BIT', 'yes')
+      args = [sys.executable]
+      args.extend(sys.argv)
+      os.execv(args[0], args)
+    else:
+      sys.exit(main(sys.argv[1:]))
+  else:
+    sys.exit(main(sys.argv[1:]))

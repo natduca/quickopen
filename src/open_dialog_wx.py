@@ -17,6 +17,7 @@ import logging
 import os
 import wx
 import wx.lib.mixins.listctrl  as  listmix
+import wx.lib.evtmgr as evtmgr
 import sys
 
 from open_dialog_base import OpenDialogBase
@@ -47,19 +48,11 @@ class OpenDialogWx(wx.Dialog, OpenDialogBase):
                                       style=wx.LC_REPORT | wx.BORDER_NONE)
     middle_box.Add(self._results_list, 1, wx.ALIGN_CENTRE|wx.ALL|wx.EXPAND)
 
-    
-
-#    lower_sizer = wx.BoxSizer(wx.HORIZONTAL)
-#    cancel_bn = wx.Button(self, wx.ID_CANCEL)
-#    ok_bn = wx.Button(self, wx.ID_OK)
-#    lower_sizer.Add(cancel_bn)
-#    lower_sizer.Add((10,0), 0)
-#    lower_sizer.Add(ok_bn)
-
     filter_box = wx.BoxSizer(wx.HORIZONTAL)
     self._filter_ctrl = wx.TextCtrl(self, -1, self._filter_text)
+    self.Bind(wx.EVT_CHAR_HOOK, self.on_evt_key_down)
     self.Bind(wx.EVT_TEXT, self.on_evt_text, self._filter_ctrl)
-    self.Bind(wx.EVT_KEY_DOWN, self.on_evt_char, self._filter_ctrl)
+    self.Bind(wx.EVT_TEXT_ENTER, self.on_evt_text_enter, self._filter_ctrl)
     filter_box.Add(self._filter_ctrl, 1, wx.EXPAND)
 
     lower_sizer = self.CreateStdDialogButtonSizer(wx.OK|wx.CANCEL)
@@ -75,25 +68,23 @@ class OpenDialogWx(wx.Dialog, OpenDialogBase):
     
     self._filter_ctrl.SetFocus()
 
-  def on_evt_char(self,event):
-    print "char"
+  def on_evt_key_down(self,event):
     code = event.GetKeyCode()
     ctrl = event.ControlDown()
-    # normal keys
     if code == wx.WXK_UP:
       self.move_selection(-1)
-      event.Skip()
     elif code == wx.WXK_DOWN:
       self.move_selection(1)
-      event.Skip()
-    elif code == wx.WXK_RETURN:
-      event.Skip()
-      print 'ok'
+    event.Skip()    
 
   def on_evt_text(self,event):
     self.set_filter_text(self._filter_ctrl.GetValue())
 
+  def on_evt_text_enter(self, event):
+    self.EndModal(wx.ID_OK)
+
   def update_results_list(self, files):
+    self._cur_results = files
     self._results_list.ClearAll()
     self._results_list.InsertColumn(0, "File")
     self._results_list.InsertColumn(1, "Path")
@@ -103,13 +94,18 @@ class OpenDialogWx(wx.Dialog, OpenDialogBase):
       i = self._results_list.InsertStringItem(sys.maxint, base)
       self._results_list.SetStringItem(i, 1, path)
 
-    self._results_list.SetItemState(len(files)-1, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
+    if len(files):
+      self._results_list.SetItemState(0, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
     c1w = 200
     self._results_list.SetColumnWidth(0, 200)
     self._results_list.SetColumnWidth(1, self._results_list.GetSize()[0] - c1w)
 
   def move_selection(self, direction):
-    cur = self._results_list.get_selected_index()
+    if direction > 0:
+      cur = self.get_selected_index(favor_topmost=False)
+    else:
+      cur = self.get_selected_index(favor_topmost=True)
+
     if cur == -1:
       return
     next = cur + direction
@@ -120,9 +116,36 @@ class OpenDialogWx(wx.Dialog, OpenDialogBase):
       next = N -1
     self._results_list.SetItemState(cur, 0, wx.LIST_STATE_SELECTED)
     self._results_list.SetItemState(next, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
+    self._results_list.EnsureVisible(next)
 
-  def get_selected_index(self):
+  def get_selected_index(self, favor_topmost=True):
+    cur = self.get_selected_indices()
+    if len(cur) > 1:
+      # clear all selections
+      for i in cur:
+        self._results_list.SetItemState(i, 0, wx.LIST_STATE_SELECTED)
+
+      # pick the topmost
+      if favor_topmost:
+        self._results_list.SetItemState(cur[0], wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
+      else:
+        self._results_list.SetItemState(cur[-1], wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
+        
     return self._results_list.GetNextSelected(-1)
+
+  def get_selected_indices(self):
+    all = []
+    cur = -1
+    while True:
+      cur = self._results_list.GetNextSelected(cur)
+      if cur == -1:
+        break
+      all.append(cur)
+
+    return all
+
+  def get_selected_items(self):
+    return map(lambda i: self._cur_results[i], self.get_selected_indices())
 
 def run(settings, db):
   app = wx.App(False)
@@ -130,7 +153,7 @@ def run(settings, db):
   dlg.CenterOnScreen()
   val = dlg.ShowModal()
   if val == wx.ID_OK:
-    print dlg.get_selected_index()
+    print "\n".join(dlg.get_selected_items())
   dlg.Destroy()
 
 if __name__ == "__main__":

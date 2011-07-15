@@ -78,10 +78,13 @@ class OpenDialogWx(wx.Dialog, OpenDialogBase):
   def on_evt_key_down(self,event):
     code = event.GetKeyCode()
     ctrl = event.ControlDown()
-    if code == wx.WXK_UP:
-      self.move_selection(-1)
-    elif code == wx.WXK_DOWN:
-      self.move_selection(1)
+    if self.FindFocus() != self._results_list:
+      if code == wx.WXK_UP:
+        self.move_selection(-1)
+        return
+      elif code == wx.WXK_DOWN:
+        self.move_selection(1)
+        return
     event.Skip()    
 
   def on_evt_text(self,event):

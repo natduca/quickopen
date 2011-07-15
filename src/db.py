@@ -125,7 +125,10 @@ class _DirCache(object):
         logging.info("directory %s changed", d)
         del self.dirs[d]
     st_mtime = os.stat(d).st_mtime
-    ents = os.listdir(d)
+    try:
+      ents = os.listdir(d)
+    except OSError:
+      ents = []
     de = _DirEnt(st_mtime, ents)
     self.dirs[d] = de
     return de.ents

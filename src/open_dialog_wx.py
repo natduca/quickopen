@@ -59,6 +59,7 @@ class OpenDialogWx(wx.Dialog, OpenDialogBase):
     filter_box = wx.BoxSizer(wx.HORIZONTAL)
     self._filter_ctrl = wx.TextCtrl(self, -1, self._filter_text)
     self.Bind(wx.EVT_TEXT, self.on_evt_text, self._filter_ctrl)
+    self.Bind(wx.EVT_KEY_DOWN, self.on_evt_char, self._filter_ctrl)
     filter_box.Add(self._filter_ctrl, 1, wx.EXPAND)
 
     lower_sizer = self.CreateStdDialogButtonSizer(wx.OK|wx.CANCEL)
@@ -74,6 +75,21 @@ class OpenDialogWx(wx.Dialog, OpenDialogBase):
     
     self._filter_ctrl.SetFocus()
 
+  def on_evt_char(self,event):
+    print "char"
+    code = event.GetKeyCode()
+    ctrl = event.ControlDown()
+    # normal keys
+    if code == wx.WXK_UP:
+      self.move_selection(-1)
+      event.Skip()
+    elif code == wx.WXK_DOWN:
+      self.move_selection(1)
+      event.Skip()
+    elif code == wx.WXK_RETURN:
+      event.Skip()
+      print 'ok'
+
   def on_evt_text(self,event):
     self.set_filter_text(self._filter_ctrl.GetValue())
 
@@ -86,9 +102,24 @@ class OpenDialogWx(wx.Dialog, OpenDialogBase):
       path = os.path.dirname(f)
       i = self._results_list.InsertStringItem(sys.maxint, base)
       self._results_list.SetStringItem(i, 1, path)
+
+    self._results_list.SetItemState(len(files)-1, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
     c1w = 200
     self._results_list.SetColumnWidth(0, 200)
     self._results_list.SetColumnWidth(1, self._results_list.GetSize()[0] - c1w)
+
+  def move_selection(self, direction):
+    cur = self._results_list.get_selected_index()
+    if cur == -1:
+      return
+    next = cur + direction
+    N = self._results_list.GetItemCount()
+    if next < 0:
+      next = 0
+    elif next >= N:
+      next = N -1
+    self._results_list.SetItemState(cur, 0, wx.LIST_STATE_SELECTED)
+    self._results_list.SetItemState(next, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
 
   def get_selected_index(self):
     return self._results_list.GetNextSelected(-1)

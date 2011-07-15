@@ -32,3 +32,11 @@ class OpenDialogBase(object):
     self._filter_text = text
     self.refresh()
 
+  def refresh(self):
+    # TODO(nduca) save the selection
+    if self._filter_text != "":
+      ft = str(self._filter_text)
+      res = self._db.search(ft)
+      self.update_results_list(res)
+    else:
+      self.update_results_list([])

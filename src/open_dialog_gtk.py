@@ -139,17 +139,12 @@ class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
     self._db.sync()
     self.refresh()
 
-  def refresh(self):
-    # TODO(nduca) save the selection
-    if self._filter_text != "":
-      ft = str(self._filter_text)
-      res = self._db.search(ft)
-      self.on_result(res)
-    else:
-      self._model.clear()
-
   # update the model based on result
-  def on_result(self, files):
+  def update_results_list(self, files):
+    if len(files) == 0:
+      self._model.clear()
+      return
+
     start_time = time.time()
     self._treeview.freeze_child_notify()
     self._treeview.set_model(None)

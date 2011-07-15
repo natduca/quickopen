@@ -36,7 +36,7 @@ class DBProxy(object):
     res = self.conn.getresponse()
     if res.status != 200:
       raise Exception("On %s, got %s" % (path, res.status))
-    res = DynObject.loads(res.read())
+    res = DynObject.loads(res.read().encode('utf8'))
     return res
 
   def _get_dir(self, id, path):

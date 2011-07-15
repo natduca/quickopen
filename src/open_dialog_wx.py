@@ -33,6 +33,9 @@ class OpenDialogWx(wx.Dialog, OpenDialogBase):
     wx.Dialog.__init__(self, None, wx.ID_ANY, "Quick open...", style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER, size=(1000,400))
     OpenDialogBase.__init__(self, settings, db)
 
+    if wx.Platform == "__WXMAC__":
+      wx.SystemOptions.SetOptionInt("mac.listctrl.always_use_generic", False)
+
     sizer = wx.BoxSizer(wx.VERTICAL)
 
     top_box = wx.BoxSizer(wx.HORIZONTAL)
@@ -49,6 +52,7 @@ class OpenDialogWx(wx.Dialog, OpenDialogBase):
     middle_box = wx.BoxSizer(wx.HORIZONTAL)
     self._results_list = TestListCtrl(self, -1,
                                       style=wx.LC_REPORT | wx.BORDER_NONE)
+
     middle_box.Add(self._results_list, 1, wx.ALIGN_CENTRE|wx.ALL|wx.EXPAND)
 
     filter_box = wx.BoxSizer(wx.HORIZONTAL)

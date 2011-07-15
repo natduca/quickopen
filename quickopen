@@ -45,6 +45,27 @@ def CMDdirs(parser, args):
   print "\n".join([x.path for x in db.dirs])
   return 0
 
+def CMDrm(parser, args):
+  """Removes a currently-indexed directory"""
+  (options, args) = parser.parse_args(args)
+  settings = load_settings(options)
+  db = open_db(settings, options)
+  dmap = {}
+  for d in db.dirs:
+    dmap[d.path] = d
+  ok = True
+  for d in args:
+    if d not in dmap:
+      ok = False
+      print "%s not found" % d
+    else:
+      db.delete_dir(dmap[d])
+      print "%s removed" % d
+  if ok:
+    return 0
+  return 255
+
+
 def CMDsearch(parser, args):
   """Search for a file"""
   (options, args) = parser.parse_args(args)
@@ -80,7 +101,6 @@ def CMDsearch(parser, args):
 
   # give up
   raise Exception("No supported UI detected.")
-
 
 def load_settings(options):
   settings_file = os.path.expanduser(options.settings)

@@ -65,7 +65,6 @@ def CMDrm(parser, args):
     return 0
   return 255
 
-
 def CMDsearch(parser, args):
   """Search for a file"""
   (options, args) = parser.parse_args(args)

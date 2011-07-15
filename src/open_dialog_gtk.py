@@ -54,14 +54,11 @@ class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
     refresh_button = gtk.Button("_Refresh")
     refresh_button.connect('clicked', lambda *args: self.refresh())
 
-    reset_button = gtk.Button("Rese_t Database")
-    reset_button.connect('clicked', lambda *args: self._reset_database())
+    reset_button = gtk.Button("Rescan Database")
+    reset_button.connect('clicked', lambda *args: self.rescan())
 
 
     stats_label = gtk.Label()
-#    def do_update_stats():
-#      self._update_stats(stats_label)
-#    glib.timeout_add(250, self._update_stats)
 
     filter_entry = gtk.Entry()
     filter_entry.set_text(self._filter_text)
@@ -76,7 +73,6 @@ class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
     table_options_hbox = gtk.HBox()
     button_hbox = gtk.HBox()
 
-#    self.get_content_area().add(vbox)
     vbox.pack_start(table_vbox,True,True,1)
     table_vbox.pack_start(table_options_hbox,False,False,0)
     table_options_hbox.pack_start(reset_button,False,False,0)
@@ -129,15 +125,6 @@ class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
   def _on_filter_text_changed(self,entry):
     text = entry.get_text()
     self.set_filter_text(text)
-
-#  def _update_stats(self,stats_label):
-#    w = self._db.call_async_waitable.get_stats()
-#    w.when_done(lambda v: stats_label.set_text(v))
-#    return self.get_property('visible')
-
-  def _reset_database(self):
-    self._db.sync()
-    self.refresh()
 
   # update the model based on result
   def update_results_list(self, files):

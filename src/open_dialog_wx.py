@@ -37,10 +37,13 @@ class OpenDialogWx(wx.Dialog, OpenDialogBase):
 
     top_box = wx.BoxSizer(wx.HORIZONTAL)
     
-    reset_bn = wx.Button(self, -1, "Reset database")
-    top_box.Add(reset_bn)
+    rescan_bn = wx.Button(self, -1, "Rescan database")
+    rescan_bn.Bind(wx.EVT_BUTTON, lambda *args: self.rescan())
+
+    top_box.Add(rescan_bn)
     top_box.AddStretchSpacer(1)
     refresh_bn = wx.Button(self, -1, "Refresh")
+    refresh_bn.Bind(wx.EVT_BUTTON, lambda *args: self.refresh())
     top_box.Add(refresh_bn)
 
     middle_box = wx.BoxSizer(wx.HORIZONTAL)

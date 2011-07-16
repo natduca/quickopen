@@ -64,6 +64,9 @@ class _RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     else:
       raise Exception('Unrecognized output type: ' + route.output)
 
+  def log_message(self, format, *args):
+    logging.info(format, args)
+
   def handleRequest(self, verb):
     path = urlparse.urlsplit(self.path)[2]
 
@@ -119,13 +122,14 @@ class Route(object):
     self.handler = handler
 
 class Daemon(BaseHTTPServer.HTTPServer):
-  def __init__(self, db, test, *args):
+  def __init__(self, db, test_mode, *args):
     BaseHTTPServer.HTTPServer.__init__(self, *args)
     self.port_ = args[0][1]
     self.db_ = db
     self.routes = []
     self.db_.on_bound_to_server(self)
-    if test:
+    self.test_mode = test_mode
+    if test_mode:
       self.add_json_route('/exit', self.on_exit, ['POST', 'GET'])
       import daemon_test
       daemon_test.add_test_handlers_to_daemon(self)
@@ -161,10 +165,13 @@ class Daemon(BaseHTTPServer.HTTPServer):
     return 1
 
   def run(self):
-    logging.warning('Starting quickopen daemon on port %d', self.port_)
+    if self.test_mode:
+      logging.info('Starting quickopen daemon on port %d', self.port_)
+    else:
+      print 'Starting quickopen daemon on port %d' % self.port_
     self.serve_forever()
-    logging.warning('Shutting down quickopen daemon on port %d', self.port_)
+    logging.info('Shutting down quickopen daemon on port %d', self.port_)
 
-def create(db, host, port, test):
-  return Daemon(db, test, (host,port), _RequestHandler)
+def create(db, host, port, test_mode):
+  return Daemon(db, test_mode, (host,port), _RequestHandler)
 

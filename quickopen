@@ -157,7 +157,7 @@ def main(argv):
   parser = optparse.OptionParser()
   parser.add_option(
       '-v', '--verbose', action='count', default=0,
-      help='Use 2 times for more debugging info')
+      help='Increase verbosity level (repeat as needed)')
   parser.add_option('--host', dest='host', action='store', help='Hostname of quickopend server')
   parser.add_option('--port', dest='port', action='store', help='Port for quickopend')
   parser.add_option('--settings', dest='settings', action='store', default='~/.quickopen', help='Settings file to use, ~/.quickopen by default')

@@ -1,4 +1,5 @@
 #!/usr/bin/env python2.6
+import logging
 import sys
 import optparse
 import os
@@ -7,13 +8,23 @@ import src.daemon
 import src.db_stub
 import src.settings
 
+
 def main():
   parser = optparse.OptionParser()
   parser.add_option('--host', dest='host', action='store', default='', help='Hostname to listen on')
   parser.add_option('--port', dest='port', action='store', default=10248, help='Port to run on')
   parser.add_option('--settings', dest='settings', action='store', default='~/.quickopend', help='Settings file to use')
   parser.add_option('--test', dest='test', action='store_true', default=False, help='Adds test hooks')
+  parser.add_option(
+      '-v', '--verbose', action='count', default=0,
+      help='Increase verbosity level (repeat as needed)')
   (options, args) = parser.parse_args()
+  if options.verbose >= 2:
+    logging.basicConfig(level=logging.DEBUG)
+  elif options.verbose:
+    logging.basicConfig(level=logging.INFO)
+  else:
+    logging.basicConfig(level=logging.WARNING)
   options.port = int(options.port)
 
   settings_file = os.path.expanduser(options.settings)

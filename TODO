@@ -1,9 +1,13 @@
 - Fuzzy matching
 - Long-running searches interrupted by additional keystrokes
 - Too-many-hits warning
+   SocketServer.ThreadingMixIn
+- Searches while indexing
+
 - Report-bad-result / track non-first query/candidates/hit pairs
 - Start daemon automatically by client; daemon reruns itself if out of date
 - Client warns if daemon is unreachable
-- Client warns if daemon is syncing
+- UI if daemon is syncing
+
 - Manpages
 - Vim and Emacs scripts

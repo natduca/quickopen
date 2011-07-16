@@ -127,15 +127,15 @@ class Daemon(BaseHTTPServer.HTTPServer):
   def __init__(self, db, test_mode, *args):
     BaseHTTPServer.HTTPServer.__init__(self, *args)
     self.port_ = args[0][1]
-    self.db_ = db
     self.routes = []
-    self.db_.on_bound_to_server(self)
     self.test_mode = test_mode
     self.idle = Event()
     if test_mode:
       self.add_json_route('/exit', self.on_exit, ['POST', 'GET'])
       import daemon_test
       daemon_test.add_test_handlers_to_daemon(self)
+    self.db_ = db
+    self.db_.on_bound_to_server(self)
 
   def on_exit(self, m, verb, data):
     logging.info("Exiting upon request.")

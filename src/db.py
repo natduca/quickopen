@@ -19,6 +19,7 @@ import re
 import threading
 
 from dyn_object import DynObject
+from event import Event
 
 DEFAULT_IGNORE=[
   ".*",
@@ -51,6 +52,7 @@ class DBDir(object):
 class DB(object):
   def __init__(self, settings):
     self.settings = settings
+    self.needs_sync = Event() # fired when the database gets dirtied and needs syncing
     self._dirty = True # whether the settings have dirtied the db
     self._sync_pending = None # non-None if a _DBSync is running
 
@@ -123,7 +125,10 @@ class DB(object):
   def _set_dirty(self):
     if self._sync_pending:
       self._sync_pending = None
+    was_dirty = self._dirty
     self._dirty = True
+    if not was_dirty:
+      self.needs_sync.fire()
 
   def sync_status(self):
     if self._dirty:
@@ -141,7 +146,6 @@ class DB(object):
       if self._sync_pending.done:
         self._sync_pending.commitResult(self)
         self._dirty = False
-        print "sync done"
       else:
         self._sync_pending.step()
       return
@@ -149,7 +153,6 @@ class DB(object):
     # start new sync
     self._dir_cache.set_ignores(self.settings.ignores)
     self._sync_pending = _DBSync(self.settings.dirs, self._dir_cache)
-    print "sync begin"
 
   def sync(self):
     """Ensures database index is up-to-date"""

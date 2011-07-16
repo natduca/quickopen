@@ -22,6 +22,7 @@ class DBStub(object):
     self.db = db.DB(settings)
 
   def on_bound_to_server(self, server):
+    self._server = server
     server.add_json_route('/dirs/add', self.add_dir, ['POST'])
     server.add_json_route('/dirs', self.list_dirs, ['GET'])
     server.add_json_route('/dirs/([a-zA-Z0-9]+)', self.get_dir, ['GET'])

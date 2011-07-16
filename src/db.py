@@ -13,9 +13,12 @@
 # limitations under the License.
 import collections
 import fnmatch
+import hashlib
 import os
 import re
-import hashlib
+import threading
+
+from dyn_object import DynObject
 
 DEFAULT_IGNORE=[
   ".*",
@@ -48,8 +51,10 @@ class DBDir(object):
 class DB(object):
   def __init__(self, settings):
     self.settings = settings
-    self._dir_cache = _DirCache()
-    self._dirty = True
+    self._dirty = True # whether the settings have dirtied the db
+    self._sync_pending = None # non-None if a _DBSync is running
+
+    self._dir_cache = _DirCache() # thread only state
 
     self.settings.register('dirs', list, [], self._on_settings_dirs_changed)
     self._on_settings_dirs_changed(None, self.settings.dirs)
@@ -57,16 +62,11 @@ class DB(object):
     self.settings.register('ignores', list, DEFAULT_IGNORE, self._on_settings_ignores_changed)
     self._on_settings_ignores_changed(None, self.settings.ignores)
 
+  ###########################################################################
+
   def _on_settings_dirs_changed(self, old, new):
     self._dirs = map(lambda d: DBDir(d), new)
     self._set_dirty()
-
-  def _on_settings_ignores_changed(self, old, new):
-    self._dir_cache.set_ignores(new)
-    self._set_dirty()
-
-  def _set_dirty(self):
-    self._dirty = True
 
   @property
   def dirs(self):
@@ -93,6 +93,11 @@ class DB(object):
     cur.remove(d.path)
     self.settings.dirs = cur # triggers _on_settings_dirs_changed
 
+  ###########################################################################
+
+  def _on_settings_ignores_changed(self, old, new):
+    self._set_dirty()
+
   @property
   def ignores(self):
     return list(self.settings.ignores)
@@ -115,31 +120,58 @@ class DB(object):
   def is_syncd(self):
     return self.sync_status()['is_syncd']
 
+  def _set_dirty(self):
+    if self._sync_pending:
+      self._sync_pending = None
+    self._dirty = True
+
   def sync_status(self):
+    if self._dirty:
+      if self._sync_pending:
+        status = "sync in progress"
+      else:
+        status = "dirty but not synchronized"
+    else:
+      status = "up-to-date"
     return {"is_syncd": not self._dirty,
-            "stauts": "unsyncd"}
+            "stauts": status}
+
+  def step_sync(self):
+    if self._sync_pending:
+      if self._sync_pending.done:
+        self._sync_pending.commitResult(self)
+        self._dirty = False
+        print "sync done"
+      else:
+        self._sync_pending.step()
+      return
+
+    # start new sync
+    self._dir_cache.set_ignores(self.settings.ignores)
+    self._sync_pending = _DBSync(self.settings.dirs, self._dir_cache)
+    print "sync begin"
 
   def sync(self):
     """Ensures database index is up-to-date"""
-    if not self._dirty:
-      return
-    sync = _DBSync(self.settings.dirs, self._dir_cache)
-    sync.run()
-    self._files = sync.files
-    self._dirty = False
+    while self._dirty:
+      self.step_sync()
 
+  ###########################################################################
   def search(self,query_regex):
     rc = re.compile(query_regex)
 
     if not self.is_syncd:
-      raise NotSyncdException("DB not syncd")
+      self.step_sync()
+      # step sync might change the db sync status
+      if not self.is_syncd:
+        raise NotSyncdException("DB not syncd")
 
-    res = []
-    truncated = False
+    res = DynObject()
+    res.hits = []
     for x in self._files:
       if rc.search(x):
-        res.append(x)
-    return res
+        res.hits.append(x)
+    return res;
 
 class _DirEnt(object):
   def __init__(self, st_mtime, ents):
@@ -153,8 +185,9 @@ class _DirCache(object):
     self.ignores = []
 
   def set_ignores(self, ignores):
-    self.dirs = dict()
-    self.ignores = ignores
+    if self.ignores != ignores:
+      self.dirs = dict()
+      self.ignores = ignores
 
   def reset_realpath_cache(self):
     self.rel_to_real = dict()
@@ -209,7 +242,7 @@ class _DBSync(object):
     for d in reverse_dirs:
       self.enqueue_dir(d)
 
-  def step(self):
+  def step_one(self):
     d = self.pending.popleft()
     ents = [self.dir_cache.realpath(os.path.join(d, ent)) for ent in self.dir_cache.listdir(d)]
     for ent in ents:
@@ -218,9 +251,18 @@ class _DBSync(object):
       else:
         self.files.add(ent)
     
-  def run(self):
-    while len(self.pending):
-      self.step()
+  def step(self):
+    i = 0
+    while i < 100 and len(self.pending):
+      self.step_one()
+      i += 1
+
+  @property
+  def done(self):
+    return len(self.pending) == 0
+
+  def commitResult(self, db):
+    db._files = self.files
 
   def enqueue_dir(self, d):
     dr = self.dir_cache.realpath(d)

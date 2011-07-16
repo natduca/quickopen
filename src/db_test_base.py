@@ -56,26 +56,26 @@ class DBTestBase(object):
     self.db.add_dir(sub_dir)
     self.assertEquals(False, self.db.is_syncd)
     self.db.sync()
-    hits = self.db.search('MySubSystem.c')
-    self.assertEquals(1, len(hits))
-    self.assertEquals(os.path.join(self.test_data_dir, 'project1/MySubSystem.c'), hits[0])
+    res = self.db.search('MySubSystem.c')
+    self.assertEquals(1, len(res.hits))
+    self.assertEquals(os.path.join(self.test_data_dir, 'project1/MySubSystem.c'), res.hits[0])
 
   def test_search_unique(self):
     self.db.add_dir(self.test_data_dir)
     self.assertEquals(False, self.db.is_syncd)
     self.db.sync()
-    hits = self.db.search('MySubSystem.c')
-    self.assertEquals(1, len(hits))
-    self.assertEquals(os.path.join(self.test_data_dir, 'project1/MySubSystem.c'), hits[0])
+    res = self.db.search('MySubSystem.c')
+    self.assertEquals(1, len(res.hits))
+    self.assertEquals(os.path.join(self.test_data_dir, 'project1/MySubSystem.c'), res.hits[0])
 
   def test_partial_search(self):
     self.db.add_dir(self.test_data_dir)
     self.assertEquals(False, self.db.is_syncd)
     self.db.sync()
-    hits = self.db.search('MyClass')
-    self.assertTrue(len(hits) >= 2)
-    self.assertTrue(os.path.join(self.test_data_dir, 'project1/MyClass.c') in hits)
-    self.assertTrue(os.path.join(self.test_data_dir, 'project1/MyClass.h') in hits)
+    res = self.db.search('MyClass')
+    self.assertTrue(len(res.hits) >= 2)
+    self.assertTrue(os.path.join(self.test_data_dir, 'project1/MyClass.c') in res.hits)
+    self.assertTrue(os.path.join(self.test_data_dir, 'project1/MyClass.h') in res.hits)
 
   def test_dir_symlinks_dont_dup(self):
     pass
@@ -94,18 +94,18 @@ class DBTestBase(object):
     self.db.add_dir(self.test_data_dir)
     self.assertEquals(False, self.db.is_syncd)
     self.db.sync()
-    hits = self.db.search('packed-refs')
-    self.assertEquals(0, len(hits))
+    res = self.db.search('packed-refs')
+    self.assertEquals(0, len(res.hits))
 
-    hits = self.db.search('svn_should_not_show_up.txt')
-    self.assertEquals(0, len(hits))
+    res = self.db.search('svn_should_not_show_up.txt')
+    self.assertEquals(0, len(res.hits))
 
   def test_ignore_ctl(self):
     self.db.add_dir(self.test_data_dir)
     self.db.sync()
 
-    hits = self.db.search('svn_should_not_show_up.txt')
-    self.assertEquals(0, len(hits))
+    res = self.db.search('svn_should_not_show_up.txt')
+    self.assertEquals(0, len(res.hits))
 
     orig = list(self.db.ignores)
     for i in orig:
@@ -113,16 +113,16 @@ class DBTestBase(object):
     self.assertEquals(False, self.db.is_syncd)
     self.db.sync()
 
-    hits = self.db.search('svn_should_not_show_up.txt')
-    self.assertEquals(1, len(hits))
+    res = self.db.search('svn_should_not_show_up.txt')
+    self.assertEquals(1, len(res.hits))
 
     for i in orig:
       self.db.ignore(i)
     self.assertEquals(False, self.db.is_syncd)
     self.db.sync()
 
-    hits = self.db.search('svn_should_not_show_up.txt')
-    self.assertEquals(0, len(hits))
+    res = self.db.search('svn_should_not_show_up.txt')
+    self.assertEquals(0, len(res.hits))
 
   def test_sync(self):
     self.db.add_dir(self.test_data_dir)

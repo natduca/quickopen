@@ -36,6 +36,18 @@ class DBTest(DBTestBase, unittest.TestCase):
     db2 = db.DB(settings2)
     self.assertEquals([d1], map(lambda d: d.path, db2.dirs))
 
+  def test_change_while_syncing(self):
+    d1 = os.path.join(self.test_data_dir, 'project1')
+    d2 = os.path.join(self.test_data_dir, 'something')
+    self.db.add_dir(d1)
+    self.db.step_sync()
+    self.db.add_dir(d2)
+    self.db.sync()
+    res = self.db.search('something_file.txt')
+    self.assertEquals(1, len(res.hits))
+    self.assertEquals(os.path.join(self.test_data_dir, 'something/something_file.txt'), res.hits[0])
+    
+
   def tearDown(self):
     DBTestBase.tearDown(self)
     self.settings_file.close()

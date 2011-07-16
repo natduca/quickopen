@@ -22,7 +22,6 @@ import urlparse
 import BaseHTTPServer
 
 from event import Event
-from db import DB
 
 """
 Exception that you can throw in a handler that will trigger a 404 response.
@@ -43,10 +42,6 @@ class _RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
   def __init__(self, request, client_address, server):
     BaseHTTPServer.BaseHTTPRequestHandler.__init__(self, request, client_address, server)
     self.server = server
-
-  @property
-  def db(self):
-    return self.server.db
 
   def send_json(self, obj):
     if type(obj) == DynObject:
@@ -124,7 +119,7 @@ class Route(object):
     self.handler = handler
 
 class Daemon(BaseHTTPServer.HTTPServer):
-  def __init__(self, db, test_mode, *args):
+  def __init__(self, test_mode, *args):
     BaseHTTPServer.HTTPServer.__init__(self, *args)
     self.port_ = args[0][1]
     self.routes = []
@@ -134,8 +129,6 @@ class Daemon(BaseHTTPServer.HTTPServer):
       self.add_json_route('/exit', self.on_exit, ['POST', 'GET'])
       import daemon_test
       daemon_test.add_test_handlers_to_daemon(self)
-    self.db_ = db
-    self.db_.on_bound_to_server(self)
 
   def on_exit(self, m, verb, data):
     logging.info("Exiting upon request.")
@@ -184,6 +177,6 @@ class Daemon(BaseHTTPServer.HTTPServer):
     self.serve_forever()
     logging.info('Shutting down quickopen daemon on port %d', self.port_)
 
-def create(db, host, port, test_mode):
-  return Daemon(db, test_mode, (host,port), _RequestHandler)
+def create(host, port, test_mode):
+  return Daemon(test_mode, (host,port), _RequestHandler)
 

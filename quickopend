@@ -29,9 +29,10 @@ def main():
 
   settings_file = os.path.expanduser(options.settings)
   settings = src.settings.Settings(settings_file)
-  db_stub = src.db_stub.DBStub(settings)
 
-  daemon = src.daemon.create(db_stub, options.host, options.port, options.test)
+  daemon = src.daemon.create(options.host, options.port, options.test)
+  db_stub = src.db_stub.DBStub(settings, daemon)
+
   daemon.run()
 
 if __name__ == '__main__':

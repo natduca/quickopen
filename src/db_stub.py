@@ -18,14 +18,12 @@ from dyn_object import *
 
 # TODO(nduca): is Stub the right word for this class? Mehh
 class DBStub(object):
-  def __init__(self, settings):
+  def __init__(self, settings, server):
     self.db = db.DB(settings)
     self.db.needs_sync.add_listener(self.on_db_needs_sync)
-    self.server = None
+    self.server = server
     self.idle_hook_added = False
 
-  def on_bound_to_server(self, server):
-    self.server = server
     server.add_json_route('/dirs/add', self.add_dir, ['POST'])
     server.add_json_route('/dirs', self.list_dirs, ['GET'])
     server.add_json_route('/dirs/([a-zA-Z0-9]+)', self.get_dir, ['GET'])
@@ -40,7 +38,6 @@ class DBStub(object):
       self.on_db_needs_sync()
 
   def on_db_needs_sync(self):
-    assert self.server
     if self.idle_hook_added:
       return
     self.server.idle.add_listener(self.on_daemon_idle)
@@ -49,7 +46,6 @@ class DBStub(object):
     self.db.step_sync()
 
     if self.db.is_syncd:
-      print "BG sync done"
       self.server.idle.remove_listener(self.on_daemon_idle)
       self.idle_hook_added = False
 

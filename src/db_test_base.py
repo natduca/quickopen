@@ -82,3 +82,11 @@ class DBTestBase(object):
     pass
 
 
+  def test_ignores(self):
+    # .git and .svn should not be found
+    self.db.add_dir(self.test_data_dir)
+    hits = self.db.search('packed-refs')
+    self.assertEquals(0, len(hits))
+
+    hits = self.db.search('svn_should_not_show_up.txt')
+    self.assertEquals(0, len(hits))

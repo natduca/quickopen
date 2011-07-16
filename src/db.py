@@ -12,9 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import collections
+import fnmatch
 import os
 import re
 import hashlib
+
+DEFAULT_IGNORE=[
+  ".*",
+]
 
 class DBDir(object):
   def __init__(self, d):
@@ -36,14 +41,21 @@ class DBDir(object):
 class DB(object):
   def __init__(self, settings):
     self.settings = settings
-    self.settings.register('dirs', list, [], self._on_settings_dirs_changed)
     self._dir_cache = _DirCache()
     self._dirty = True
-    self._last_settings_dir = None
+
+    self.settings.register('dirs', list, [], self._on_settings_dirs_changed)
     self._on_settings_dirs_changed(None, self.settings.dirs)
+
+    self.settings.register('ignore', list, DEFAULT_IGNORE, self._on_settings_ignores_changed)
+    self._on_settings_ignores_changed(None, self.settings.ignore)
 
   def _on_settings_dirs_changed(self, old, new):
     self._dirs = map(lambda d: DBDir(d), new)
+    self._set_dirty()
+
+  def _on_settings_ignores_changed(self, old, new):
+    self._dir_cache.set_ignores(new)
     self._set_dirty()
 
   def _set_dirty(self):
@@ -60,7 +72,7 @@ class DB(object):
 
     # commit change
     cur.append(d)
-    self.settings.dirs = cur
+    self.settings.dirs = cur  # triggers _on_settings_dirs_changed
     return self.dirs[-1]
 
   def delete_dir(self, d):
@@ -70,7 +82,7 @@ class DB(object):
     if d.path not in cur:
       raise Exception("not found")
     cur.remove(d.path)
-    self.settings.dirs = cur
+    self.settings.dirs = cur # triggers _on_settings_dirs_changed
 
   def sync(self):
     """Ensures database index is up-to-date"""
@@ -103,6 +115,11 @@ class _DirCache(object):
   def __init__(self):
     self.dirs = dict()
     self.rel_to_real = dict()
+    self.ignores = []
+
+  def set_ignores(self, ignores):
+    self.dirs = dict()
+    self.ignores = ignores
 
   def reset_realpath_cache(self):
     self.rel_to_real = dict()
@@ -114,6 +131,12 @@ class _DirCache(object):
       r = os.path.realpath(d)
       self.rel_to_real[d] = r
       return r
+
+  def is_ignored(self, f):
+    for i in self.ignores:
+      if fnmatch.fnmatch(f, i):
+        return True
+    return False
 
   def listdir(self, d):
     """Lists contents of a dir, but only using its realpath."""
@@ -129,6 +152,8 @@ class _DirCache(object):
       ents = os.listdir(d)
     except OSError:
       ents = []
+
+    ents = [e for e in ents if not self.is_ignored(e)]
     de = _DirEnt(st_mtime, ents)
     self.dirs[d] = de
     return de.ents

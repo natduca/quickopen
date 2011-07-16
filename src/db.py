@@ -17,6 +17,7 @@ import hashlib
 import os
 import re
 import threading
+import time
 
 from dyn_object import DynObject
 from event import Event
@@ -253,12 +254,19 @@ class _DBSync(object):
         self.enqueue_dir(ent)
       else:
         self.files.add(ent)
-    
+
   def step(self):
-    i = 0
-    while i < 100 and len(self.pending):
-      self.step_one()
-      i += 1
+    start = time.time()
+    n = 0
+    try:
+      while time.time() - start < 0.15:
+        i = 0
+        while i < 10:
+          self.step_one()
+          i += 1
+          n += 1
+    except IndexError:
+      pass
 
   @property
   def done(self):

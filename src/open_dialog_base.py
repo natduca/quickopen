@@ -25,10 +25,6 @@ class OpenDialogBase(object):
     self._settings.filter_text = self._filter_text
 
   def set_filter_text(self, text):
-    try:
-      re.compile(text)
-    except Exception, ex:
-      logging.error("Regexp error: %s", str(ex))
     self._filter_text = text
     self.refresh()
 

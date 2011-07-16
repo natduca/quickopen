@@ -13,7 +13,6 @@
 # limitations under the License.
 import glib
 import gtk
-import re
 import time
 import logging
 import os

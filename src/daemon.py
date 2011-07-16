@@ -15,11 +15,13 @@ from dyn_object import *
 import json
 import logging
 import re
+import select
 import sys
 import traceback
 import urlparse
 import BaseHTTPServer
 
+from event import Event
 from db import DB
 
 """
@@ -129,6 +131,7 @@ class Daemon(BaseHTTPServer.HTTPServer):
     self.routes = []
     self.db_.on_bound_to_server(self)
     self.test_mode = test_mode
+    self.idle = Event()
     if test_mode:
       self.add_json_route('/exit', self.on_exit, ['POST', 'GET'])
       import daemon_test
@@ -158,7 +161,16 @@ class Daemon(BaseHTTPServer.HTTPServer):
   def serve_forever(self):
     self.is_running_ = True
     while self.is_running_:
-      self.handle_request()
+      if self.idle.has_listeners:
+        delay = 0.05
+      else:
+        delay = 1
+      
+      r, w, e = select.select([self], [], [], delay)
+      if r:
+        self.handle_request()
+      else:
+        self.idle.fire()
 
   def shutdown(self):
     self.is_running_ = False

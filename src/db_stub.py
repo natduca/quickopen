@@ -30,6 +30,7 @@ class DBStub(object):
     server.add_json_route('/ignores/add', self.ignores_add, ['POST'])
     server.add_json_route('/ignores/remove', self.ignores_remove, ['POST'])
     server.add_json_route('/sync', self.sync, ['POST'])
+    server.add_json_route('/sync_status', self.sync_status, ['GET'])
     server.add_json_route('/search', self.search, ['POST'])
 
   def add_dir(self, m, verb, data):
@@ -77,3 +78,6 @@ class DBStub(object):
   def sync(self, m, verb, data):
     self.db.sync()
     return {"status": "OK"}
+
+  def sync_status(self, m, verb, data):
+    return self.db.sync_status()

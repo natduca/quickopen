@@ -53,25 +53,31 @@ class DBTestBase(object):
     self.db.add_dir(self.test_data_dir)
     sub_dir = os.path.join(self.test_data_dir, 'project1')
     self.db.add_dir(sub_dir)
+    self.assertEquals(False, self.db.is_syncd)
+    self.db.sync()
     hits = self.db.search('MySubSystem.c')
     self.assertEquals(1, len(hits))
     self.assertEquals(os.path.join(self.test_data_dir, 'project1/MySubSystem.c'), hits[0])
 
   def test_search_unique(self):
     self.db.add_dir(self.test_data_dir)
+    self.assertEquals(False, self.db.is_syncd)
+    self.db.sync()
     hits = self.db.search('MySubSystem.c')
     self.assertEquals(1, len(hits))
     self.assertEquals(os.path.join(self.test_data_dir, 'project1/MySubSystem.c'), hits[0])
 
   def test_partial_search(self):
     self.db.add_dir(self.test_data_dir)
+    self.assertEquals(False, self.db.is_syncd)
+    self.db.sync()
     hits = self.db.search('MyClass')
     self.assertTrue(len(hits) >= 2)
     self.assertTrue(os.path.join(self.test_data_dir, 'project1/MyClass.c') in hits)
     self.assertTrue(os.path.join(self.test_data_dir, 'project1/MyClass.h') in hits)
 
   def test_dir_symlinks_dont_dup(self):
-    self.db.add_dir(self.test_data_dir)
+    pass
 
   def test_search_more_than_max(self):
     # find something where you get more than a sane number of requests
@@ -85,6 +91,8 @@ class DBTestBase(object):
   def test_ignores(self):
     # .git and .svn should not be found
     self.db.add_dir(self.test_data_dir)
+    self.assertEquals(False, self.db.is_syncd)
+    self.db.sync()
     hits = self.db.search('packed-refs')
     self.assertEquals(0, len(hits))
 
@@ -93,6 +101,7 @@ class DBTestBase(object):
 
   def test_ignore_ctl(self):
     self.db.add_dir(self.test_data_dir)
+    self.db.sync()
 
     hits = self.db.search('svn_should_not_show_up.txt')
     self.assertEquals(0, len(hits))
@@ -100,6 +109,7 @@ class DBTestBase(object):
     orig = list(self.db.ignores)
     for i in orig:
       self.db.unignore(i)
+    self.assertEquals(False, self.db.is_syncd)
     self.db.sync()
 
     hits = self.db.search('svn_should_not_show_up.txt')
@@ -107,10 +117,23 @@ class DBTestBase(object):
 
     for i in orig:
       self.db.ignore(i)
+    self.assertEquals(False, self.db.is_syncd)
     self.db.sync()
 
     hits = self.db.search('svn_should_not_show_up.txt')
     self.assertEquals(0, len(hits))
+
+  def test_sync(self):
+    self.db.add_dir(self.test_data_dir)
+    self.assertEquals(False, self.db.is_syncd)
+    self.db.sync()
+    self.assertEquals(True, self.db.is_syncd)
+
+  def test_sync(self):
+    self.db.add_dir(self.test_data_dir)
+    self.assertEquals(False, self.db.is_syncd)
+    self.db.sync()
+    self.assertEquals(True, self.db.is_syncd)
 
   def test_dup_ignore_ctl(self):
     self.db.add_dir(self.test_data_dir)
@@ -122,4 +145,5 @@ class DBTestBase(object):
 
     self.db.unignore("foo")
     self.assertRaises(Exception, lambda: self.db.unignore("foo"))
+    self.assertEquals(False, self.db.is_syncd)
 

@@ -104,6 +104,14 @@ class DB(object):
 
   ###########################################################################
 
+  @property
+  def is_syncd(self):
+    return self.sync_status()['is_syncd']
+
+  def sync_status(self):
+    return {"is_syncd": not self._dirty,
+            "stauts": "unsyncd"}
+
   def sync(self):
     """Ensures database index is up-to-date"""
     if not self._dirty:
@@ -116,8 +124,8 @@ class DB(object):
   def search(self,query_regex):
     rc = re.compile(query_regex)
 
-    if self._dirty:
-      self.sync()
+    if not self.is_syncd:
+      raise Exception("DB not syncd")
 
     res = []
     truncated = False

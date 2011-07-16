@@ -45,7 +45,7 @@ def CMDdirs(parser, args):
   print "\n".join([x.path for x in db.dirs])
   return 0
 
-def CMDrm(parser, args):
+def CMDrmdir(parser, args):
   """Removes a currently-indexed directory"""
   (options, args) = parser.parse_args(args)
   settings = load_settings(options)

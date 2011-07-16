@@ -57,14 +57,32 @@ class DBTestBase(object):
     self.assertEquals(False, self.db.is_syncd)
     self.db.sync()
     res = self.db.search('MySubSystem.c')
-    self.assertEquals(1, len(res.hits))
+    self.assertEquals(1, len(res.hits))    
     self.assertEquals(os.path.join(self.test_data_dir, 'project1/MySubSystem.c'), res.hits[0])
+
+  def DISABLED_test_dir_query(self):
+    self.db.add_dir(self.test_data_dir)
+    sub_dir = os.path.join(self.test_data_dir, 'project1/')
+    self.db.add_dir(sub_dir)
+    self.assertEquals(False, self.db.is_syncd)
+    self.db.sync()
+    res = self.db.search('MySubSystem.c')
+    self.assertTrue(len(res.hits) >= 1)
+    self.assertTrue(os.path.join(self.test_data_dir, 'project1/MySubSystem.c') in res.hits)
 
   def test_search_unique(self):
     self.db.add_dir(self.test_data_dir)
     self.assertEquals(False, self.db.is_syncd)
     self.db.sync()
     res = self.db.search('MySubSystem.c')
+    self.assertEquals(1, len(res.hits))
+    self.assertEquals(os.path.join(self.test_data_dir, 'project1/MySubSystem.c'), res.hits[0])
+
+  def test_search_with_dir(self):
+    self.db.add_dir(self.test_data_dir)
+    self.assertEquals(False, self.db.is_syncd)
+    self.db.sync()
+    res = self.db.search('project1/MySubSystem.c')
     self.assertEquals(1, len(res.hits))
     self.assertEquals(os.path.join(self.test_data_dir, 'project1/MySubSystem.c'), res.hits[0])
 

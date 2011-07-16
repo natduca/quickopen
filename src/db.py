@@ -55,9 +55,11 @@ class DB(object):
     self.settings = settings
     self.needs_sync = Event() # fired when the database gets dirtied and needs syncing
     self._dirty = True # whether the settings have dirtied the db
-    self._sync_pending = None # non-None if a _DBSync is running
+    self._pending_index = None # non-None if a _DBIndex is running
+    self._cur_index = None # the last _DBIndex object --> actually runs the searches
 
     self._dir_cache = _DirCache() # thread only state
+
 
     self.settings.register('dirs', list, [], self._on_settings_dirs_changed)
     self._on_settings_dirs_changed(None, self.settings.dirs)
@@ -124,8 +126,8 @@ class DB(object):
     return self.sync_status()['is_syncd']
 
   def _set_dirty(self):
-    if self._sync_pending:
-      self._sync_pending = None
+    if self._pending_index:
+      self._pending_index = None
     was_dirty = self._dirty
     self._dirty = True
     if not was_dirty:
@@ -133,7 +135,7 @@ class DB(object):
 
   def sync_status(self):
     if self._dirty:
-      if self._sync_pending:
+      if self._pending_index:
         status = "sync in progress"
       else:
         status = "dirty but not synchronized"
@@ -143,17 +145,18 @@ class DB(object):
             "stauts": status}
 
   def step_sync(self):
-    if self._sync_pending:
-      if self._sync_pending.done:
-        self._sync_pending.commitResult(self)
+    if self._pending_index:
+      if self._pending_index.complete:
+        self._cur_index = self._pending_index
+        self._pending_index = None
         self._dirty = False
       else:
-        self._sync_pending.step()
+        self._pending_index.index_a_bit_more()
       return
 
     # start new sync
     self._dir_cache.set_ignores(self.settings.ignores)
-    self._sync_pending = _DBSync(self.settings.dirs, self._dir_cache)
+    self._pending_index = _DBIndex(self.settings.dirs, self._dir_cache)
 
   def sync(self):
     """Ensures database index is up-to-date"""
@@ -161,21 +164,14 @@ class DB(object):
       self.step_sync()
 
   ###########################################################################
-  def search(self,query_regex):
-    rc = re.compile(query_regex)
-
+  def search(self,query):
     if not self.is_syncd:
       self.step_sync()
       # step sync might change the db sync status
       if not self.is_syncd:
         raise NotSyncdException("DB not syncd")
 
-    res = DynObject()
-    res.hits = []
-    for x in self._files:
-      if rc.search(x):
-        res.hits.append(x)
-    return res;
+    return self._cur_index.search(query)
 
 class _DirEnt(object):
   def __init__(self, st_mtime, ents):
@@ -230,15 +226,25 @@ class _DirCache(object):
     self.dirs[d] = de
     return de.ents
 
-class _DBSync(object):
+class _DBIndex(object):
   def __init__(self, dirs, dir_cache):
     self.dir_cache = dir_cache
-    self.dirs = dirs
-    self.dir_cache.reset_realpath_cache()    
-    self.files = set()
-    self.pending = collections.deque()
+    self.dir_cache.reset_realpath_cache()
 
+    self._basename_slots = dict()
+
+    # variablse used both during indexing and once indexed
+    self.files_by_basename = dict() # maps basename to list
+
+    # variables used during indexing
+    self.pending = collections.deque()
     self.visited = set()
+    self.complete = False
+
+    # variables used once indexed
+    self.files = []
+    self.files_associated_with_basename = []
+
 
     # enqueue start points in reverse because the whole search is DFS
     reverse_dirs = list(dirs)
@@ -246,16 +252,7 @@ class _DBSync(object):
     for d in reverse_dirs:
       self.enqueue_dir(d)
 
-  def step_one(self):
-    d = self.pending.popleft()
-    ents = [self.dir_cache.realpath(os.path.join(d, ent)) for ent in self.dir_cache.listdir(d)]
-    for ent in ents:
-      if os.path.isdir(ent):
-        self.enqueue_dir(ent)
-      else:
-        self.files.add(ent)
-
-  def step(self):
+  def index_a_bit_more(self):
     start = time.time()
     n = 0
     try:
@@ -266,14 +263,7 @@ class _DBSync(object):
           i += 1
           n += 1
     except IndexError:
-      pass
-
-  @property
-  def done(self):
-    return len(self.pending) == 0
-
-  def commitResult(self, db):
-    db._files = self.files
+      self.commitResult()
 
   def enqueue_dir(self, d):
     dr = self.dir_cache.realpath(d)
@@ -282,3 +272,68 @@ class _DBSync(object):
     self.visited.add(dr)
     self.pending.appendleft(dr)
 
+
+  def step_one(self):
+    d = self.pending.popleft()
+    for basename in self.dir_cache.listdir(d):
+      path = self.dir_cache.realpath(os.path.join(d, basename))
+      if os.path.isdir(path):
+        self.enqueue_dir(path)
+      else:
+        if basename not in self.files_by_basename:
+          self.files_by_basename[basename] = []
+        self.files_by_basename[basename].append(path)
+
+  def commitResult(self):
+    self.complete = True
+    tmp = self.files_by_basename
+    self.files_by_basename = [] # change to list    
+    for basename,files_with_basename in tmp.items():
+      idx_of_first_file = len(self.files)
+      self.files_by_basename.append(basename)
+      self.files_associated_with_basename.append(idx_of_first_file)
+      self.files_associated_with_basename.append(len(files_with_basename))
+      self.files.extend(files_with_basename)
+
+
+  def search(self, query):
+    slashIdx = query.rfind('/')
+    if slashIdx != -1:
+      dirpart = query[:slashIdx]
+      basepart = query[slashIdx+1:]
+    else:
+      dirpart = None
+      basepart = query
+
+    # fuzz the basepart
+    if 1:
+      tmp = ['*']
+      for i in range(len(basepart)):
+        tmp.append(basepart[i])
+      tmp.append('*')
+      basepart = '*'.join(tmp)
+    
+    hits = []
+    truncated = False
+    for i in range(len(self.files_by_basename)):
+      x = self.files_by_basename[i]
+      if fnmatch.fnmatch(x, basepart):
+        lo = self.files_associated_with_basename[2*i]
+        n = self.files_associated_with_basename[2*i+1]
+        hits.extend(self.files[lo:lo+n])
+        if len(hits) > 100:
+          truncated = True
+          break
+
+    if dirpart:
+      reshits = []
+      for path in hits:
+        dirname = os.path.dirname(path)
+        if dirname.endswith(dirpart):
+          reshits.append(path)
+      hits = reshits
+        
+    res = DynObject()
+    res.hits = hits
+    res.truncated = truncated
+    return res

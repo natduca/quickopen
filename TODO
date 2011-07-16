@@ -1,13 +1,14 @@
-- Fuzzy matching
-- Long-running searches interrupted by additional keystrokes
-- Too-many-hits warning
-   SocketServer.ThreadingMixIn
-- Searches while indexing
+- Dir-query
+- fnmatch vs regexp vs hand-coded?
+- UI for truncated search
+- UI for failed searches while indexing
+- UI if daemon is syncing
 
 - Report-bad-result / track non-first query/candidates/hit pairs
 - Start daemon automatically by client; daemon reruns itself if out of date
-- Client warns if daemon is unreachable
-- UI if daemon is syncing
+- UI if daemon is unreachable
+
+- Boosts
 
 - Manpages
 - Vim and Emacs scripts

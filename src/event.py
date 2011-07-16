@@ -22,6 +22,10 @@ class Event(object):
   def add_listener(self,cb):
     self._listeners.append(cb)
 
+  @property
+  def has_listeners(self):
+    return len(self._listeners)
+
   def remove_listener(self,cb):
     self._listeners.remove(cb)
 

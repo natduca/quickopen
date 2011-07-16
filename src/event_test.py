@@ -22,6 +22,7 @@ class EventTest(unittest.TestCase):
       self.assertEqual(3, args[0])
       fired.append(True)
     e.add_listener(l)
+    self.assertEqual(True, e.has_listeners)
     e.fire(3)
     self.assertEqual(1, len(fired))
 

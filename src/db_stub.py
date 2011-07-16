@@ -72,7 +72,10 @@ class DBStub(object):
 
   def search(self, m, verb, data):
     q = re.compile(data)
-    res = self.db.search(data)
+    try:
+      res = self.db.search(data)
+    except db.NotSyncdException:
+      raise daemon.SilentException()
     return res
 
   def sync(self, m, verb, data):

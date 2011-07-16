@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import db
 import os
 import test_data
 
@@ -134,6 +135,11 @@ class DBTestBase(object):
     self.assertEquals(False, self.db.is_syncd)
     self.db.sync()
     self.assertEquals(True, self.db.is_syncd)
+
+  def test_search_unsync(self):
+    self.db.add_dir(self.test_data_dir)
+    self.assertEquals(False, self.db.is_syncd)
+    self.assertRaises(db.NotSyncdException, lambda: self.db.search("foo"))
 
   def test_dup_ignore_ctl(self):
     self.db.add_dir(self.test_data_dir)

@@ -21,6 +21,13 @@ DEFAULT_IGNORE=[
   ".*",
 ]
 
+"""
+Exception thrown when a search fails due to the DB being unsyncd
+"""
+class NotSyncdException(Exception):
+  def __init__(self,*args):
+    Exception.__init__(self, *args)
+
 class DBDir(object):
   def __init__(self, d):
     self.path = d
@@ -125,7 +132,7 @@ class DB(object):
     rc = re.compile(query_regex)
 
     if not self.is_syncd:
-      raise Exception("DB not syncd")
+      raise NotSyncdException("DB not syncd")
 
     res = []
     truncated = False

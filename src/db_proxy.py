@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import db
 import httplib
 from dyn_object import *
 
@@ -75,7 +76,10 @@ class DBProxy(object):
       raise "Pattern not found"
 
   def search(self, q):
-    ret = self._req('POST', '/search', q)
+    try:
+      ret = self._req('POST', '/search', q)
+    except Exception:
+      raise db.NotSyncdException()
     return ret
 
   @property

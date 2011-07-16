@@ -66,6 +66,8 @@ class DB(object):
     return list(self._dirs)
 
   def add_dir(self, d):
+    d = os.path.abspath(d)
+
     cur = list(self.settings.dirs)
     if d in cur:
       return

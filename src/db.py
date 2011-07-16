@@ -47,8 +47,8 @@ class DB(object):
     self.settings.register('dirs', list, [], self._on_settings_dirs_changed)
     self._on_settings_dirs_changed(None, self.settings.dirs)
 
-    self.settings.register('ignore', list, DEFAULT_IGNORE, self._on_settings_ignores_changed)
-    self._on_settings_ignores_changed(None, self.settings.ignore)
+    self.settings.register('ignores', list, DEFAULT_IGNORE, self._on_settings_ignores_changed)
+    self._on_settings_ignores_changed(None, self.settings.ignores)
 
   def _on_settings_dirs_changed(self, old, new):
     self._dirs = map(lambda d: DBDir(d), new)
@@ -83,6 +83,24 @@ class DB(object):
       raise Exception("not found")
     cur.remove(d.path)
     self.settings.dirs = cur # triggers _on_settings_dirs_changed
+
+  @property
+  def ignores(self):
+    return list(self.settings.ignores)
+
+  def ignore(self,pattern):
+    i = list(self.settings.ignores)
+    if pattern in i:
+      return
+    i.append(pattern)
+    self.settings.ignores = i
+
+  def unignore(self,pattern):
+    i = list(self.settings.ignores)
+    i.remove(pattern)
+    self.settings.ignores = i
+
+  ###########################################################################
 
   def sync(self):
     """Ensures database index is up-to-date"""

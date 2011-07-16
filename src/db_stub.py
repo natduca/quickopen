@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import daemon
 import db
 import re
 from dyn_object import *
@@ -25,6 +26,9 @@ class DBStub(object):
     server.add_json_route('/dirs', self.list_dirs, ['GET'])
     server.add_json_route('/dirs/([a-zA-Z0-9]+)', self.get_dir, ['GET'])
     server.add_json_route('/dirs/([a-zA-Z0-9]+)', self.delete_dir, ['DELETE'])
+    server.add_json_route('/ignores', self.get_ignores, ['GET'])
+    server.add_json_route('/ignores/add', self.ignores_add, ['POST'])
+    server.add_json_route('/ignores/remove', self.ignores_remove, ['POST'])
     server.add_json_route('/sync', self.sync, ['POST'])
     server.add_json_route('/search', self.search, ['POST'])
 
@@ -50,6 +54,20 @@ class DBStub(object):
         self.db.delete_dir(d)
         return {"status": 'OK'}
     raise daemon.NotFoundException()    
+
+  def get_ignores(self, m, verb, data):
+    return self.db.ignores
+
+  def ignores_add(self, m, verb, data):
+    self.db.ignore(data)
+    return {"status": "OK"}
+
+  def ignores_remove(self, m, verb, data):
+    try:
+      self.db.unignore(data)
+    except Exception:
+      raise daemon.SilentException()
+    return {"status": "OK"}
 
   def search(self, m, verb, data):
     q = re.compile(data)

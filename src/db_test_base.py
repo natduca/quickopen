@@ -90,3 +90,36 @@ class DBTestBase(object):
 
     hits = self.db.search('svn_should_not_show_up.txt')
     self.assertEquals(0, len(hits))
+
+  def test_ignore_ctl(self):
+    self.db.add_dir(self.test_data_dir)
+
+    hits = self.db.search('svn_should_not_show_up.txt')
+    self.assertEquals(0, len(hits))
+
+    orig = list(self.db.ignores)
+    for i in orig:
+      self.db.unignore(i)
+    self.db.sync()
+
+    hits = self.db.search('svn_should_not_show_up.txt')
+    self.assertEquals(1, len(hits))
+
+    for i in orig:
+      self.db.ignore(i)
+    self.db.sync()
+
+    hits = self.db.search('svn_should_not_show_up.txt')
+    self.assertEquals(0, len(hits))
+
+  def test_dup_ignore_ctl(self):
+    self.db.add_dir(self.test_data_dir)
+    seq = set(self.db.ignores)
+    seq.add("foo")
+    self.db.ignore("foo")
+    self.db.ignore("foo")
+    self.assertEquals(seq, set(self.db.ignores))
+
+    self.db.unignore("foo")
+    self.assertRaises(Exception, lambda: self.db.unignore("foo"))
+

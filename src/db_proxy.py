@@ -61,6 +61,19 @@ class DBProxy(object):
     ret = self._req('DELETE', '/dirs/%s' % d.id)
     assert ret.status == 'OK'
 
+  @property
+  def ignores(self):
+    return self._req('GET', '/ignores')
+
+  def ignore(self, i):
+    ret = self._req('POST', '/ignores/add', i)
+
+  def unignore(self, i):
+    try:
+      ret = self._req('POST', '/ignores/remove', i)
+    except:
+      raise "Pattern not found"
+
   def search(self, q):
     ret = self._req('POST', '/search', q)
     return ret

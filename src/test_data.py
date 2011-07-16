@@ -34,6 +34,15 @@ class TestData(object):
     ret = os.system('ln -s %s %s' % (src, dst))
     assert ret == 0
 
+    # make a real git directory
+    gitpath = os.path.join(self.test_data_dir, 'gitproj')
+    oldcwd = os.getcwd()
+    os.chdir(gitpath)
+    ret = os.system('git init')
+    ret = os.system('git add .')
+    ret = os.system('git commit -m .')
+    assert ret == 0
+    os.chdir(oldcwd)
 
   def close(self):
     if os.path.exists(self.test_data_dir):

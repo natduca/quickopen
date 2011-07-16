@@ -69,7 +69,7 @@ class _RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
     if 'Content-Length' in self.headers:
       cl = int(self.headers['Content-Length'])
-      text = self.rfile.read(cl)
+      text = self.rfile.read(cl).encode('utf8')
       obj = DynObject.loads(text)
     else:
       obj = None

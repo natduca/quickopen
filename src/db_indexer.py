@@ -34,13 +34,17 @@ class DBIndexer(object):
     self.pending = collections.deque()
     self.visited = set()
     self.complete = False
-    
+    self.num_files_found = 0 # stats only
 
     # enqueue start points in reverse because the whole search is DFS
     reverse_dirs = list(dirs)
     reverse_dirs.reverse()
     for d in reverse_dirs:
       self.enqueue_dir(d)
+
+  @property
+  def progress(self):
+    return "%i files found, %i dirs pending" % (self.num_files_found, len(self.pending))
 
   def index_a_bit_more(self):
     start = time.time()
@@ -74,3 +78,4 @@ class DBIndexer(object):
         if basename not in self.files_by_basename:
           self.files_by_basename[basename] = []
         self.files_by_basename[basename].append(path)
+        self.num_files_found += 1

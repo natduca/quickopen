@@ -14,6 +14,11 @@
 import collections
 import os
 import time
+import json
+
+class MockIndexer(object):
+  def __init__(self, filename):
+    self.files_by_basename = json.load(open(filename))
 
 class DBIndexer(object):
   def __init__(self, dirs, dir_cache):

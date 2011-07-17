@@ -11,80 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import collections
-import fnmatch
-import hashlib
 import os
-import re
-import threading
-import time
+import fnmatch
 
 from dyn_object import DynObject
-from event import Event
 
 class DBIndex(object):
-  def __init__(self, dirs, dir_cache):
-    self.dir_cache = dir_cache
-    self.dir_cache.reset_realpath_cache()
-
-    self._basename_slots = dict()
-
-    # variablse used both during indexing and once indexed
-    self.files_by_basename = dict() # maps basename to list
-
-    # variables used during indexing
-    self.pending = collections.deque()
-    self.visited = set()
-    self.complete = False
-
-    # variables used once indexed
+  def __init__(self, indexer):
+    self.files_by_basename = [] # change to list    
     self.files = []
     self.files_associated_with_basename = []
-
-
-    # enqueue start points in reverse because the whole search is DFS
-    reverse_dirs = list(dirs)
-    reverse_dirs.reverse()
-    for d in reverse_dirs:
-      self.enqueue_dir(d)
-
-  def index_a_bit_more(self):
-    start = time.time()
-    n = 0
-    try:
-      while time.time() - start < 0.15:
-        i = 0
-        while i < 10:
-          self.step_one()
-          i += 1
-          n += 1
-    except IndexError:
-      self.commitResult()
-
-  def enqueue_dir(self, d):
-    dr = self.dir_cache.realpath(d)
-    if dr in self.visited:
-      return
-    self.visited.add(dr)
-    self.pending.appendleft(dr)
-
-
-  def step_one(self):
-    d = self.pending.popleft()
-    for basename in self.dir_cache.listdir(d):
-      path = self.dir_cache.realpath(os.path.join(d, basename))
-      if os.path.isdir(path):
-        self.enqueue_dir(path)
-      else:
-        if basename not in self.files_by_basename:
-          self.files_by_basename[basename] = []
-        self.files_by_basename[basename].append(path)
-
-  def commitResult(self):
-    self.complete = True
-    tmp = self.files_by_basename
-    self.files_by_basename = [] # change to list    
-    for basename,files_with_basename in tmp.items():
+    for basename,files_with_basename in indexer.files_by_basename.items():
       idx_of_first_file = len(self.files)
       self.files_by_basename.append(basename)
       self.files_associated_with_basename.append(idx_of_first_file)

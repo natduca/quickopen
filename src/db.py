@@ -11,15 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import collections
-import fnmatch
 import hashlib
 import os
-import re
-import threading
 import time
+import fnmatch
 
 from db_index import DBIndex
+from db_indexer import DBIndexer
 from dyn_object import DynObject
 from event import Event
 
@@ -56,7 +54,7 @@ class DB(object):
     self.settings = settings
     self.needs_sync = Event() # fired when the database gets dirtied and needs syncing
     self._dirty = True # whether the settings have dirtied the db
-    self._pending_index = None # non-None if a DBIndex is running
+    self._pending_indexer = None # non-None if a DBIndex is running
     self._cur_index = None # the last DBIndex object --> actually runs the searches
 
     self._dir_cache = _DirCache() # thread only state
@@ -127,8 +125,8 @@ class DB(object):
     return self.sync_status()['is_syncd']
 
   def _set_dirty(self):
-    if self._pending_index:
-      self._pending_index = None
+    if self._pending_indexer:
+      self._pending_indexer = None
     was_dirty = self._dirty
     self._dirty = True
     if not was_dirty:
@@ -136,7 +134,7 @@ class DB(object):
 
   def sync_status(self):
     if self._dirty:
-      if self._pending_index:
+      if self._pending_indexer:
         status = "sync in progress"
       else:
         status = "dirty but not synchronized"
@@ -146,18 +144,18 @@ class DB(object):
             "stauts": status}
 
   def step_sync(self):
-    if self._pending_index:
-      if self._pending_index.complete:
-        self._cur_index = self._pending_index
-        self._pending_index = None
+    if self._pending_indexer:
+      if self._pending_indexer.complete:
+        self._cur_index = DBIndex(self._pending_indexer)
+        self._pending_indexer = None
         self._dirty = False
       else:
-        self._pending_index.index_a_bit_more()
+        self._pending_indexer.index_a_bit_more()
       return
 
     # start new sync
     self._dir_cache.set_ignores(self.settings.ignores)
-    self._pending_index = DBIndex(self.settings.dirs, self._dir_cache)
+    self._pending_indexer = DBIndexer(self.settings.dirs, self._dir_cache)
 
   def sync(self):
     """Ensures database index is up-to-date"""

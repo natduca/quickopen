@@ -84,10 +84,11 @@ class DBProxy(object):
 
   @property
   def is_syncd(self):
-    return  self._req('GET', '/sync_status').is_syncd
+    return self.sync_status().is_syncd
 
   def sync(self):
     ret = self._req('POST', '/sync')
 
   def sync_status(self):
-    ret = self._req('GET', '/sync_status')
+    return self._req('GET', '/sync_status')
+

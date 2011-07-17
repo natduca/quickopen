@@ -122,7 +122,7 @@ class DB(object):
 
   @property
   def is_syncd(self):
-    return self.sync_status()['is_syncd']
+    return self.sync_status().is_syncd
 
   def _set_dirty(self):
     if self._pending_indexer:
@@ -135,13 +135,13 @@ class DB(object):
   def sync_status(self):
     if self._dirty:
       if self._pending_indexer:
-        status = "sync in progress"
+        status = "syncing: %s" % self._pending_indexer.progress
       else:
         status = "dirty but not synchronized"
     else:
       status = "up-to-date"
-    return {"is_syncd": not self._dirty,
-            "stauts": status}
+    return DynObject({"is_syncd": not self._dirty,
+                      "status": status})
 
   def step_sync(self):
     if self._pending_indexer:

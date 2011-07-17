@@ -81,6 +81,8 @@ class DBTestBase(object):
   def test_search_with_dir(self):
     self.db.add_dir(self.test_data_dir)
     self.assertEquals(False, self.db.is_syncd)
+    self.assertFalse(self.db.sync_status().is_syncd)
+    self.assertTrue(self.db.sync_status().status != '')
     self.db.sync()
     res = self.db.search('project1/MySubSystem.c')
     self.assertEquals(1, len(res.hits))

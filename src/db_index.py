@@ -103,7 +103,7 @@ class FuzzyFnMatcher(object):
 
 class DBIndex(object):
   def __init__(self, indexer,matcher=FuzzyRe2Matcher):
-    self.matcher = matcher(indexer.files_by_basename, False)
+    self.matcher = matcher(indexer.files_by_basename, True)
 
   def search(self, query, max_hits = 100):
     slashIdx = query.rfind('/')

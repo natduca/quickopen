@@ -24,11 +24,22 @@ def matchers():
   }
 
 class FuzzyRe2Matcher(object):
-  def __init__(self, files_by_basename):
-    self.files_by_basename = files_by_basename
-    files = self.files_by_basename.keys()
-    files.sort()
-    self.basenames_unsplit = ("\n" + "\n".join(files) + "\n").encode('utf8')
+  def __init__(self, files_by_basename, case_sensitive):
+    if case_sensitive:
+      self.files_by_basename = files_by_basename
+      files = self.files_by_basename.keys()
+      files.sort()
+      self.basenames_unsplit = ("\n" + "\n".join(files) + "\n").encode('utf8')
+    else:
+      self.files_by_basename = {}
+      basenames = files_by_basename.keys()
+      basenames.sort()
+      for bn in basenames:
+        lbn = bn.lower()
+        if lbn not in self.files_by_basename:
+          self.files_by_basename[lbn] = []
+        self.files_by_basename[lbn].extend(files_by_basename[bn])
+      self.basenames_unsplit = ("\n" + "\n".join(self.files_by_basename.keys()) + "\n").encode('utf8')
     assert type(self.basenames_unsplit) == str
 
   def search(self, q, max_hits):
@@ -56,13 +67,16 @@ class FuzzyRe2Matcher(object):
     return (hits, truncated)
 
 class FuzzyFnMatcher(object):
-  def __init__(self, files_by_basename):
+  def __init__(self, files_by_basename, case_sensitive):
     self.files_by_basename = []
     self.files = []
     self.files_associated_with_basename = []
     for basename,files_with_basename in files_by_basename.items():
       idx_of_first_file = len(self.files)
-      self.files_by_basename.append(basename)
+      if case_sensitive:
+        self.files_by_basename.append(basename)
+      else:
+        self.files_by_basename.append(basename.lower())
       self.files_associated_with_basename.append(idx_of_first_file)
       self.files_associated_with_basename.append(len(files_with_basename))
       self.files.extend(files_with_basename)
@@ -89,7 +103,7 @@ class FuzzyFnMatcher(object):
 
 class DBIndex(object):
   def __init__(self, indexer,matcher=FuzzyRe2Matcher):
-    self.matcher = matcher(indexer.files_by_basename)
+    self.matcher = matcher(indexer.files_by_basename, False)
 
   def search(self, query, max_hits = 100):
     slashIdx = query.rfind('/')

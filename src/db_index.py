@@ -18,15 +18,7 @@ from dyn_object import DynObject
 
 class DBIndex(object):
   def __init__(self, indexer):
-    self.files_by_basename = [] # change to list    
-    self.files = []
-    self.files_associated_with_basename = []
-    for basename,files_with_basename in indexer.files_by_basename.items():
-      idx_of_first_file = len(self.files)
-      self.files_by_basename.append(basename)
-      self.files_associated_with_basename.append(idx_of_first_file)
-      self.files_associated_with_basename.append(len(files_with_basename))
-      self.files.extend(files_with_basename)
+    self.matcher = FnMatcher(indexer.files_by_basename)
 
   def search(self, query):
     slashIdx = query.rfind('/')
@@ -36,27 +28,11 @@ class DBIndex(object):
     else:
       dirpart = None
       basepart = query
-
-    # fuzz the basepart
-    if 1:
-      tmp = ['*']
-      for i in range(len(basepart)):
-        tmp.append(basepart[i])
-      tmp.append('*')
-      basepart = '*'.join(tmp)
     
     hits = []
     truncated = False
     if len(basepart):
-      for i in range(len(self.files_by_basename)):
-        x = self.files_by_basename[i]
-        if fnmatch.fnmatch(x, basepart):
-          lo = self.files_associated_with_basename[2*i]
-          n = self.files_associated_with_basename[2*i+1]
-          hits.extend(self.files[lo:lo+n])
-          if len(hits) > 100:
-            truncated = True
-            break
+      (hits, truncated) = self.matcher.search(basepart)
     else:
       hits = self.files
 
@@ -72,3 +48,36 @@ class DBIndex(object):
     res.hits = hits
     res.truncated = truncated
     return res
+    
+
+class FnMatcher(object):
+  def __init__(self, files_by_basename):
+    self.files_by_basename = []
+    self.files = []
+    self.files_associated_with_basename = []
+    for basename,files_with_basename in files_by_basename.items():
+      idx_of_first_file = len(self.files)
+      self.files_by_basename.append(basename)
+      self.files_associated_with_basename.append(idx_of_first_file)
+      self.files_associated_with_basename.append(len(files_with_basename))
+      self.files.extend(files_with_basename)
+
+  def search(self, query):
+    tmp = ['*']
+    for i in range(len(query)):
+      tmp.append(query[i])
+    tmp.append('*')
+    flt = '*'.join(tmp)
+    
+    truncated = False
+    hits = []
+    for i in range(len(self.files_by_basename)):
+      x = self.files_by_basename[i]
+      if fnmatch.fnmatch(x, flt):
+        lo = self.files_associated_with_basename[2*i]
+        n = self.files_associated_with_basename[2*i+1]
+        hits.extend(self.files[lo:lo+n])
+        if len(hits) > 100:
+          truncated = True
+          break
+    return (hits, truncated)

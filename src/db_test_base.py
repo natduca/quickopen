@@ -60,7 +60,7 @@ class DBTestBase(object):
     self.assertEquals(1, len(res.hits))    
     self.assertEquals(os.path.join(self.test_data_dir, 'project1/MySubSystem.c'), res.hits[0])
 
-  def DISABLED_test_dir_query(self):
+  def test_dir_query(self):
     self.db.add_dir(self.test_data_dir)
     sub_dir = os.path.join(self.test_data_dir, 'project1/')
     self.db.add_dir(sub_dir)

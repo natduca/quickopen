@@ -295,7 +295,6 @@ class _DBIndex(object):
       self.files_associated_with_basename.append(len(files_with_basename))
       self.files.extend(files_with_basename)
 
-
   def search(self, query):
     slashIdx = query.rfind('/')
     if slashIdx != -1:
@@ -315,15 +314,18 @@ class _DBIndex(object):
     
     hits = []
     truncated = False
-    for i in range(len(self.files_by_basename)):
-      x = self.files_by_basename[i]
-      if fnmatch.fnmatch(x, basepart):
-        lo = self.files_associated_with_basename[2*i]
-        n = self.files_associated_with_basename[2*i+1]
-        hits.extend(self.files[lo:lo+n])
-        if len(hits) > 100:
-          truncated = True
-          break
+    if len(basepart):
+      for i in range(len(self.files_by_basename)):
+        x = self.files_by_basename[i]
+        if fnmatch.fnmatch(x, basepart):
+          lo = self.files_associated_with_basename[2*i]
+          n = self.files_associated_with_basename[2*i+1]
+          hits.extend(self.files[lo:lo+n])
+          if len(hits) > 100:
+            truncated = True
+            break
+    else:
+      hits = self.files
 
     if dirpart:
       reshits = []

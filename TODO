@@ -1,4 +1,3 @@
-- Dir-query
 - fnmatch vs regexp vs hand-coded?
 - UI for truncated search
 - UI for failed searches while indexing
@@ -7,6 +6,8 @@
 - Report-bad-result / track non-first query/candidates/hit pairs
 - Start daemon automatically by client; daemon reruns itself if out of date
 - UI if daemon is unreachable
+
+- Speed up empty-dir-query
 
 - Boosts
 

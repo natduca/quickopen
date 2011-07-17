@@ -20,13 +20,35 @@ class OpenDialogBase(object):
     self._filter_text = settings.filter_text
     self._settings = settings
     self._db = db
+    self._can_process_queries = False
 
+  def on_tick(self,*args):
+    try:
+      stat = self._db.sync_status()
+      status = stat.status
+      enabled = stat.is_syncd
+    except Exception, ex:
+      print ex
+      status = "quickopend not running"
+      enabled = False
+    self.set_status("DB Status: %s" % status)
+    self.set_can_process_queries(enabled)
+
+  def set_can_process_queries(self, can_process):
+    could_process = self._can_process_queries
+    self._can_process_queries = can_process
+
+    self.set_results_enabled(can_process)
+    if not could_process and can_process:
+      self.refresh()
+    
   def just_before_closed(self):
     self._settings.filter_text = self._filter_text
 
   def set_filter_text(self, text):
     self._filter_text = text
-    self.refresh()
+    if self._can_process_queries:
+      self.refresh()
 
   def rescan(self):
     self._db.sync()

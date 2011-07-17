@@ -42,8 +42,11 @@ class OpenDialogWx(wx.Dialog, OpenDialogBase):
     rescan_bn = wx.Button(self, -1, "Rescan database")
     rescan_bn.Bind(wx.EVT_BUTTON, lambda *args: self.rescan())
 
+    self.status_text = wx.StaticText(self, -1, '')
+
     top_box.Add(rescan_bn)
-    top_box.AddStretchSpacer(1)
+    top_box.Add((10,0))
+    top_box.Add(self.status_text,1, wx.EXPAND | wx.ALL | wx.ALIGN_CENTER_VERTICAL)
     refresh_bn = wx.Button(self, -1, "Refresh")
     refresh_bn.Bind(wx.EVT_BUTTON, lambda *args: self.refresh())
     top_box.Add(refresh_bn)
@@ -73,6 +76,21 @@ class OpenDialogWx(wx.Dialog, OpenDialogBase):
     self.SetSizer(outer_sizer)
     
     self._filter_ctrl.SetFocus()
+
+    self._timer = wx.Timer(self, -1)
+    self.Bind(wx.EVT_TIMER, self.on_tick, self._timer)
+    self._timer.Start(250,False)
+    self.on_tick()
+
+  def set_status(self,status_text):
+    self.status_text.SetLabel(status_text)
+
+  def set_results_enabled(self,en):
+    self._results_list.Enable(en)
+    if not en:
+      self._results_list.ClearAll()
+    okbn = self.FindWindowById(wx.ID_OK)
+    okbn.Enable(en)
 
   def on_evt_key_down(self,event):
     code = event.GetKeyCode()

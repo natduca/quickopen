@@ -28,7 +28,6 @@ class OpenDialogBase(object):
       status = stat.status
       enabled = stat.is_syncd
     except Exception, ex:
-      print ex
       status = "quickopend not running"
       enabled = False
     self.set_status("DB Status: %s" % status)

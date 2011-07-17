@@ -24,6 +24,8 @@ class DBProxy(object):
   def __init__(self, host, port, start_if_needed = False):
     if start_if_needed:
       raise Exception("Not implemented")
+    self.host = host
+    self.port = port
     self.conn = httplib.HTTPConnection(host, port, True)
     self._dir_lut = {}
 
@@ -33,7 +35,11 @@ class DBProxy(object):
         data = data.as_json()
       else:
         data = json.dumps(data)
-    self.conn.request(method, path, data)
+    try:
+      self.conn.request(method, path, data)
+    except httplib.CannotSendRequest:
+      self.conn = httplib.HTTPConnection(self.host, self.port, True)
+      self.conn.request(method, path, data)
     res = self.conn.getresponse()
     if res.status != 200:
       raise Exception("On %s, got %s" % (path, res.status))

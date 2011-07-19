@@ -173,7 +173,7 @@ class Daemon(BaseHTTPServer.HTTPServer):
     if self.test_mode:
       logging.info('Starting quickopen daemon on port %d', self.port_)
     else:
-      print 'Starting quickopen daemon on port %d' % self.port_
+      sys.stderr.write('Starting quickopen daemon on port %d\n' % self.port_)
     self.serve_forever()
     logging.info('Shutting down quickopen daemon on port %d', self.port_)
 

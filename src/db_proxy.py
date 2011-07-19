@@ -14,6 +14,7 @@
 import db
 import httplib
 import subprocess
+import sys
 import time
 import json
 
@@ -40,11 +41,10 @@ class DBProxy(object):
 
   def try_to_start_quickopend(self):
     args = ['./quickopend']
-    print 'No quickopend running. Launching it...'
+    sys.stderr.write('No quickopend running. Launching it...\n')
     self.proc = subprocess.Popen(args)
     
-
-    print 'Making sure it came up on port %i' % self._port_for_autostart
+    sys.stderr.write('Making sure it came up on port %i\n' % self._port_for_autostart)
     ok = False
     for i in range(10):
       try:
@@ -77,6 +77,8 @@ class DBProxy(object):
     try:
       self.conn.request(method, path, data)
     except httplib.CannotSendRequest:
+      self.conn = None
+    if not self.conn:
       if self._start_if_needed:
         self.try_to_start_quickopend()
         self._start_if_needed = False # dont do it twice

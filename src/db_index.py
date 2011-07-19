@@ -158,6 +158,7 @@ class DBIndex(object):
     if matcher_name not in matchers():
       raise Exception("Unrecognized matcher name")
     N = min(_get_num_cpus(), 4) # test for scaling beyond 4
+    self.num_files_indexed = 0
     def makeChunks(items, N):
       base = 0
       chunksize = len(indexer.files_by_basename) / N
@@ -167,6 +168,7 @@ class DBIndex(object):
       for i in range(N):
         chunk = dict()
         for j in items[base:base+chunksize]:
+          self.num_files_indexed += len(j[1])
           chunk[j[0]] = j[1]
         base += chunksize
         chunks.append(chunk)
@@ -182,7 +184,7 @@ class DBIndex(object):
 
   @property
   def status(self):
-    return "using %i threads for searches" % len(self.pools)
+    return "%i files indexed; %i-threaded searches" % (self.num_files_indexed, len(self.pools))
 
   def close(self):
     self.pool.close()

@@ -101,6 +101,26 @@ def CMDsearch(parser, args):
   # give up
   raise Exception("No supported UI detected.")
 
+def CMDstatus(parser, args):
+  """Checks the status of the quick open database"""
+  (options, args) = parser.parse_args(args)
+  settings = load_settings(options)
+  db = open_db(settings, options)
+  print db.sync_status().status
+
+def CMDrawsearch(parser, args):
+  """Prints the raw database's results for <query>"""
+  (options, args) = parser.parse_args(args)
+  settings = load_settings(options)
+  db = open_db(settings, options)
+  if len(args) != 1:
+    parser.error('Expected: <query>')
+  if not db.is_syncd:
+    print "Database is not fully indexed. Wait a bit or try quickopen status"
+    return 255
+  print "\n".join([x for x in db.search(args[0]).hits])
+  return 0
+
 def load_settings(options):
   settings_file = os.path.expanduser(options.settings)
   settings = src.settings.Settings(settings_file)

@@ -1,16 +1,18 @@
 - Re-enable case sensitivity without any test breakage
-- UI for truncated search
+- warning bar if search().truncated
 
-- Start daemon automatically by client; daemon reruns itself if out of date
+- Emacs C-N C-P move selection up and down
 
 - Boosts
 
+- Emacs scripts
+
+- FuzRe2 shoudl use re.escape
+
 - Manpages
-- Vim and Emacs scripts
+- Query perf & bad-result log
 
-- FuzRe2 uses regexps but does not sanitize inputs
-- FuzRe2 takes too long on long query strings
+- Fallback from FuzRe2 to prefix match for long query strings?
 
-- Speed up empty-dir-query
-
-- Report-bad-result / track non-first query/candidates/hit pairs
+- Speed up empty-dir-query, e.g. foo/
+- Support wildcard-dir-query, e.g. f*b/*

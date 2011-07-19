@@ -53,7 +53,7 @@ class DBIndexTestBase(object):
     matchers = db_index.matchers()
     self.indexers = {}
     for (mn, m) in matchers.items():
-      self.indexers[mn] = db_index.DBIndex(mock_indexer, m)
+      self.indexers[mn] = db_index.DBIndex(mock_indexer, mn)
     
 
 class DBIndexTest(unittest.TestCase,DBIndexTestBase):

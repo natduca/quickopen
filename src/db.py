@@ -139,7 +139,8 @@ class DB(object):
       else:
         status = "dirty but not synchronized"
     else:
-      status = "up-to-date"
+      status = "up-to-date: %s" % self._cur_index.status
+
     return DynObject({"is_syncd": not self._dirty,
                       "status": status})
 

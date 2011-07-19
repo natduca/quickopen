@@ -13,7 +13,12 @@
 # limitations under the License.
 import db
 import httplib
-from dyn_object import *
+import subprocess
+import time
+import json
+
+from dyn_object import DynObject
+from event import Event
 
 class DBDirProxy(object):
   def __init__(self, id, path):
@@ -21,13 +26,47 @@ class DBDirProxy(object):
     self.path = path
 
 class DBProxy(object):
-  def __init__(self, host, port, start_if_needed = False):
-    if start_if_needed:
-      raise Exception("Not implemented")
+  def __init__(self, host, port, start_if_needed = False, port_for_autostart=-1):
+    if start_if_needed and port_for_autostart == -1:
+      raise Exception("Cannot start_if_needed without a port_for_autostart")
     self.host = host
     self.port = port
+    self._start_if_needed = start_if_needed
+    if self._start_if_needed:
+      self._port_for_autostart = port_for_autostart
+      self.couldnt_start_daemon = Event()
     self.conn = httplib.HTTPConnection(host, port, True)
     self._dir_lut = {}
+
+  def try_to_start_quickopend(self):
+    args = ['./quickopend']
+    print 'No quickopend running. Launching it...'
+    self.proc = subprocess.Popen(args)
+    
+
+    print 'Making sure it came up on port %i' % self._port_for_autostart
+    ok = False
+    for i in range(10):
+      try:
+        conn = httplib.HTTPConnection('localhost', self._port_for_autostart, True)
+        conn.request('GET', '/ping')
+      except:
+        time.sleep(0.05)
+        continue
+
+      res = conn.getresponse()
+      if res.status != 200:
+        ok = False
+        break
+      if json.loads(res.read()) != 'pong':
+        ok = False
+        break
+      ok = True
+      break
+    if not ok:
+      self.couldnt_start_daemon.fire()
+      raise Exception("Daemon did not come up")
+    
 
   def _req(self, method, path, data = None):
     if data:
@@ -38,6 +77,9 @@ class DBProxy(object):
     try:
       self.conn.request(method, path, data)
     except httplib.CannotSendRequest:
+      if self._start_if_needed:
+        self.try_to_start_quickopend()
+        self._start_if_needed = False # dont do it twice
       self.conn = httplib.HTTPConnection(self.host, self.port, True)
       self.conn.request(method, path, data)
     res = self.conn.getresponse()

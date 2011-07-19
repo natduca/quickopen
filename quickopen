@@ -113,7 +113,14 @@ def open_db(settings,options):
     options.host = settings.host
   if not options.port:
     options.port = settings.port
-  db = src.db_proxy.DBProxy(options.host, options.port)
+
+  # Open the quickopend settings file to get the default
+  # port for the daemon.
+  daemon_settings_file = os.path.expanduser("~/.quickopend")
+  settings = src.settings.Settings(daemon_settings_file)
+  settings.register('port', int, 10248) # keep in sync with quickopend default
+
+  db = src.db_proxy.DBProxy(options.host, options.port, start_if_needed=True, port_for_autostart=settings.port)
   return db
 
 # Subcommand addins to optparse, taken from git-cl.py, 

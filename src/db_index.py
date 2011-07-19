@@ -46,9 +46,10 @@ class FuzzyRe2Matcher(object):
 
   def search(self, q, max_hits):
     # fuzzy match expression
+    escaped_q = re.escape(q)
     tmp = []
-    for i in range(len(q)):
-      tmp.append(q[i])
+    for i in range(len(escaped_q)):
+      tmp.append(escaped_q[i])
     flt = "\n.*%s.*\n" % '.*'.join(tmp)
     regex = re.compile(flt)
     

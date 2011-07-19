@@ -1,1 +1,5 @@
-QuickOpen is a utility for quickly opening files.
+Open files quickly using fuzzy search expressions in directory-trees
+containing hundreds of thousands of files.
+
+Inspired by FuzzyFilter for Vim and FuzzyMatch for Emacs, but with
+focus on performance and user interface.

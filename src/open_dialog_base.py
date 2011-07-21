@@ -58,6 +58,6 @@ class OpenDialogBase(object):
     if self._filter_text != "":
       ft = str(self._filter_text)
       res = self._db.search(ft)
-      self.update_results_list(res.hits)
+      self.update_results_list(res.hits,res.ranks)
     else:
-      self.update_results_list([])
+      self.update_results_list([],[])

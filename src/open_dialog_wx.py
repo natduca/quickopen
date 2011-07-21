@@ -110,22 +110,27 @@ class OpenDialogWx(wx.Dialog, OpenDialogBase):
   def on_evt_text_enter(self, event):
     self.EndModal(wx.ID_OK)
 
-  def update_results_list(self, files):
+  def update_results_list(self, files, ranks):
     self._cur_results = files
     self._results_list.ClearAll()
-    self._results_list.InsertColumn(0, "File")
-    self._results_list.InsertColumn(1, "Path")
-    for f in files:
+    self._results_list.InsertColumn(0, "Rank")
+    self._results_list.InsertColumn(1, "File")
+    self._results_list.InsertColumn(2, "Path")
+    for i in range(len(files)):
+      f = files[i]
+      r = ranks[i]
       base = os.path.basename(f)
       path = os.path.dirname(f)
-      i = self._results_list.InsertStringItem(sys.maxint, base)
-      self._results_list.SetStringItem(i, 1, path)
+      i = self._results_list.InsertStringItem(sys.maxint, str(r))
+      self._results_list.SetStringItem(i, 1, base)
+      self._results_list.SetStringItem(i, 2, path)
 
     if len(files):
       self._results_list.SetItemState(0, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
     c1w = 200
-    self._results_list.SetColumnWidth(0, 200)
-    self._results_list.SetColumnWidth(1, self._results_list.GetSize()[0] - c1w)
+    self._results_list.SetColumnWidth(0, 20)
+    self._results_list.SetColumnWidth(1, 200)
+    self._results_list.SetColumnWidth(2, self._results_list.GetSize()[0] - c1w)
 
   def move_selection(self, direction):
     if direction > 0:

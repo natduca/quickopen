@@ -57,7 +57,8 @@ class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
     reset_button.connect('clicked', lambda *args: self.rescan())
 
 
-    stats_label = gtk.Label()
+    status_label = gtk.Label()
+    self.status_label = status_label
 
     filter_entry = gtk.Entry()
     filter_entry.set_text(self._filter_text)
@@ -75,7 +76,7 @@ class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
     vbox.pack_start(table_vbox,True,True,1)
     table_vbox.pack_start(table_options_hbox,False,False,0)
     table_options_hbox.pack_start(reset_button,False,False,0)
-    table_options_hbox.pack_start(stats_label,False,False,10)
+    table_options_hbox.pack_start(status_label,False,False,10)
     table_options_hbox.pack_end(refresh_button,False,False,0)
     table_vbox.pack_start(treeview_scroll_window,True,True,0)
     table_vbox.pack_start(truncated_bar,False,True,0)
@@ -92,7 +93,11 @@ class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
 
     filter_entry.grab_focus()
 
-    self.refresh()
+    glib.timeout_add(250, self.on_timeout_fired)
+
+  def on_timeout_fired(self):
+    self.on_tick()
+    return True # renews the timeout
 
   def response(self, arg):
     self.just_before_closed()
@@ -124,6 +129,13 @@ class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
   def _on_filter_text_changed(self,entry):
     text = entry.get_text()
     self.set_filter_text(text)
+
+  def set_results_enabled(self, en):
+    self._treeview.set_sensitive(en)
+    self.set_response_sensitive(gtk.RESPONSE_OK, en)
+
+  def set_status(self, status_text):
+    self.status_label.set_text(status_text)
 
   # update the model based on result
   def update_results_list(self, files):

@@ -140,7 +140,7 @@ class DBIndex(object):
       hits = reshits
 
     # sort by rank
-    hits.sort(lambda x,y: cmp(x[1],y[1]))
+    hits.sort(lambda x,y: -cmp(x[1],y[1]))
 
     res = DynObject()
     res.hits = [c[0] for c in hits]

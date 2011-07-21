@@ -67,7 +67,16 @@ class DBIndexTest(unittest.TestCase,DBIndexTestBase):
         res.append(i.search(q,max_hits=sys.maxint))
 
       for i in range(1,len(res)):
-        self.assertTrue(set(res[i-1].hits) == set(res[i].hits))
+        a = set(res[i-1].hits)
+        b = set(res[i].hits)
+        if a != b:
+          # debug only
+          a_name = db_index.matchers().keys()[i-1]
+          b_name = db_index.matchers().keys()[i]
+          in_a = a.difference(b)
+          in_b = b.difference(a)
+          import pdb; pdb.set_trace()
+          self.assertTrue(False)
 
 class DBIndexPerfTest(DBIndexTestBase):
   def test_matcher_perf(self,max_hits):

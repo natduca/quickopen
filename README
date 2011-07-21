@@ -6,46 +6,57 @@ performance and user interface.
 
 Configuration
 --------------------------------------------------------------------------------
-  nduca: ~/quickopen $ ./quickopen add ~/chromium
-  nduca: ~/quickopen $ ./quickopen add ~/quickopen
-  nduca: ~/quickopen $ ./quickopen ignore \*LayoutTests\*
-  nduca: ~/quickopen $ ./quickopen rawsearch foo
-  Database is not fully indexed. Wait a bit or try quickopen status
-  nduca: ~/quickopen $ ./quickopen status
-  Syncing: 17802 files found, 116 dirs pending
-  nduca: ~/quickopen $ ./quickopen status
-  up-to-date: 158553 files indexed; 2-threaded searches 
+nduca: ~/quickopen $ ./quickopen add ~/chromium
+nduca: ~/quickopen $ ./quickopen add ~/quickopen
+nduca: ~/quickopen $ ./quickopen ignore \*LayoutTests\*
+nduca: ~/quickopen $ ./quickopen rawsearch foo
+Database is not fully indexed. Wait a bit or try quickopen status
+nduca: ~/quickopen $ ./quickopen status
+Syncing: 17802 files found, 116 dirs pending
+nduca: ~/quickopen $ ./quickopen status
+up-to-date: 158553 files indexed; 2-threaded searches 
 
-  A few noes:
-   1. QuickOpen maintains an in-memory index in the 'quickopend' process. 
-      This is automatically launched by quickopen commands.
-   2. Directories and ignore rules for quickopend are stored in ~/.quickopend
+A few noes:
+ 1. QuickOpen maintains an in-memory index in the 'quickopend' process. 
+    This is automatically launched by quickopen commands.
+ 2. Directories and ignore rules for quickopend are stored in ~/.quickopend
 
 Usage
 --------------------------------------------------------------------------------
  
-  nduca: ~/quickopen $ ./quickopen
-     <brings up a GUI for a picking a file, 
-      prints file picked to stdout once done>
+nduca: ~/quickopen $ ./quickopen
+   <brings up a GUI for a picking a file, 
+    prints file picked to stdout once done>
 
-  nduca: ~/quickopen $ ./quickopen rawsearch render_widgethvw
-  ~/chrome/src/content/browser/renderer_host/render_widget_host_view.h
-  ~/chrome/src/chrome/browser/renderer_host/render_widget_host_view_gtk.h
-  ~/chrome/src/chrome/browser/renderer_host/render_widget_host_view_views.h
-  ~/chrome/src/chrome/browser/renderer_host/render_widget_host_view_win.h
-  ~/chrome/src/chrome/browser/renderer_host/render_widget_host_view_mac.h
+nduca: ~/quickopen $ ./quickopen rawsearch render_widgethvw
+~/chrome/src/content/browser/renderer_host/render_widget_host_view.h
+~/chrome/src/chrome/browser/renderer_host/render_widget_host_view_gtk.h
+~/chrome/src/chrome/browser/renderer_host/render_widget_host_view_views.h
+~/chrome/src/chrome/browser/renderer_host/render_widget_host_view_win.h
+~/chrome/src/chrome/browser/renderer_host/render_widget_host_view_mac.h
 
 
-VIM
+VIM Bindings
 --------------------------------------------------------------------------------
-  1. Put quickopen.vim in your vimrc
-  2. <C-O> or <Command-O> to bring up quickopen GUI, pick a file,
+1. Load quickopen.vim from your vimrc
+2. <C-O> or <Command-O> to bring up quickopen GUI, pick a file,
      then :find it
 
+Note, quickopen.vim depends on being adjacent to the rest of quickopen
+code. If you symlink to quickopen.el or copy just the .el file, it will
+not be able to find the rest of quickopen.
 
-Emacs
+
+Emacs Bindings
 --------------------------------------------------------------------------------
-  Coming soon
+1. (load-file "~/quickopen/quickopen.el")
+2. M-S-O will load a file with quickopen
+
+Bind to 'quickopen if you want to customize your keybindings.
+
+Note, quickopen.el depends on being adjacent to the rest of quickopen
+code. If you symlink to quickopen.el or copy just the .el file, it will
+not be able to find the rest of quickopen.
 
 Queries
 --------------------------------------------------------------------------------

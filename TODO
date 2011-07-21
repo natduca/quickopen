@@ -1,13 +1,13 @@
 - Re-enable case sensitivity without any test breakage
-- warning bar if search().truncated
 
+- warning bar if search().truncated
 - Emacs C-N C-P move selection up and down
 
 - Boosts
 
-- Emacs scripts
-
 - Manpages
+- Extension queries: What shoudl abc.c match?
+
 - Query perf & bad-result log
 
 - Fallback from FuzRe2 to prefix match for long query strings?

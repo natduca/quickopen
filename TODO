@@ -1,5 +1,3 @@
-- Re-enable case sensitivity without any test breakage
-
 - warning bar if search().truncated
 - Emacs C-N C-P move selection up and down
 

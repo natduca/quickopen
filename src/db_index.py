@@ -27,6 +27,7 @@ def matchers():
 
 class FuzzyRe2Matcher(object):
   def __init__(self, files_by_basename, case_sensitive):
+    self.case_sensitive = case_sensitive
     if case_sensitive:
       self.files_by_basename = files_by_basename
       files = self.files_by_basename.keys()
@@ -45,6 +46,8 @@ class FuzzyRe2Matcher(object):
     assert type(self.basenames_unsplit) == str
 
   def search(self, q, max_hits):
+    if not self.case_sensitive:
+      q = q.lower()
     # fuzzy match expression
     escaped_q = re.escape(q)
     tmp = []
@@ -71,6 +74,7 @@ class FuzzyRe2Matcher(object):
 
 class FuzzyFnMatcher(object):
   def __init__(self, files_by_basename, case_sensitive):
+    self.case_sensitive = case_sensitive
     self.files_by_basename = []
     self.files = []
     self.files_associated_with_basename = []
@@ -85,6 +89,8 @@ class FuzzyFnMatcher(object):
       self.files.extend(files_with_basename)
 
   def search(self, query, max_hits):
+    if not self.case_sensitive:
+      query = query.lower()
     tmp = ['*']
     for i in range(len(query)):
       tmp.append(query[i])
@@ -155,7 +161,7 @@ class LocalPool(object):
 
 class DBIndex(object):
   def __init__(self, indexer,matcher_name='FuzRe2'):
-    case_sensitive = True
+    case_sensitive = False
     if matcher_name not in matchers():
       raise Exception("Unrecognized matcher name")
     N = min(_get_num_cpus(), 4) # test for scaling beyond 4

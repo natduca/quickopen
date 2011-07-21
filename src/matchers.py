@@ -17,7 +17,8 @@ import re
 def matchers():
   return {
     "FuzFn": FuzzyFnMatcher,
-    "FuzRe2": FuzzyRe2Matcher
+    "FuzRe2": FuzzyRe2Matcher,
+    "FuzRe2PreFB": FuzzyRe2PreFBMatcher
   }
 
 class FuzzyRe2Matcher(object):
@@ -49,8 +50,10 @@ class FuzzyRe2Matcher(object):
     for i in range(len(escaped_q)):
       tmp.append(escaped_q[i])
     flt = "\n.*%s.*\n" % '.*'.join(tmp)
+    return self._search(flt, q, max_hits)
+
+  def _search(self, flt, q, max_hits):
     regex = re.compile(flt)
-    
     hits = []
     truncated = False
     base = 0
@@ -66,6 +69,23 @@ class FuzzyRe2Matcher(object):
       else:
         break
     return (hits, truncated)
+
+class FuzzyRe2PreFBMatcher(object):
+  def __init__(self, files_by_basename, case_sensitive):
+    self.case_sensitive = case_sensitive
+    self.fuzzy = FuzzyRe2Matcher(files_by_basename, case_sensitive)
+
+  def search(self, q, max_hits):
+    if len(q) >= 6:
+      # for long queries, instead of a*b*c do *abc* 
+      if not self.case_sensitive:
+        q = q.lower()
+      # use fuzzy match to find the actual expression, but with less fuzzy expression
+      escaped_q = re.escape(q)
+      flt = "\n.*%s.*\n" % escaped_q
+      return self.fuzzy._search(flt, q, max_hits)
+    else:
+      return self.fuzzy.search(q, max_hits)
 
 class FuzzyFnMatcher(object):
   def __init__(self, files_by_basename, case_sensitive):

@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import optparse
 import os
 import re
 import sys
@@ -66,11 +67,23 @@ def discover(filters):
   return unittest.TestSuite(subsuites)
 
 if __name__ == "__main__":
+  parser = optparse.OptionParser()
+  parser.add_option('--debug', dest='debug', action='store_true', help='Hostname to listen on')
+  (options, args) = parser.parse_args()
+
+  # install hook on set_trace if --debug
+  if options.debug:
+    def hook(*args):
+      import traceback, pdb
+      traceback.print_exception(*args)
+      pdb.pm()
+    sys.excepthook = hook
+
   # make sure cwd is the base quickopen directory!
   os.chdir(os.path.dirname(__file__))
 
-  if len(sys.argv) > 1:
-    suites = discover(sys.argv[1:])
+  if len(args) > 1:
+    suites = discover(args[0])
   else:
     suites = discover(['.*'])
   r = unittest.TextTestRunner()

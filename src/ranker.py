@@ -42,14 +42,15 @@ class Ranker(object):
     start_letters = [hit[i] for i in starts]
 
     # escape the query
-    escaped_q = re.escape(query)
+    escaped_q = re.escape(query.lower())
     # go xyz --> (.*)x(.*)y(.*)z(.*)
     tmp = ['(.*?)']
     for i in range(len(escaped_q)):
       tmp.append('(%s.*)' % escaped_q[i])
     flt = ''.join(tmp)
     m = re.match(flt, hit)
-    assert m
+    if not m:
+      import pdb; pdb.set_trace()
     ngroups = len(tmp) - 1
 
     groups = m.groups()

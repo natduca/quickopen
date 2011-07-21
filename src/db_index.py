@@ -129,18 +129,22 @@ class DBIndex(object):
         truncated |= subtruncated
         hits.extend(subhits)
     else:
-      hits = self.files
+      hits = [(path, 1) for path in self.files]
 
     if dirpart:
       reshits = []
-      for path in hits:
-        dirname = os.path.dirname(path)
+      for hit in hits:
+        dirname = os.path.dirname(hit[0])
         if dirname.endswith(dirpart):
-          reshits.append(path)
+          reshits.append(hit)
       hits = reshits
-        
+
+    # sort by rank
+    hits.sort(lambda x,y: cmp(x[1],y[1]))
+
     res = DynObject()
-    res.hits = hits
+    res.hits = [c[0] for c in hits]
+    res.ranks = [c[1] for c in hits]
     res.truncated = truncated
     return res
     

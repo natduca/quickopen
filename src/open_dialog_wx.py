@@ -38,7 +38,7 @@ class OpenDialogWx(wx.Dialog, OpenDialogBase):
     sizer = wx.BoxSizer(wx.VERTICAL)
 
     top_box = wx.BoxSizer(wx.HORIZONTAL)
-    
+
     rescan_bn = wx.Button(self, -1, "Rescan database")
     rescan_bn.Bind(wx.EVT_BUTTON, lambda *args: self.rescan())
 
@@ -74,7 +74,7 @@ class OpenDialogWx(wx.Dialog, OpenDialogBase):
     outer_sizer = wx.BoxSizer(wx.VERTICAL)
     outer_sizer.Add(sizer, 1, wx.ALL | wx.EXPAND, 8)
     self.SetSizer(outer_sizer)
-    
+
     self._filter_ctrl.SetFocus()
 
     self._timer = wx.Timer(self, -1)
@@ -102,7 +102,7 @@ class OpenDialogWx(wx.Dialog, OpenDialogBase):
       elif code == wx.WXK_DOWN:
         self.move_selection(1)
         return
-    event.Skip()    
+    event.Skip()
 
   def on_evt_text(self,event):
     self.set_filter_text(self._filter_ctrl.GetValue())
@@ -157,7 +157,7 @@ class OpenDialogWx(wx.Dialog, OpenDialogBase):
         self._results_list.SetItemState(cur[0], wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
       else:
         self._results_list.SetItemState(cur[-1], wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
-        
+
     return self._results_list.GetNextSelected(-1)
 
   def get_selected_indices(self):

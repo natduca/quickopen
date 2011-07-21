@@ -16,7 +16,7 @@ import re
 
 class Ranker(object):
   def rank(self, query, hit):
-    return get_num_hits_on_word_starts(query, hit)
+    return self.get_num_hits_on_word_starts(query, hit)
 
   def get_starts(self, word):
     if re.search('_', word):
@@ -67,6 +67,8 @@ class Ranker(object):
     for i in range(1, len(groups)):
       # look for start_letter to the left of group_start[i]
       # that matches groups[i][0]
+      if len(groups[i]) == 0:
+        continue
       letter_to_look_for = groups[i][0]
       leftmost_start_index = group_starts[i]
       for j in range(len(start_letters)):

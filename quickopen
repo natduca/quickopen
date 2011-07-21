@@ -110,7 +110,9 @@ def CMDstatus(parser, args):
 
 def CMDrawsearch(parser, args):
   """Prints the raw database's results for <query>"""
+  parser.add_option('--show-rank', '-r', dest='show_rank', action='store_true', help='Show the ranking of results')
   (options, args) = parser.parse_args(args)
+
   settings = load_settings(options)
   db = open_db(settings, options)
   if len(args) != 1:
@@ -118,8 +120,16 @@ def CMDrawsearch(parser, args):
   if not db.is_syncd:
     print "Database is not fully indexed. Wait a bit or try quickopen status"
     return 255
-  print "\n".join([x for x in db.search(args[0]).hits])
-  return 0
+  res = db.search(args[0])
+  if options.show_rank:
+    combined = [(res.ranks[i],res.hits[i]) for i in range(len(res.hits))]
+    print "\n".join(["%i,%s" % c for c in combined])
+  else:
+    print "\n".join([x for x in res.hits])
+
+  if len(res.hits) > 0:
+    return 0
+  return 255
 
 def load_settings(options):
   settings_file = os.path.expanduser(options.settings)

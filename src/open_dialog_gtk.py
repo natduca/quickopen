@@ -188,7 +188,7 @@ def run(settings, db):
   resp = dlg.run()
   dlg.hide()
   if resp == gtk.RESPONSE_OK:
-    print dlg.selected_files
+    print "\n".join(dlg.selected_files)
 
 if __name__ == "__main__":
   import db_test_base

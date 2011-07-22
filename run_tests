@@ -47,7 +47,7 @@ def discover(filters):
           if re.search(f,name):
             return True
         return False
-
+  
       base_suite = loader.loadTestsFromModule(module)
       new_suite = unittest.TestSuite()
       for t in base_suite:
@@ -82,8 +82,8 @@ if __name__ == "__main__":
   # make sure cwd is the base quickopen directory!
   os.chdir(os.path.dirname(__file__))
 
-  if len(args) > 1:
-    suites = discover(args[0])
+  if len(args) > 0:
+    suites = discover(args)
   else:
     suites = discover(['.*'])
   r = unittest.TextTestRunner()

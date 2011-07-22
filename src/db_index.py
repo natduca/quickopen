@@ -13,15 +13,15 @@
 # limitations under the License.
 import os
 import multiprocessing
-from matchers import *
+import matchers
 
 from dyn_object import DynObject
 
 global slave
 
-def SlaveInit(matcher_name, files_by_basename, case_sensitive):
+def SlaveInit(matcher_name, files_by_basename):
   global slave
-  slave = matchers()[matcher_name](files_by_basename, case_sensitive)
+  slave = matchers.matchers()[matcher_name](files_by_basename)
 
 def SlaveMSearch(query, max_hits):
   assert slave
@@ -67,9 +67,10 @@ class LocalPool(object):
     return Result()
 
 class DBIndex(object):
-  def __init__(self, indexer,matcher_name='FuzRe2'):
-    case_sensitive = False
-    if matcher_name not in matchers():
+  def __init__(self, indexer,matcher_name=None):
+    if not matcher_name:
+      matcher_name = matchers.default_matcher()
+    if matcher_name not in matchers.matchers():
       raise Exception("Unrecognized matcher name")
     N = min(_get_num_cpus(), 4) # test for scaling beyond 4
     self.num_files_indexed = 0
@@ -94,7 +95,7 @@ class DBIndex(object):
     for i in range(len(self.pools)):
       chunk = chunks[i]
       pool = self.pools[i]
-      pool.apply(SlaveInit, (matcher_name, chunk, case_sensitive))
+      pool.apply(SlaveInit, (matcher_name, chunk))
 
   @property
   def status(self):
@@ -120,7 +121,8 @@ class DBIndex(object):
     truncated = False
     if len(basepart):
       result_handles = []
-      max_chunk_hits = max(1, max_hits / len(self.pools))
+      max_chunk_hits = max_hits
+#      max_chunk_hits = max(1, max_hits / len(self.pools))
       for i in range(len(self.pools)):
         pool = self.pools[i]
         result_handles.append(pool.apply_async(SlaveMSearch, (basepart, max_chunk_hits)))

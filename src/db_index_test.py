@@ -18,67 +18,32 @@ import unittest
 import time
 
 FILES_BY_BASENAME = None
-QUERIES = [
-  'warmup',
-  'r',
-  'rw',
-  'rwh',
-  'rwhv',
-  're',
-  'ren',
-  'rend',
-  'rende',
-  'render',
-  'render_',
-  'render_w',
-  'render_wi',
-  'render_widget',
-  'iv',
-  'info_view',
-  'w',
-  'we',
-  'web',
-  'webv',
-  'webvi',
-  'webvie',
-  'webview',
-  'wv',
-  'wvi',
-  'webgraphics'
-  ]
 
-class DBIndexTestBase(object):
-  def __init__(self, test_file):
-    mock_indexer = db_indexer.MockIndexer(test_file)
+class DBIndexTest(unittest.TestCase):
+  def setUp(self):
+    mock_indexer = db_indexer.MockIndexer('test_data/cr_files_by_basename_five_percent.json')
+    self.index = db_index.DBIndex(mock_indexer)
+
+  def test_case_sensitive_query(self):
+    self.assertTrue('~/chrome/src/third_party/tlslite/tlslite/integration/ClientHelper.py' in self.index.search('ClientHelper').hits)
+
+  def test_case_insensitive_query(self):
+    self.assertTrue("~/ndbg/quickopen/src/db_proxy_test.py" in self.index.search('db_proxy_test').hits)
+
+  def test_case_query_with_extension(self):
+    self.assertTrue("~/ndbg/quickopen/src/db_proxy_test.py" in self.index.search('db_proxy_test.py').hits)
+    self.assertTrue('~/chrome/src/third_party/tlslite/tlslite/integration/ClientHelper.py' in self.index.search('ClientHelper.py').hits)
+
+  def test_dir_query(self):
+    self.assertTrue("~/ndbg/quickopen/src/db_proxy_test.py" in self.index.search('src/db_proxy_test.py').hits)
+
+class DBIndexPerfTest():
+  def __init__(self):
     matchers = db_index.matchers()
     self.indexers = {}
     for (mn, m) in matchers.items():
       self.indexers[mn] = db_index.DBIndex(mock_indexer, mn)
 
-class DBIndexTest(unittest.TestCase,DBIndexTestBase):
-  def __init__(self,*args,**kwargs):
-    unittest.TestCase.__init__(self,*args,**kwargs)
-    DBIndexTestBase.__init__(self, 'test_data/cr_files_by_basename_five_percent.json')
-
-  def test_matchers_agree_on_all_queries(self):
-    for q in QUERIES:
-      res = []
-      for mn,i in self.indexers.items():
-        res.append(i.search(q,max_hits=sys.maxint))
-
-      for i in range(1,len(res)):
-        a = set(res[i-1].hits)
-        b = set(res[i].hits)
-        if a != b:
-          # debug only
-          a_name = db_index.matchers().keys()[i-1]
-          b_name = db_index.matchers().keys()[i]
-          in_a = a.difference(b)
-          in_b = b.difference(a)
-          import pdb; pdb.set_trace()
-          self.assertTrue(False)
-
-class DBIndexPerfTest(DBIndexTestBase):
   def test_matcher_perf(self,max_hits):
     header_rec = ["  %15s "]
     header_data = ["query"]
@@ -88,6 +53,35 @@ class DBIndexPerfTest(DBIndexTestBase):
       header_data.append(mn)
       entry_rec.append("%10.4f")
     print ' '.join(header_rec) % tuple(header_data)
+
+    PERF_QUERIES = [
+    'warmup',
+      'r',
+      'rw',
+      'rwh',
+      'rwhv',
+      're',
+      'ren',
+      'rend',
+      'rende',
+      'render',
+      'render_',
+      'render_w',
+      'render_wi',
+      'render_widget',
+      'iv',
+      'info_view',
+      'w',
+      'we',
+      'web',
+      'webv',
+      'webvi',
+      'webvie',
+      'webview',
+      'wv',
+      'wvi',
+      'webgraphics'
+    ]
     for q in QUERIES:
       entry_data = [q]
       for mn,i in self.indexers.items():

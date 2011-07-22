@@ -39,6 +39,7 @@ class RankerTest(unittest.TestCase):
 
   def test_query_hits_on_word_starts(self):
     self.assertEquals(5, self.ranker.get_num_hits_on_word_starts('rwhv', 'render_widget_host_view.cc'))
+    self.assertEquals(3, self.ranker.get_num_hits_on_word_starts('wvi', 'render_widget_host_view_win.cc')) # eew
     self.assertEquals(2, self.ranker.get_num_hits_on_word_starts('w', 'WebViewImpl.cc'))
     self.assertEquals(1, self.ranker.get_num_hits_on_word_starts('v', 'WebViewImpl.cc'))
     self.assertEquals(3, self.ranker.get_num_hits_on_word_starts('wv', 'WebViewImpl.cc'))

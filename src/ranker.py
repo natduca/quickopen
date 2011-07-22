@@ -42,11 +42,11 @@ class Ranker(object):
     start_letters = [hit[i] for i in starts]
 
     # escape the query
-    escaped_q = re.escape(query.lower())
+    lower_query = query.lower()
     # go xyz --> (.*)x(.*)y(.*)z(.*)
     tmp = ['(.*?)']
-    for i in range(len(escaped_q)):
-      tmp.append('(%s.*)' % escaped_q[i])
+    for i in range(len(lower_query)):
+      tmp.append('(%s.*)' % re.escape(lower_query[i]))
     flt = ''.join(tmp)
     m = re.match(flt, hit)
     if not m:

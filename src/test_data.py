@@ -46,6 +46,9 @@ class TestData(object):
     assert ret == 0
     os.chdir(oldcwd)
 
+  def path_to(self, subpath):
+    return os.path.join(self.test_data_dir, subpath)
+    
   def system(self, cmd):
     args = shlex.split(cmd)
     p = subprocess.Popen(args,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
@@ -55,4 +58,4 @@ class TestData(object):
   def close(self):
     if os.path.exists(self.test_data_dir):
       self.system('rm -rf %s' % self.test_data_dir)
-
+    self.test_data_dir = None

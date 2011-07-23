@@ -13,11 +13,11 @@
 # limitations under the License.
 import hashlib
 import os
-import time
 import fnmatch
 
 from db_index import DBIndex
 from db_indexer import DBIndexer
+from dir_cache import DirCache
 from dyn_object import DynObject
 from event import Event
 
@@ -57,7 +57,7 @@ class DB(object):
     self._pending_indexer = None # non-None if a DBIndex is running
     self._cur_index = None # the last DBIndex object --> actually runs the searches
 
-    self._dir_cache = _DirCache() # thread only state
+    self._dir_cache = DirCache() # thread only state
 
 
     self.settings.register('dirs', list, [], self._on_settings_dirs_changed)
@@ -172,57 +172,4 @@ class DB(object):
         raise NotSyncdException("DB not syncd")
 
     return self._cur_index.search(query)
-
-class _DirEnt(object):
-  def __init__(self, st_mtime, ents):
-    self.st_mtime = st_mtime
-    self.ents = ents
-
-class _DirCache(object):
-  def __init__(self):
-    self.dirs = dict()
-    self.rel_to_real = dict()
-    self.ignores = []
-
-  def set_ignores(self, ignores):
-    if self.ignores != ignores:
-      self.dirs = dict()
-      self.ignores = ignores
-
-  def reset_realpath_cache(self):
-    self.rel_to_real = dict()
-
-  def realpath(self, d):
-    if d in self.rel_to_real:
-      return self.rel_to_real[d]
-    else:
-      r = os.path.realpath(d)
-      self.rel_to_real[d] = r
-      return r
-
-  def is_ignored(self, f):
-    for i in self.ignores:
-      if fnmatch.fnmatch(f, i):
-        return True
-    return False
-
-  def listdir(self, d):
-    """Lists contents of a dir, but only using its realpath."""
-    if d in self.dirs:
-      de = self.dirs[d]
-      if os.stat(d).st_mtime == de.st_mtime:
-        return de.ents
-      else:
-        logging.info("directory %s changed", d)
-        del self.dirs[d]
-    st_mtime = os.stat(d).st_mtime
-    try:
-      ents = os.listdir(d)
-    except OSError:
-      ents = []
-
-    ents = [e for e in ents if not self.is_ignored(e)]
-    de = _DirEnt(st_mtime, ents)
-    self.dirs[d] = de
-    return de.ents
 

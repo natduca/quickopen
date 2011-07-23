@@ -23,9 +23,13 @@ def SlaveInit(matcher_name, files_by_basename):
   global slave
   slave = matchers.matchers()[matcher_name](files_by_basename)
 
-def SlaveMSearch(query, max_hits):
+def SlaveSearchBasenames(query, max_hits):
   assert slave
-  return slave.search( query, max_hits)
+  return slave.search_basenames(query, max_hits)
+
+def SlaveSearchFilesInDirectoriesEndingWith(query, max_hits):
+  assert slave
+  return slave.search_files_in_directories_ending_with(query, max_hits)
 
 def _get_num_cpus():
    """
@@ -119,19 +123,28 @@ class DBIndex(object):
     
     hits = []
     truncated = False
+    max_chunk_hits = max(1, max_hits / len(self.pools))
     if len(basepart):
       result_handles = []
-      max_chunk_hits = max_hits
-#      max_chunk_hits = max(1, max_hits / len(self.pools))
       for i in range(len(self.pools)):
         pool = self.pools[i]
-        result_handles.append(pool.apply_async(SlaveMSearch, (basepart, max_chunk_hits)))
+        result_handles.append(pool.apply_async(SlaveSearchBasenames, (basepart, max_chunk_hits)))
       for h in result_handles:
         (subhits, subtruncated) = h.get()
         truncated |= subtruncated
         hits.extend(subhits)
     else:
-      hits = [(path, 1) for path in self.files]
+      if len(dirpart):
+        result_handles = []
+        for i in range(len(self.pools)):
+          pool = self.pools[i]
+          result_handles.append(pool.apply_async(SlaveSearchFilesInDirectoriesEndingWith, (dirpart, max_chunk_hits)))
+        for h in result_handles:
+          (subhits, subtruncated) = h.get()
+          truncated |= subtruncated
+          hits.extend(subhits)
+      else:
+        hits = []
 
     if dirpart:
       reshits = []

@@ -26,3 +26,10 @@ class DirCacheTest(unittest.TestCase):
     c = DirCache()
     # shoudl not raise exception
     c.listdir(self.test_data.path_to('xxx'))
+
+  def test_listdir_when_gone(self):
+    c = DirCache()
+    something = self.test_data.path_to('something');
+    c.listdir(something)
+    self.test_data.rm_rf(something)
+    self.assertEquals([], c.listdir(self.test_data.path_to('something')))

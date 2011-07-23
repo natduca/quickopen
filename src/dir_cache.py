@@ -13,6 +13,7 @@
 # limitations under the License.
 import os
 import fnmatch
+import logging
 
 class DirEnt(object):
   def __init__(self, st_mtime, ents):
@@ -51,18 +52,25 @@ class DirCache(object):
     """Lists contents of a dir, but only using its realpath."""
     if d in self.dirs:
       de = self.dirs[d]
-      if os.stat(d).st_mtime == de.st_mtime:
+      try:
+        st_mtime = os.stat(d).st_mtime
+      except OSError:
+        st_mtime = 0
+        del self.dirs[d]
+        logging.debug("directory %s gone", d)
+        return []
+
+      if st_mtime == de.st_mtime:
         return de.ents
       else:
-        logging.info("directory %s changed", d)
+        logging.debug("directory %s changed", d)
         del self.dirs[d]
     try:
       st = os.stat(d)
       st_mtime = st.st_mtime
       ents = os.listdir(d)
     except OSError:
-      ents = []
-      st_mtime = 0
+      return []
 
     ents = [e for e in ents if not self.is_ignored(e)]
     de = DirEnt(st_mtime, ents)

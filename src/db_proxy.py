@@ -81,9 +81,11 @@ class DBProxy(object):
     if not self.conn:
       if self._start_if_needed:
         self.try_to_start_quickopend()
-        self._start_if_needed = False # dont do it twice
+        self._start_if_needed = False # dont try to autostart again
       self.conn = httplib.HTTPConnection(self.host, self.port, True)
       self.conn.request(method, path, data)
+    else:
+      self._start_if_needed = False # if a request succeds, dont trigger autostart
     res = self.conn.getresponse()
     if res.status != 200:
       raise Exception("On %s, got %s" % (path, res.status))

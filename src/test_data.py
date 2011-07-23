@@ -21,7 +21,7 @@ class TestData(object):
     # create a directory hierarchy to do tests in
     self.test_data_dir = os.path.realpath(os.path.join(tempfile.gettempdir(), 'db_test'))
     if os.path.exists(self.test_data_dir):
-      self.system('rm -rf %s' % self.test_data_dir)
+      self.rm_rf(self.test_data_dir)
     self.system('cp -r ./test_data/ %s' % self.test_data_dir)
 
     # dir symlink project1_symlink to project1
@@ -55,7 +55,11 @@ class TestData(object):
     p.communicate()
     return p.returncode
     
+  def rm_rf(self, dirname):
+    assert os.path.exists(dirname)
+    self.system('rm -rf -- %s' % dirname)
+
   def close(self):
     if os.path.exists(self.test_data_dir):
-      self.system('rm -rf %s' % self.test_data_dir)
+      self.rm_rf(self.test_data_dir)
     self.test_data_dir = None

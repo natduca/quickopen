@@ -13,7 +13,6 @@
 # limitations under the License.
 import hashlib
 import os
-import fnmatch
 
 from db_index import DBIndex
 from db_indexer import DBIndexer

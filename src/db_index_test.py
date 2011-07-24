@@ -50,20 +50,10 @@ class DBIndexTest(unittest.TestCase):
 
 class DBIndexPerfTest():
   def __init__(self):
-    matchers = db_index.matchers()
-    self.indexers = {}
-    for (mn, m) in matchers.items():
-      self.indexers[mn] = db_index.DBIndex(mock_indexer, mn)
+    self.index = db_index.DBIndex(mock_indexer)
 
   def test_matcher_perf(self,max_hits):
-    header_rec = ["  %15s "]
-    header_data = ["query"]
-    entry_rec = ["  %15s "]
-    for mn in self.indexers.keys():
-      header_rec.append("%10s")
-      header_data.append(mn)
-      entry_rec.append("%10.4f")
-    print ' '.join(header_rec) % tuple(header_data)
+    print "%15s %s" % ("query", "time")
 
     PERF_QUERIES = [
     'warmup',
@@ -94,13 +84,10 @@ class DBIndexPerfTest():
       'webgraphics'
     ]
     for q in QUERIES:
-      entry_data = [q]
-      for mn,i in self.indexers.items():
-        start = time.time()
-        i.search(q,max_hits)
-        elapsed = time.time() - start
-        entry_data.append(elapsed)
-      print ' '.join(entry_rec) % tuple(entry_data)
+      start = time.time()
+      self.indexer.search(q,max_hits)
+      elapsed = time.time() - start
+      print '%15s %.3f' % (q ,elapsed)
       
 if __name__ == '__main__':
   test = DBIndexPerfTest('test_data/cr_files_by_basename.json')

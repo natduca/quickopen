@@ -19,9 +19,9 @@ from dyn_object import DynObject
 
 global slave
 
-def SlaveInit(matcher_name, files_by_basename):
+def SlaveInit(files_by_basename):
   global slave
-  slave = matchers.matchers()[matcher_name](files_by_basename)
+  slave = matchers.Matcher(files_by_basename)
 
 def SlaveSearchBasenames(query, max_hits):
   assert slave
@@ -57,53 +57,48 @@ class LocalPool(object):
   def __init__(self, n):
     assert n == 1
 
-  def apply(self, fn, args=[]):
+  def apply(self, fn, args=()):
     return fn(*args)
 
-  def apply_async(self, fn, args=[]):
+  def apply_async(self, fn, args=()):
     class Result(object):
       def get(self):
         return fn(*args)
     return Result()
 
 class DBIndex(object):
-  def __init__(self, indexer,matcher_name=None):
+  def __init__(self, indexer):
     self.files = []
-    for basename,files_with_basename in indexer.files_by_basename.items():
+    self.files_by_basename = indexer.files_by_basename
+    for basename,files_with_basename in self.files_by_basename.items():
       self.files.extend(files_with_basename)
 
-    if not matcher_name:
-      matcher_name = matchers.default_matcher()
-    if matcher_name not in matchers.matchers():
-      raise Exception("Unrecognized matcher name")
     N = min(_get_num_cpus(), 4) # test for scaling beyond 4
-    self.num_files_indexed = 0
     def makeChunks(items, N):
       base = 0
-      chunksize = len(indexer.files_by_basename) / N
+      chunksize = len(items) / N
       if chunksize == 0:
         chunksize = 1
       chunks = []
       for i in range(N):
         chunk = dict()
         for j in items[base:base+chunksize]:
-          self.num_files_indexed += len(j[1])
           chunk[j[0]] = j[1]
         base += chunksize
         chunks.append(chunk)
       return chunks
-    chunks = makeChunks(list(indexer.files_by_basename.items()), N)
+    chunks = makeChunks(list(self.files_by_basename.items()), N)
 
     self.pools = [LocalPool(1)]
     self.pools.extend([multiprocessing.Pool(1) for x in range(len(chunks)-1)])
     for i in range(len(self.pools)):
       chunk = chunks[i]
       pool = self.pools[i]
-      pool.apply(SlaveInit, (matcher_name, chunk))
+      pool.apply(SlaveInit, (chunk,))
 
   @property
   def status(self):
-    return "%i files indexed; %i-threaded searches" % (self.num_files_indexed, len(self.pools))
+    return "%i files indexed; %i-threaded searches" % (len(self.files), len(self.pools))
 
   def close(self):
     self.pool.close()

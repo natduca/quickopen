@@ -50,7 +50,8 @@ class DBIndexTest(unittest.TestCase):
     self.assertTrue("~/ndbg/quickopen/src/db_proxy_test.py" in self.index.search('src/db_proxy_test.py').hits)
 
 class DBIndexPerfTest():
-  def __init__(self):
+  def __init__(self, testfile):
+    mock_indexer = db_indexer.MockIndexer(testfile)
     self.index = db_index.DBIndex(mock_indexer)
 
   def test_matcher_perf(self,max_hits):
@@ -84,9 +85,9 @@ class DBIndexPerfTest():
       'wvi',
       'webgraphics'
     ]
-    for q in QUERIES:
+    for q in PERF_QUERIES:
       start = time.time()
-      self.indexer.search(q,max_hits)
+      self.index.search(q,max_hits)
       elapsed = time.time() - start
       print '%15s %.3f' % (q ,elapsed)
       

@@ -27,10 +27,6 @@ def SlaveSearchBasenames(query, max_hits):
   assert slave
   return slave.search_basenames(query, max_hits)
 
-def SlaveSearchFilesInDirectoriesEndingWith(query, max_hits):
-  assert slave
-  return slave.search_files_in_directories_ending_with(query, max_hits)
-
 def _get_num_cpus():
    """
    Detects the number of CPUs on a system. Cribbed from 
@@ -72,6 +68,10 @@ class LocalPool(object):
 
 class DBIndex(object):
   def __init__(self, indexer,matcher_name=None):
+    self.files = []
+    for basename,files_with_basename in indexer.files_by_basename.items():
+      self.files.extend(files_with_basename)
+
     if not matcher_name:
       matcher_name = matchers.default_matcher()
     if matcher_name not in matchers.matchers():
@@ -135,14 +135,7 @@ class DBIndex(object):
         hits.extend(subhits)
     else:
       if len(dirpart):
-        result_handles = []
-        for i in range(len(self.pools)):
-          pool = self.pools[i]
-          result_handles.append(pool.apply_async(SlaveSearchFilesInDirectoriesEndingWith, (dirpart, max_chunk_hits)))
-        for h in result_handles:
-          (subhits, subtruncated) = h.get()
-          truncated |= subtruncated
-          hits.extend(subhits)
+        hits.extend([(f, 1) for f in self.files])
       else:
         hits = []
 

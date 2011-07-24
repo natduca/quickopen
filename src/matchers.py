@@ -29,14 +29,12 @@ def default_matcher():
 class FuzzyFnMatcher(object):
   def __init__(self, files_by_basename):
     self.files_by_basename = []
-    self.files = []
     self.files_associated_with_basename = []
     for basename,files_with_basename in files_by_basename.items():
       idx_of_first_file = len(self.files)
       self.files_by_basename.append(basename.lower())
       self.files_associated_with_basename.append(idx_of_first_file)
       self.files_associated_with_basename.append(len(files_with_basename))
-      self.files.extend(files_with_basename)
 
   def get_filter(self, query, lower_query):
     tmp = ['*']
@@ -45,9 +43,6 @@ class FuzzyFnMatcher(object):
     tmp.append('*')
     flt = '*'.join(tmp)
     return flt
-
-  def search_files_in_directories_ending_with(self, query):
-    return ([(path, 1) for path in self.files], False)
 
   def search_basenames(self, query, max_hits):
     lower_query = query.lower()
@@ -84,9 +79,6 @@ class OneBigStringRegexpMatcher(object):
       self.files.extend(files)
       self.basenames_unsplit = ("\n" + "\n".join(self.files_by_basename.keys()) + "\n").encode('utf8')
     assert type(self.basenames_unsplit) == str
-
-  def search_files_in_directories_ending_with(self, query, max_hits):
-    return ([(path, 1) for path in self.files],False)
 
   def search_basenames(self, query, max_hits):
     # fuzzy match expression

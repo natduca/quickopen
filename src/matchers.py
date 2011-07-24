@@ -38,6 +38,7 @@ class Matcher(object):
     hits = dict()
 
     # word starts first
+    self.add_all_matching( hits, query, self.get_camelcase_wordstart_filter(lower_query), max_hits, case_sensitive=True )
     self.add_all_matching( hits, query, self.get_delimited_wordstart_filter(lower_query), max_hits, case_sensitive=False )
 
     # add in superfuzzy matches
@@ -47,14 +48,24 @@ class Matcher(object):
 
   def get_delimited_wordstart_filter(self, query):
     query = re.escape(query)
-    # abc -> _a _b _c
-    #        a _b _c
+    # abc -> ^a.*_b.*_c
+    # abc -> .*_a.*_b.*_c
     tmp = []
     tmp.append("((^%s)|(.*_%s))" % (query[0], query[0]))
     for i in range(len(query)-1):
       c = query[i]
       tmp.append("_%s" % query[i])
     flt = "\n%s.*\n" % '.*'.join(tmp)
+    return flt
+
+  def get_camelcase_wordstart_filter(self, query):
+    query = re.escape(query.upper())
+    # abc -> A.*B.*C
+    #        .*[^A-Z]A.*
+    tmp = []
+    for i in range(len(query)):
+      tmp.append("[^A-Z]%s" % query[i])
+    flt = "\n.*%s.*\n" % '.*'.join(tmp)
     return flt
 
   def get_superfuzzy_filter(self, query):
@@ -77,7 +88,12 @@ class Matcher(object):
       if m:
         hit = m.group(0)[1:-1]
         rank = ranker.rank(query, hit)
-        hits[hit] = rank
+        if case_sensitive:
+          hit = hit.lower()
+        if hit in hits:
+          hits[hit] = max(hits[hit],rank)
+        else:
+          hits[hit] = rank
         base = m.end() - 1
         if len(hits) > max_hits:
           truncated = True

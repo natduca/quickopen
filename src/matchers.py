@@ -22,21 +22,40 @@ class Matcher(object):
     self.basenames_unsplit = ("\n" + "\n".join(self.files_by_basename.keys()) + "\n").encode('utf8')
     assert type(self.basenames_unsplit) == str
 
-  def get_filter(self, query):
+  def search_basenames(self, query, max_hits):
+    lower_query = query.lower()
+
+    hits = dict()
+
+    # word starts first
+    self.add_all_matching( hits, query, self.get_delimited_wordstart_filter(lower_query), max_hits )
+
+    # add in superfuzzy matches
+    self.add_all_matching( hits, query, self.get_superfuzzy_filter(lower_query), max_hits )
+
+    return hits, len(hits) == max_hits
+
+  def get_delimited_wordstart_filter(self, query):
+    query = re.escape(query)
+    # abc -> _a _b _c
+    #        a _b _c
+    tmp = []
+    tmp.append("((^%s)|(.*_%s))" % (query[0], query[0]))
+    for i in range(len(query)-1):
+      c = query[i]
+      tmp.append("_%s" % query[i])
+    flt = "\n%s.*\n" % '.*'.join(tmp)
+    return flt
+
+  def get_superfuzzy_filter(self, query):
     tmp = []
     for i in range(len(query)):
       tmp.append(re.escape(query[i]))
     flt = "\n.*%s.*\n" % '.*'.join(tmp)
     return flt
 
-  def search_basenames(self, query, max_hits):
-    # fuzzy match expression
-    lower_query = query.lower()
-
-    flt = self.get_filter(lower_query)
+  def add_all_matching(self, hits, query, flt, max_hits):
     regex = re.compile(flt)
-    hits = dict()
-    truncated = False
     base = 0
     ranker = Ranker()
     while True:
@@ -51,4 +70,3 @@ class Matcher(object):
           break
       else:
         break
-    return (hits, truncated)

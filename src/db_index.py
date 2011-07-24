@@ -69,13 +69,13 @@ class LocalPool(object):
 class DBIndex(object):
   def __init__(self, indexer):
     self.files = []
-    self.files_by_basename = dict()
+    self.files_by_lower_basename = dict()
     for basename,files_with_basename in indexer.files_by_basename.items():
       lower_basename = basename.lower()
-      if lower_basename in self.files_by_basename:
-        self.files_by_basename[lower_basename].extend(files_with_basename)
+      if lower_basename in self.files_by_lower_basename:
+        self.files_by_lower_basename[lower_basename].extend(files_with_basename)
       else:
-        self.files_by_basename[lower_basename] = files_with_basename
+        self.files_by_lower_basename[lower_basename] = files_with_basename
       self.files.extend(files_with_basename)
 
     N = min(_get_num_cpus(), 4) # test for scaling beyond 4
@@ -92,7 +92,7 @@ class DBIndex(object):
         base += chunksize
         chunks.append(chunk)
       return chunks
-    chunks = makeChunks(list(self.files_by_basename.items()), N)
+    chunks = makeChunks(list(indexer.files_by_basename.items()), N)
 
     self.pools = [LocalPool(1)]
     self.pools.extend([multiprocessing.Pool(1) for x in range(len(chunks)-1)])
@@ -139,7 +139,7 @@ class DBIndex(object):
           else:
             base_hits[hit] = rank
       for hit,rank in base_hits.items():
-        files = self.files_by_basename[hit]
+        files = self.files_by_lower_basename[hit]
         for f in files:
           hits.append((f,rank))
     else:

@@ -19,8 +19,18 @@ from ranker import Ranker
 class Matcher(object):
   def __init__(self, files_by_basename):
     self.files_by_basename = files_by_basename
+
+    self.files_by_lower_basename = dict()
+    for basename,files_with_basename in files_by_basename.items():
+      lower_basename = basename.lower()
+      if lower_basename in self.files_by_lower_basename:
+        self.files_by_lower_basename[lower_basename].extend(files_with_basename)
+      else:
+        self.files_by_lower_basename[lower_basename] = files_with_basename
+
     self.basenames_unsplit = ("\n" + "\n".join(self.files_by_basename.keys()) + "\n").encode('utf8')
-    assert type(self.basenames_unsplit) == str
+    self.lower_basenames_unsplit = ("\n" + "\n".join(self.files_by_lower_basename.keys()) + "\n").encode('utf8')
+    assert type(self.lower_basenames_unsplit) == str
 
   def search_basenames(self, query, max_hits):
     lower_query = query.lower()
@@ -28,10 +38,10 @@ class Matcher(object):
     hits = dict()
 
     # word starts first
-    self.add_all_matching( hits, query, self.get_delimited_wordstart_filter(lower_query), max_hits )
+    self.add_all_matching( hits, query, self.get_delimited_wordstart_filter(lower_query), max_hits, case_sensitive=False )
 
     # add in superfuzzy matches
-    self.add_all_matching( hits, query, self.get_superfuzzy_filter(lower_query), max_hits )
+    self.add_all_matching( hits, query, self.get_superfuzzy_filter(lower_query), max_hits, case_sensitive=False )
 
     return hits, len(hits) == max_hits
 
@@ -54,12 +64,16 @@ class Matcher(object):
     flt = "\n.*%s.*\n" % '.*'.join(tmp)
     return flt
 
-  def add_all_matching(self, hits, query, flt, max_hits):
+  def add_all_matching(self, hits, query, flt, max_hits, case_sensitive):
     regex = re.compile(flt)
     base = 0
     ranker = Ranker()
+    if not case_sensitive:
+      index = self.lower_basenames_unsplit
+    else:
+      index = self.basenames_unsplit
     while True:
-      m = regex.search(self.basenames_unsplit, base)
+      m = regex.search(index, base)
       if m:
         hit = m.group(0)[1:-1]
         rank = ranker.rank(query, hit)

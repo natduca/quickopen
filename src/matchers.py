@@ -18,24 +18,14 @@ from ranker import Ranker
 
 class Matcher(object):
   def __init__(self, files_by_basename):
-    self.files_by_basename = {}
-    self.files = []
-    basenames = files_by_basename.keys()
-    basenames.sort()
-    for bn in basenames:
-      lbn = bn.lower()
-      if lbn not in self.files_by_basename:
-        self.files_by_basename[lbn] = []
-      files = files_by_basename[bn]
-      self.files_by_basename[lbn].extend(files)
-      self.files.extend(files)
-      self.basenames_unsplit = ("\n" + "\n".join(self.files_by_basename.keys()) + "\n").encode('utf8')
+    self.files_by_basename = files_by_basename
+    self.basenames_unsplit = ("\n" + "\n".join(self.files_by_basename.keys()) + "\n").encode('utf8')
     assert type(self.basenames_unsplit) == str
 
-  def get_filter(self, query, lower_query):
+  def get_filter(self, query):
     tmp = []
     for i in range(len(query)):
-      tmp.append(re.escape(lower_query[i]))
+      tmp.append(re.escape(query[i]))
     flt = "\n.*%s.*\n" % '.*'.join(tmp)
     return flt
 
@@ -43,9 +33,9 @@ class Matcher(object):
     # fuzzy match expression
     lower_query = query.lower()
 
-    flt = self.get_filter(query, lower_query)
+    flt = self.get_filter(lower_query)
     regex = re.compile(flt)
-    hits = []
+    hits = dict()
     truncated = False
     base = 0
     ranker = Ranker()
@@ -54,7 +44,7 @@ class Matcher(object):
       if m:
         hit = m.group(0)[1:-1]
         rank = ranker.rank(query, hit)
-        hits.extend([(h, rank) for h in self.files_by_basename[hit]])
+        hits[hit] = rank
         base = m.end() - 1
         if len(hits) > max_hits:
           truncated = True

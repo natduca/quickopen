@@ -69,8 +69,13 @@ class LocalPool(object):
 class DBIndex(object):
   def __init__(self, indexer):
     self.files = []
-    self.files_by_basename = indexer.files_by_basename
-    for basename,files_with_basename in self.files_by_basename.items():
+    self.files_by_basename = dict()
+    for basename,files_with_basename in indexer.files_by_basename.items():
+      lower_basename = basename.lower()
+      if lower_basename in self.files_by_basename:
+        self.files_by_basename[lower_basename].extend(files_with_basename)
+      else:
+        self.files_by_basename[lower_basename] = files_with_basename
       self.files.extend(files_with_basename)
 
     N = min(_get_num_cpus(), 4) # test for scaling beyond 4
@@ -121,13 +126,22 @@ class DBIndex(object):
     max_chunk_hits = max(1, max_hits / len(self.pools))
     if len(basepart):
       result_handles = []
+      base_hits = dict()
       for i in range(len(self.pools)):
         pool = self.pools[i]
         result_handles.append(pool.apply_async(SlaveSearchBasenames, (basepart, max_chunk_hits)))
       for h in result_handles:
         (subhits, subtruncated) = h.get()
         truncated |= subtruncated
-        hits.extend(subhits)
+        for hit,rank in subhits.items():
+          if hit in base_hits:
+            base_hits[hit] = max(base_hits[hit],rank)
+          else:
+            base_hits[hit] = rank
+      for hit,rank in base_hits.items():
+        files = self.files_by_basename[hit]
+        for f in files:
+          hits.append((f,rank))
     else:
       if len(dirpart):
         hits.extend([(f, 1) for f in self.files])
@@ -136,9 +150,10 @@ class DBIndex(object):
 
     if dirpart:
       reshits = []
+      lower_dirpart = dirpart.lower()
       for hit in hits:
         dirname = os.path.dirname(hit[0])
-        if dirname.endswith(dirpart):
+        if dirname.endswith(lower_dirpart):
           reshits.append(hit)
       hits = reshits
 

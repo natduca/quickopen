@@ -37,6 +37,9 @@ class RankerTest(unittest.TestCase):
       starts = self.ranker.get_starts(word)
       self.assertEquals(expected_starts, starts)
 
+  def test_tricky_situations(self):
+    self.assertEquals(2, self.ranker.rank('test_thread_tab.py', 'tw'))
+
   def test_query_hits_on_word_starts(self):
     self.assertEquals(5, self.ranker.get_num_hits_on_word_starts('rwhv', 'render_widget_host_view.cc'))
     self.assertEquals(3, self.ranker.get_num_hits_on_word_starts('wvi', 'render_widget_host_view_win.cc')) # eew

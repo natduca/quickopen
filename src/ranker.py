@@ -50,7 +50,9 @@ class Ranker(object):
     flt = ''.join(tmp)
     m = re.match(flt, hit)
     if not m:
-      import pdb; pdb.set_trace()
+      if len(query):
+        return  self.rank(query[:-1],hit)
+      return 0
     ngroups = len(tmp) - 1
 
     groups = m.groups()

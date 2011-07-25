@@ -38,6 +38,7 @@ class Matcher(object):
     hits = dict()
 
     # word starts first
+    import pdb; pdb.set_trace()
     self.add_all_matching( hits, query, self.get_camelcase_wordstart_filter(lower_query), max_hits, case_sensitive=True )
     self.add_all_matching( hits, query, self.get_delimited_wordstart_filter(lower_query), max_hits, case_sensitive=False )
 
@@ -51,7 +52,7 @@ class Matcher(object):
     # abc -> ^a.*_b.*_c
     # abc -> .*_a.*_b.*_c
     tmp = []
-    tmp.append("((^%s)|(.*_%s))" % (query[0], query[0]))
+    tmp.append("(?:(?:^%s)|(?:.*_%s))" % (query[0], query[0]))
     for i in range(len(query)-1):
       c = query[i]
       tmp.append("_%s" % query[i])
@@ -64,7 +65,7 @@ class Matcher(object):
     #        .*[^A-Z]A.*
     tmp = []
     for i in range(len(query)):
-      tmp.append("[^A-Z]%s" % query[i])
+      tmp.append("[^A-Z\n]%s" % query[i])
     flt = "\n.*%s.*\n" % '.*'.join(tmp)
     return flt
 
@@ -87,6 +88,8 @@ class Matcher(object):
       m = regex.search(index, base)
       if m:
         hit = m.group(0)[1:-1]
+        if hit.find('\n') != -1:
+          raise Exception("Somethign is messed up with flt=[%s] query=[%s] hit=[%s]" % (flt,query,hit))
         rank = ranker.rank(query, hit)
         if case_sensitive:
           hit = hit.lower()

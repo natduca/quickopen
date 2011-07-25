@@ -23,6 +23,7 @@ class RankerTest(unittest.TestCase):
   def test_get_word_starts(self):
     data = {
 #      01234567
+      '' : [],
       'abc' : [0],
       'abd_def' : [0, 4],
       'ab_cd_ef' : [0, 3, 6],
@@ -38,6 +39,8 @@ class RankerTest(unittest.TestCase):
       self.assertEquals(expected_starts, starts)
 
   def test_tricky_situations(self):
+    self.assertEquals(0, self.ranker.rank('foo', ''))
+    self.assertEquals(0, self.ranker.rank('foo', 't'))
     self.assertEquals(2, self.ranker.rank('test_thread_tab.py', 'tw'))
 
   def test_query_hits_on_word_starts(self):

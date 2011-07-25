@@ -27,6 +27,13 @@ class DBIndexTest(unittest.TestCase):
   def test_case_sensitive_query(self):
     self.assertTrue('~/chrome/src/third_party/tlslite/tlslite/integration/ClientHelper.py' in self.index.search('ClientHelper').hits)
 
+  def test_wordstart_query(self):
+    self.assertTrue('~/chrome/src/content/browser/renderer_host/render_widget_host_gtk.cc' in self.index.search('rwh').hits)
+    self.assertTrue('~/chrome/src/content/browser/renderer_host/render_widget_host_gtk.cc' in self.index.search('rwhg').hits)
+
+    self.assertTrue('~/chrome/src/third_party/WebKit/Source/WebCore/css/MediaFeatureNames.cpp' in self.index.search('mfn').hits)
+    self.assertTrue('~/chrome/src/third_party/WebKit/Source/WebCore/css/MediaFeatureNames.cpp' in self.index.search('MFN').hits)
+
   def test_case_insensitive_query(self):
     self.assertTrue("~/ndbg/quickopen/src/db_proxy_test.py" in self.index.search('db_proxy_test').hits)
 

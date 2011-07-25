@@ -38,7 +38,7 @@ class Matcher(object):
     hits = dict()
 
     # word starts first
-    import pdb; pdb.set_trace()
+    #import pdb; pdb.set_trace()
     self.add_all_matching( hits, query, self.get_camelcase_wordstart_filter(lower_query), max_hits, case_sensitive=True )
     self.add_all_matching( hits, query, self.get_delimited_wordstart_filter(lower_query), max_hits, case_sensitive=False )
 

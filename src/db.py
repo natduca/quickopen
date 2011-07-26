@@ -20,8 +20,12 @@ from dir_cache import DirCache
 from dyn_object import DynObject
 from event import Event
 
-DEFAULT_IGNORE=[
+DEFAULT_IGNORES=[
   ".*",
+  ".o",
+  ".obj",
+  ".pyc",
+  ".pyo",
 ]
 
 """
@@ -62,7 +66,10 @@ class DB(object):
     self.settings.register('dirs', list, [], self._on_settings_dirs_changed)
     self._on_settings_dirs_changed(None, self.settings.dirs)
 
-    self.settings.register('ignores', list, DEFAULT_IGNORE, self._on_settings_ignores_changed)
+    self.settings.register('ignores', list, [], self._on_settings_ignores_changed)
+    if self.settings.ignores == []:
+	self.settings.ignores = DEFAULT_IGNORES;
+
     self._on_settings_ignores_changed(None, self.settings.ignores)
 
   ###########################################################################

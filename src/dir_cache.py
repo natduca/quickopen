@@ -29,7 +29,7 @@ class DirCache(object):
   def set_ignores(self, ignores):
     if self.ignores != ignores:
       self.dirs = dict()
-      self.ignores = ignores
+      self.ignores = [os.path.expanduser(i) for i in ignores]
 
   def reset_realpath_cache(self):
     self.rel_to_real = dict()

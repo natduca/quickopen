@@ -44,9 +44,9 @@ class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
       column.set_cell_data_func(text_cell_renderer, lambda column, cell, model, iter: cell.set_property('text', accessor_cb(model.get(iter,0)[0])))
       treeview.append_column(column)
       return column
-    add_column("Rank",lambda obj: obj[0])
-    add_column("File",lambda obj: os.path.basename(obj[1]))
-    add_column("Path",lambda obj: os.path.dirname(obj[1]))
+    add_column("Rank",lambda obj: obj[1])
+    add_column("File",lambda obj: os.path.basename(obj[0]))
+    add_column("Path",lambda obj: os.path.dirname(obj[0]))
 
     self.connect('destroy', self.on_destroy)
 
@@ -152,7 +152,7 @@ class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
 
     for i in range(len(files)):
       row = self._model.append()
-      self._model.set(row, 0, (hits[i], files[i]))
+      self._model.set(row, 0, (files[i], ranks[i]))
 
     self._treeview.set_model(self._model)
     self._treeview.thaw_child_notify()

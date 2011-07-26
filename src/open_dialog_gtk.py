@@ -180,7 +180,7 @@ class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
     files = []
     for path in rows:
       iter = model.get_iter(path)
-      obj = model.get(iter,0)[0]
+      obj = model.get(iter,0)[0][0]
       files.append(obj)
     return files
 

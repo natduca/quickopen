@@ -83,11 +83,16 @@ class DBIndex(object):
           chunk[j[0]] = j[1]
         base += chunksize
         chunks.append(chunk)
+      # items may not have evenly divided by N
+      for j in items[base:]:
+          chunks[0][j[0]] = j[1]
       return chunks
+
     chunks = makeChunks(list(indexer.files_by_basename.items()), N)
 
     self.pools = [LocalPool(1)]
     self.pools.extend([multiprocessing.Pool(1) for x in range(len(chunks)-1)])
+
     for i in range(len(self.pools)):
       chunk = chunks[i]
       pool = self.pools[i]

@@ -26,6 +26,7 @@ DEFAULT_IGNORES=[
   "*.obj",
   "*.pyc",
   "*.pyo",
+  "#*",
 ]
 
 """

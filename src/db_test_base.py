@@ -15,6 +15,8 @@ import db
 import os
 import test_data
 
+# TODO, some of this stuff into db_indexer test
+
 class DBTestBase(object):
   def setUp(self):
     self.test_data = test_data.TestData()
@@ -125,20 +127,28 @@ class DBTestBase(object):
     self.db.sync()
     self.assertEquals([], self.db.search('something_file.txt').hits)
 
-  def test_ignore_symlink_path(self):
-    # test ignore of absolute path
-    ref_file = os.path.join(self.test_data_dir, "project1/MyClass.c")
-    self.db.add_dir(self.test_data_dir)
+  def test_ignore_inside_symlink(self):
+    # the case of interest here is where someone has
+    # /project1_symlink_dir --> /project1
+    # /project1_symlink is the one requested to be indexed
+    # and they ask to ignore something inside the symlink
+
+    # set up so that 
+    project1_symlink_dir = os.path.join(self.test_data_dir, "project1_symlink/")
+    self.db.add_dir(project1_symlink_dir)
+    self.db.sync()
+
+    ref_file = os.path.join(self.test_data_dir, "project1/module/project1_module1.txt")
 
     # first make sure it shows up via project1_symlink at the non-symlink location
-    self.db.ignore(os.path.join(self.test_data_dir, 'project1/*'))
-    self.db.sync()
-    self.assertTrue(ref_file in self.db.search('MyClass.c').hits)
+    hits = self.db.search('project1_module1.txt').hits
+    self.assertTrue(ref_file in hits)
 
-    # now ignore the symlink too, make sure its gone
-    self.db.ignore(os.path.join(self.test_data_dir, 'project1_symlink/*'))
+    # now ignore something inside project1_symlink
+    self.db.ignore(os.path.join(self.test_data_dir, 'project1_symlink/module/*'))
     self.db.sync()
-    self.assertFalse(ref_file in self.db.search('MyClass.c').hits)
+    hits = self.db.search('project1_module1.txt').hits
+    self.assertTrue(ref_file not in hits)
 
   def test_ignore_ctl(self):
     self.db.add_dir(self.test_data_dir)

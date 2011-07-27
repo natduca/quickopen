@@ -13,10 +13,20 @@
 # limitations under the License.
 import ranker
 import re
+import os
 
 class Ranker(object):
   def rank(self, query, hit, truncated = False):
-    return self.get_num_hits_on_word_starts(query, hit, truncated)
+    # word start ranks
+    base = self.get_num_hits_on_word_starts(query, hit, truncated)
+    if len(query) > 4 and hit.startswith(query):
+      base += 1
+    hitbase = os.path.splitext(hit)[0]
+    querybase = os.path.splitext(query)[0]
+    # big points if you match the full string
+    if querybase == hitbase:
+      base *= 2
+    return base
 
   def get_starts(self, word):
     if not len(word):
@@ -53,7 +63,7 @@ class Ranker(object):
     m = re.match(flt, hit)
     if not m:
       if len(query) > 1:
-        return  self.rank(query[:-1],hit,True)
+        return  self.get_num_hits_on_word_starts(query[:-1],hit,True)
       return 0
     ngroups = len(tmp) - 1
 

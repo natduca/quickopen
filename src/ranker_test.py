@@ -54,4 +54,7 @@ class RankerTest(unittest.TestCase):
     self.assertEquals(2, self.ranker.get_num_hits_on_word_starts('evi', 'WebViewImpl.cc'))
     self.assertEquals(2, self.ranker.get_num_hits_on_word_starts('wv', 'eWbViewImpl.cc'))
     self.assertEquals(1, self.ranker.get_num_hits_on_word_starts('ebiew', 'WebViewImpl.cc'))
-    
+
+  def test_rank(self):
+    self.assertEquals(3, self.ranker.rank('render_', 'render_widget.cc'))
+    self.assertEquals(8, self.ranker.rank('render_widget', 'render_widget.cc'))

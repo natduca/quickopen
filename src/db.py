@@ -171,11 +171,14 @@ class DB(object):
       self.step_sync()
 
   ###########################################################################
-  def search(self,query):
+  def search(self, query, max_hits = -1):
     if not self.is_syncd:
       self.step_sync()
       # step sync might change the db sync status
       if not self.is_syncd:
         raise NotSyncdException("DB not syncd")
 
-    return self._cur_index.search(query)
+    if max_hits == -1:
+      return self._cur_index.search(query)
+    else:
+      return self._cur_index.search(query, max_hits)

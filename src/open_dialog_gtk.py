@@ -94,7 +94,7 @@ class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
 
     filter_entry.grab_focus()
 
-    glib.timeout_add(250, self.on_timeout_fired)
+    glib.timeout_add(100, self.on_timeout_fired)
 
   def on_timeout_fired(self):
     self.on_tick()

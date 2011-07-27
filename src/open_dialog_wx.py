@@ -79,7 +79,7 @@ class OpenDialogWx(wx.Dialog, OpenDialogBase):
 
     self._timer = wx.Timer(self, -1)
     self.Bind(wx.EVT_TIMER, self.on_tick, self._timer)
-    self._timer.Start(250,False)
+    self._timer.Start(100,False)
     self.on_tick()
 
   def set_status(self,status_text):

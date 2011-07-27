@@ -61,8 +61,8 @@ def discover(filters):
         else:
           raise Exception("Wtf, expected TestSuite or TestCase, got %s" % t)
 
-        if new_suite.countTestCases():
-          subsuites.append(new_suite)
+      if new_suite.countTestCases():
+        subsuites.append(new_suite)
 
   return unittest.TestSuite(subsuites)
 

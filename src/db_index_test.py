@@ -75,6 +75,20 @@ class DBIndexTestST(unittest.TestCase, DBIndexTestBase):
     self.threaded = False
     DBIndexTestBase.setUp(self)
 
+  def test_chunker(self):
+    def validate(num_items,nchunks):
+      start_list = [(i,True) for i in range(num_items)]
+      chunks = self.index._make_chunks(start_list,nchunks)
+      found_indices = set()
+      for chunk in chunks:
+        for i,j in chunk.items():
+          self.assertTrue(i not in found_indices)
+          found_indices.add(i)
+      self.assertEquals(set(range(num_items)), found_indices)
+    validate(0,1)
+    validate(10,1)
+    validate(10,2)
+    validate(10,3)
 
   def tearDown(self):
     DBIndexTestBase.tearDown(self)

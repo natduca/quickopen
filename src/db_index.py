@@ -71,24 +71,7 @@ class DBIndex(object):
     else:
       N = 1
 
-    def makeChunks(items, N):
-      base = 0
-      chunksize = len(items) / N
-      if chunksize == 0:
-        chunksize = 1
-      chunks = []
-      for i in range(N):
-        chunk = dict()
-        for j in items[base:base+chunksize]:
-          chunk[j[0]] = j[1]
-        base += chunksize
-        chunks.append(chunk)
-      # items may not have evenly divided by N
-      for j in items[base:]:
-          chunks[0][j[0]] = j[1]
-      return chunks
-
-    chunks = makeChunks(list(indexer.files_by_basename.items()), N)
+    chunks = self._make_chunks(list(indexer.files_by_basename.items()), N)
 
     self.pools = [LocalPool(1)]
     self.pools.extend([multiprocessing.Pool(1) for x in range(len(chunks)-1)])
@@ -97,6 +80,23 @@ class DBIndex(object):
       chunk = chunks[i]
       pool = self.pools[i]
       pool.apply(SlaveInit, (chunk,))
+
+  def _make_chunks(self, items, N):
+    base = 0
+    chunksize = len(items) / N
+    if chunksize == 0:
+      chunksize = 1
+    chunks = []
+    for i in range(N):
+      chunk = dict()
+      for j in items[base:base+chunksize]:
+        chunk[j[0]] = j[1]
+      base += chunksize
+      chunks.append(chunk)
+    # items may not have evenly divided by N
+    for j in items[base:]:
+        chunks[0][j[0]] = j[1]
+    return chunks
 
   @property
   def status(self):

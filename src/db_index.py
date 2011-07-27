@@ -45,6 +45,15 @@ class LocalPool(object):
         return fn(*args)
     return Result()
 
+  def terminate(self):
+    pass
+
+  def join(self):
+    pass
+
+  def close(self):
+    pass
+
 class DBIndex(object):
   def __init__(self, indexer, threaded = True):
     self.files = []
@@ -89,11 +98,12 @@ class DBIndex(object):
     return "%i files indexed; %i-threaded searches" % (len(self.files), len(self.pools))
 
   def close(self):
-    self.pool.close()
-    try:
-      self.pool.join()
-    except:
-      self.pool.terminate()
+    for p in self.pools:
+      p.close()
+      try:
+        p.join()
+      except:
+        p.terminate()
 
   def search(self, query, max_hits = 100):
     slashIdx = query.rfind('/')

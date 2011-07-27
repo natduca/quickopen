@@ -100,15 +100,6 @@ class DBTestBase(object):
   def test_dir_symlinks_dont_dup(self):
     pass
 
-  def test_search_more_than_max(self):
-    # find something where you get more than a sane number of requests
-    pass
-
-  def test_add_file_after_scan(self):
-    # not implemented
-    pass
-
-
   def test_ignores(self):
     self.db.add_dir(self.test_data_dir)
     self.assertEquals(False, self.db.is_syncd)
@@ -127,12 +118,27 @@ class DBTestBase(object):
     self.assertEquals([], self.db.search('ignored.pyc').hits)
     self.assertEquals([], self.db.search('ignored.pyo').hits)
 
-  def test_ignore_ctl(self):
+  def test_ignore_path(self):
     # test ignore of absolute path
     self.db.add_dir(self.test_data_dir)
     self.db.ignore(os.path.join(self.test_data_dir, 'something/*'))
     self.db.sync()
     self.assertEquals([], self.db.search('something_file.txt').hits)
+
+  def test_ignore_symlink_path(self):
+    # test ignore of absolute path
+    ref_file = os.path.join(self.test_data_dir, "project1/MyClass.c")
+    self.db.add_dir(self.test_data_dir)
+
+    # first make sure it shows up via project1_symlink at the non-symlink location
+    self.db.ignore(os.path.join(self.test_data_dir, 'project1/*'))
+    self.db.sync()
+    self.assertTrue(ref_file in self.db.search('MyClass.c').hits)
+
+    # now ignore the symlink too, make sure its gone
+    self.db.ignore(os.path.join(self.test_data_dir, 'project1_symlink/*'))
+    self.db.sync()
+    self.assertFalse(ref_file in self.db.search('MyClass.c').hits)
 
   def test_ignore_ctl(self):
     self.db.add_dir(self.test_data_dir)

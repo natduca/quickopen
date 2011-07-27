@@ -11,13 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import matchers
+import matcher
 import unittest
 import re
 
 class MatcherTest(unittest.TestCase):
   def test_filters(self):
-    m = matchers.Matcher({})
+    m = matcher.Matcher({})
     camelcase = m.get_camelcase_wordstart_filter
     delimited = m.get_delimited_wordstart_filter
     superfuzzy = m.get_superfuzzy_filter

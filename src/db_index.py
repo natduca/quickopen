@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 import multiprocessing
-import matchers
+import matcher
 
 from dyn_object import DynObject
 
@@ -21,7 +21,7 @@ global slave
 
 def SlaveInit(files_by_basename):
   global slave
-  slave = matchers.Matcher(files_by_basename)
+  slave = matcher.Matcher(files_by_basename)
 
 def SlaveSearchBasenames(query, max_hits):
   assert slave

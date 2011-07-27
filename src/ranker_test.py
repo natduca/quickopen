@@ -13,7 +13,7 @@
 # limitations under the License.
 import unittest
 from ranker import Ranker
-import matchers
+import matcher
 
 class RankerTest(unittest.TestCase):
   def setUp(self):

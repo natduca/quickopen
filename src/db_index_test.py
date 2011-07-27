@@ -36,7 +36,7 @@ class DBIndexTestBase(object):
 
   def test_case_insensitive_query(self):
     self.assertTrue("~/ndbg/quickopen/src/db_proxy_test.py" in self.index.search('db_proxy_test').hits)
-    self.assertTrue("~/ndbg/quickopen/src/test_data/something/something_file.txt" in self.index.search('something_file.txt').hits)
+    self.assertTrue("~/ndbg/quickopen/test_data/something/something_file.txt" in self.index.search('something_file.txt').hits)
 
   def test_case_query_with_extension(self):
     self.assertTrue("~/ndbg/quickopen/src/db_proxy_test.py" in self.index.search('db_proxy_test.py').hits)
@@ -62,7 +62,7 @@ class DBIndexTestMT(DBIndexTestBase, unittest.TestCase):
     unittest.TestCase.__init__(self,*args,**kwargs)
     self.threaded = True
 
-class DBIndexTest(DBIndexTestBase, unittest.TestCase):
+class DBIndexTestST(DBIndexTestBase, unittest.TestCase):
   def __init__(self,*args,**kwargs):
     unittest.TestCase.__init__(self,*args,**kwargs)
     self.threaded = False

@@ -73,6 +73,18 @@ if __name__ == "__main__":
 
   # install hook on set_trace if --debug
   if options.debug:
+    import exceptions
+    class DebuggingAssertionError(exceptions.AssertionError):
+      def __init__(self, *args):
+        exceptions.AssertionError.__init__(self, *args)
+        print "Assertion failed, entering PDB..."
+        import pdb
+        if hasattr(sys, '_getframe'):
+          pdb.Pdb().set_trace(sys._getframe().f_back.f_back)
+        else:
+          pdb.set_trace()
+    unittest.TestCase.failureException = DebuggingAssertionError
+
     def hook(*args):
       import traceback, pdb
       traceback.print_exception(*args)

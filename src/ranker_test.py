@@ -44,12 +44,13 @@ class RankerTest(unittest.TestCase):
     self.assertEquals(2, self.ranker.rank('test_thread_tab.py', 'tw'))
 
   def test_query_hits_on_word_starts(self):
-    self.assertEquals(5, self.ranker.get_num_hits_on_word_starts('rwhv', 'render_widget_host_view.cc'))
+    self.assertEquals(6, self.ranker.get_num_hits_on_word_starts('rwhv', 'render_widget_host_view.cc')) # test +1 for hitting all words
+    self.assertEquals(4, self.ranker.get_num_hits_on_word_starts('rwh', 'render_widget_host_view.cc'))
     self.assertEquals(3, self.ranker.get_num_hits_on_word_starts('wvi', 'render_widget_host_view_win.cc')) # eew
     self.assertEquals(2, self.ranker.get_num_hits_on_word_starts('w', 'WebViewImpl.cc'))
     self.assertEquals(1, self.ranker.get_num_hits_on_word_starts('v', 'WebViewImpl.cc'))
     self.assertEquals(3, self.ranker.get_num_hits_on_word_starts('wv', 'WebViewImpl.cc'))
-    self.assertEquals(4, self.ranker.get_num_hits_on_word_starts('wvi', 'WebViewImpl.cc'))
+    self.assertEquals(5, self.ranker.get_num_hits_on_word_starts('wvi', 'WebViewImpl.cc'))
     self.assertEquals(2, self.ranker.get_num_hits_on_word_starts('evi', 'WebViewImpl.cc'))
     self.assertEquals(2, self.ranker.get_num_hits_on_word_starts('wv', 'eWbViewImpl.cc'))
     self.assertEquals(1, self.ranker.get_num_hits_on_word_starts('ebiew', 'WebViewImpl.cc'))

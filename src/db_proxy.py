@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import async_http_connection
 import db
 import httplib
 import subprocess
@@ -134,6 +135,9 @@ class DBProxy(object):
       raise db.NotSyncdException()
     return ret
 
+  def search_async(self, q):
+    return AsyncSearch(self.host, self.port, q)
+    
   @property
   def is_syncd(self):
     return self.sync_status().is_syncd
@@ -144,3 +148,32 @@ class DBProxy(object):
   def sync_status(self):
     return self._req('GET', '/sync_status')
 
+class AsyncSearchError(object): 
+  pass
+
+class AsyncSearch(object):
+  def __init__(self, host, port, q):
+    self.async_conn = async_http_connection.AsyncHTTPConnection(host, port)
+    self.async_conn.begin_request('POST', '/search', json.dumps(q))
+    self._result = None
+
+  @property
+  def ready(self):
+     return self.async_conn.is_response_ready()
+
+  @property
+  def result(self):
+     if not self.async_conn:
+       raise AsyncSearchError, 'connection died during search'
+
+     if not self._result:
+       res = self.async_conn.get_response()
+       if res.status != 200:
+         self.async_conn.close()
+         self.async_conn = None
+         raise AsyncSearchError, 'got status %i' % res.status
+       else:
+         data = res.read()
+         res = DynObject.loads(data.encode('utf8'))
+         self._result = res
+     return self._result

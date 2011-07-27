@@ -24,8 +24,6 @@ import src.db_proxy
 
 ###########################################################################
 
-asdffsdf
-
 def CMDadd(parser, args):
   """Adds a directory to the index"""
   (options, args) = parser.parse_args(args)

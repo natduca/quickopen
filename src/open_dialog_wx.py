@@ -185,8 +185,11 @@ def run(settings, db):
   dlg.CenterOnScreen()
   val = dlg.ShowModal()
   if val == wx.ID_OK:
-    print "\n".join(dlg.get_selected_items())
+    res = dlg.get_selected_items()
+  else:
+    res = None
   dlg.Destroy()
+  return res
 
 if __name__ == "__main__":
   import db_test_base

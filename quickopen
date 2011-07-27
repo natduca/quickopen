@@ -24,6 +24,8 @@ import src.db_proxy
 
 ###########################################################################
 
+asdffsdf
+
 def CMDadd(parser, args):
   """Adds a directory to the index"""
   (options, args) = parser.parse_args(args)
@@ -67,35 +69,43 @@ def CMDrmdir(parser, args):
 
 def CMDsearch(parser, args):
   """Search for a file"""
+  parser.add_option('--ok', dest='ok', action='store_true', default=False, help='Output "OK" before results')
   (options, args) = parser.parse_args(args)
   settings = load_settings(options)
   db = open_db(settings, options)
 
-  # try using gtk
-  has_gtk = False
-  try:
-    import pygtk
-    pygtk.require('2.0')
-    has_gtk = True
-  except ImportError:
-    pass
+  def run():
+    # try using gtk
+    has_gtk = False
+    try:
+      import pygtk
+      pygtk.require('2.0')
+      has_gtk = True
+    except ImportError:
+      pass
 
-  if has_gtk:
-    import src.open_dialog_gtk
-    src.open_dialog_gtk.run(settings, db)
-    return 0
+    if has_gtk:
+      import src.open_dialog_gtk
+      return src.open_dialog_gtk.run(settings, db)
 
-  # if that didn't work, try using wx
-  has_wx = False
-  try:
-    import wx
-    has_wx = True
-  except ImportError:
-    pass
+    # if that didn't work, try using wx
+    has_wx = False
+    try:
+      import wx
+      has_wx = True
+    except ImportError:
+      pass
 
-  if has_wx:
-    import src.open_dialog_wx
-    src.open_dialog_wx.run(settings, db)
+    if has_wx:
+      import src.open_dialog_wx
+      return src.open_dialog_wx.run(settings, db)
+  res = run()
+  if not res:
+    return 255
+  else:
+    if options.ok:
+      print "OK"
+    print "\n".join(res)
     return 0
 
   # give up

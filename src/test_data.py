@@ -46,18 +46,28 @@ class TestData(object):
     assert ret == 0
     os.chdir(oldcwd)
 
+    # make some .o and .pyc files [things that would otherwise confuse .gitignore]
+    self.write1('something/ignored.o')
+    self.write1('something/ignored.pyo')
+    self.write1('something/ignored.pyc')
+
   def path_to(self, subpath):
     return os.path.join(self.test_data_dir, subpath)
-    
+
   def system(self, cmd):
     args = shlex.split(cmd)
     p = subprocess.Popen(args,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     p.communicate()
     return p.returncode
-    
+
   def rm_rf(self, dirname):
     assert os.path.exists(dirname)
     self.system('rm -rf -- %s' % dirname)
+
+  def write1(self, dirname):
+    f = open(os.path.join(self.test_data_dir, dirname), 'w')
+    f.write('1\n')
+    f.close()
 
   def close(self):
     if os.path.exists(self.test_data_dir):

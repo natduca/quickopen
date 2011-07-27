@@ -22,10 +22,10 @@ from event import Event
 
 DEFAULT_IGNORES=[
   ".*",
-  ".o",
-  ".obj",
-  ".pyc",
-  ".pyo",
+  "*.o",
+  "*.obj",
+  "*.pyc",
+  "*.pyo",
 ]
 
 """
@@ -178,4 +178,3 @@ class DB(object):
         raise NotSyncdException("DB not syncd")
 
     return self._cur_index.search(query)
-

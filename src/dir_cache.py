@@ -29,7 +29,13 @@ class DirCache(object):
   def set_ignores(self, ignores):
     if self.ignores != ignores:
       self.dirs = dict()
-      self.ignores = [os.path.expanduser(i) for i in ignores]
+      def fixpath(p):
+        if p.find(os.path.sep) != -1:
+          tmp = os.path.expanduser(p)
+          return os.path.realpath(tmp)
+        else:
+          return p
+      self.ignores = [fixpath(i) for i in ignores]
 
   def reset_realpath_cache(self):
     self.rel_to_real = dict()
@@ -42,10 +48,14 @@ class DirCache(object):
       self.rel_to_real[d] = r
       return r
 
-  def is_ignored(self, f):
+  def is_ignored(self, basename, fullname):
     for i in self.ignores:
-      if fnmatch.fnmatch(f, i):
-        return True
+      if i.find(os.path.sep) != -1:
+        if fnmatch.fnmatch(fullname, i):
+          return True
+      else:
+        if fnmatch.fnmatch(basename, i):
+          return True
     return False
 
   def listdir(self, d):
@@ -72,8 +82,7 @@ class DirCache(object):
     except OSError:
       return []
 
-    ents = [e for e in ents if not self.is_ignored(e)]
+    ents = [e for e in ents if not self.is_ignored(e, os.path.join(d, e))]
     de = DirEnt(st_mtime, ents)
     self.dirs[d] = de
     return de.ents
-

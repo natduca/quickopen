@@ -27,27 +27,6 @@ def SlaveSearchBasenames(query, max_hits):
   assert slave
   return slave.search_basenames(query, max_hits)
 
-def _get_num_cpus():
-   """
-   Detects the number of CPUs on a system. Cribbed from 
-   http://codeliberates.blogspot.com/2008/05/detecting-cpuscores-in-python.html
-   """
-   # Linux, Unix and MacOS:
-   if hasattr(os, "sysconf"):
-     if os.sysconf_names.has_key("SC_NPROCESSORS_ONLN"):
-       # Linux & Unix:
-       ncpus = os.sysconf("SC_NPROCESSORS_ONLN")
-       if isinstance(ncpus, int) and ncpus > 0:
-         return ncpus
-       else: # OSX:
-         return int(os.popen2("sysctl -n hw.ncpu")[1].read())
-   # Windows:
-   if os.environ.has_key("NUMBER_OF_PROCESSORS"):
-     ncpus = int(os.environ["NUMBER_OF_PROCESSORS"]);
-     if ncpus > 0:
-       return ncpus
-   return 1 # Default
-
 class LocalPool(object):
   """
   Class that looks like a multiprocessing.Pool but executes locally.
@@ -67,7 +46,7 @@ class LocalPool(object):
     return Result()
 
 class DBIndex(object):
-  def __init__(self, indexer):
+  def __init__(self, indexer, threaded = True):
     self.files = []
     self.files_by_lower_basename = dict()
     for basename,files_with_basename in indexer.files_by_basename.items():
@@ -78,7 +57,11 @@ class DBIndex(object):
         self.files_by_lower_basename[lower_basename] = files_with_basename
       self.files.extend(files_with_basename)
 
-    N = min(_get_num_cpus(), 4) # test for scaling beyond 4
+    if threaded:
+      N = min(multiprocessing.cpu_count(), 4) # test for scaling beyond 4
+    else:
+      N = 1
+
     def makeChunks(items, N):
       base = 0
       chunksize = len(items) / N
@@ -120,7 +103,7 @@ class DBIndex(object):
     else:
       dirpart = None
       basepart = query
-    
+
     hits = []
     truncated = False
     max_chunk_hits = max(1, max_hits / len(self.pools))

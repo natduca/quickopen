@@ -19,10 +19,10 @@ import time
 
 FILES_BY_BASENAME = None
 
-class DBIndexTest(unittest.TestCase):
+class DBIndexTestBase(object):
   def setUp(self):
     mock_indexer = db_indexer.MockIndexer('test_data/cr_files_by_basename_five_percent.json')
-    self.index = db_index.DBIndex(mock_indexer)
+    self.index = db_index.DBIndex(mock_indexer,threaded=self.threaded)
 
   def test_case_sensitive_query(self):
     self.assertTrue('~/chrome/src/third_party/tlslite/tlslite/integration/ClientHelper.py' in self.index.search('ClientHelper').hits)
@@ -36,6 +36,7 @@ class DBIndexTest(unittest.TestCase):
 
   def test_case_insensitive_query(self):
     self.assertTrue("~/ndbg/quickopen/src/db_proxy_test.py" in self.index.search('db_proxy_test').hits)
+    self.assertTrue("~/ndbg/quickopen/src/test_data/something/something_file.txt" in self.index.search('something_file.txt').hits)
 
   def test_case_query_with_extension(self):
     self.assertTrue("~/ndbg/quickopen/src/db_proxy_test.py" in self.index.search('db_proxy_test.py').hits)
@@ -55,6 +56,16 @@ class DBIndexTest(unittest.TestCase):
 
   def test_dir_and_name_query(self):
     self.assertTrue("~/ndbg/quickopen/src/db_proxy_test.py" in self.index.search('src/db_proxy_test.py').hits)
+
+class DBIndexTestMT(DBIndexTestBase, unittest.TestCase):
+  def __init__(self,*args,**kwargs):
+    unittest.TestCase.__init__(self,*args,**kwargs)
+    self.threaded = True
+
+class DBIndexTest(DBIndexTestBase, unittest.TestCase):
+  def __init__(self,*args,**kwargs):
+    unittest.TestCase.__init__(self,*args,**kwargs)
+    self.threaded = False
 
 class DBIndexPerfTest():
   def __init__(self, testfile):

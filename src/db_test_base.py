@@ -110,15 +110,29 @@ class DBTestBase(object):
 
 
   def test_ignores(self):
-    # .git and .svn should not be found
     self.db.add_dir(self.test_data_dir)
     self.assertEquals(False, self.db.is_syncd)
     self.db.sync()
+
+    # .git should not be found
     res = self.db.search('packed-refs')
     self.assertEquals(0, len(res.hits))
 
+    # file inside .svn should not be found
     res = self.db.search('svn_should_not_show_up.txt')
     self.assertEquals(0, len(res.hits))
+
+    # certain ignored suffixes should not be found
+    self.assertEquals([], self.db.search('ignored.o').hits)
+    self.assertEquals([], self.db.search('ignored.pyc').hits)
+    self.assertEquals([], self.db.search('ignored.pyo').hits)
+
+  def test_ignore_ctl(self):
+    # test ignore of absolute path
+    self.db.add_dir(self.test_data_dir)
+    self.db.ignore(os.path.join(self.test_data_dir, 'something/*'))
+    self.db.sync()
+    self.assertEquals([], self.db.search('something_file.txt').hits)
 
   def test_ignore_ctl(self):
     self.db.add_dir(self.test_data_dir)
@@ -172,4 +186,3 @@ class DBTestBase(object):
     self.db.unignore("foo")
     self.assertRaises(Exception, lambda: self.db.unignore("foo"))
     self.assertEquals(False, self.db.is_syncd)
-

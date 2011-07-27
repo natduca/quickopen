@@ -18,18 +18,36 @@
 
 (defun quickopen-run ()
   (with-temp-buffer
+    (goto-char (point-max))
     (let* ((prev-point (point)))
-      (call-process (format "%s/%s" quickopen-dir-base "quickopen") nil t)
+      (call-process (format "%s/%s" quickopen-dir-base "quickopen") nil t nil "search" "--ok")
       (if (> (point) 1)
-        (buffer-substring prev-point (- (point) prev-point))
-      nil))))
+          (buffer-substring prev-point (- (point) prev-point))
+        nil))))
 
 (defun quickopen()
   (interactive "")
   (let* ((result (quickopen-run)))
     (when result
-      (message (format "qo obtained %s" result))
-      (find-file result))))
+      (if (string-equal (substring result 0 3) "OK\n")
+          (progn
+            (message "Opening")
+            (find-file (substring result 3))
+            )
+        (progn 
+          (message "Error running quickopen...")
+          (with-current-buffer (get-buffer-create "*quickopen*")
+            (delete-region 1 (point-max))
+            (insert "Error while quickopening:\n")
+            (insert result)
+            (insert "\n\n\n")
+            )
+          (switch-to-buffer "*quickopen*")
+          )
+        )
+      )))
+
+
 
 (defun quickopen-strrchr(x y)
   (with-temp-buffer

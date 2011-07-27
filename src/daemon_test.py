@@ -121,3 +121,10 @@ def add_test_handlers_to_daemon(daemon):
     x.status = 'OK'
     return x
   daemon.add_json_route('/test_dyn_obj', handler_for_dynobj, ['GET'])
+
+
+  def handler_for_sleep(m, verb, data):
+    import time
+    time.sleep(0.25)
+    return 'OK'
+  daemon.add_json_route('/sleep', handler_for_sleep, ['GET'])

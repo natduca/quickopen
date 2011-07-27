@@ -20,11 +20,11 @@ import time
 FILES_BY_BASENAME = None
 
 class DBIndexTestBase(object):
-  def __init__(self):
+  def setUp(self):
     mock_indexer = db_indexer.MockIndexer('test_data/cr_files_by_basename_five_percent.json')
     self.index = db_index.DBIndex(mock_indexer,threaded=self.threaded)
 
-  def close(self):
+  def tearDown(self):
     self.index.close()
 
   def test_case_sensitive_query(self):
@@ -61,23 +61,22 @@ class DBIndexTestBase(object):
     self.assertTrue("~/ndbg/quickopen/src/db_proxy_test.py" in self.index.search('src/db_proxy_test.py').hits)
 
 class DBIndexTestMT(unittest.TestCase, DBIndexTestBase):
-  def __init__(self,*args,**kwargs):
-    unittest.TestCase.__init__(self,*args,**kwargs)
+  def setUp(self,*args,**kwargs):
+    unittest.TestCase.setUp(self,*args,**kwargs)
+    DBIndexTestBase.setUp(self)
     self.threaded = True
-    DBIndexTestBase.__init__(self)
 
   def tearDown(self):
-    self.close()
+    DBIndexTestBase.tearDown(self)
 
 class DBIndexTestST(unittest.TestCase, DBIndexTestBase):
-  def __init__(self,*args,**kwargs):
-    unittest.TestCase.__init__(self,*args,**kwargs)
+  def setUp(self,*args,**kwargs):
+    unittest.TestCase.setUp(self,*args,**kwargs)
+    DBIndexTestBase.setUp(self)
     self.threaded = False
-    DBIndexTestBase.__init__(self)
 
   def tearDown(self):
-    self.close()
-
+    DBIndexTestBase.tearDown(self)
 
 class DBIndexPerfTest():
   def __init__(self, testfile):

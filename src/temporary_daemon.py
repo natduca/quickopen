@@ -91,7 +91,7 @@ class TemporaryDaemon(object):
 
   @property
   def host(self):
-    return localhost
+    return 'localhost'
 
   @property
   def port(self):

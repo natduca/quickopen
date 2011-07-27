@@ -70,7 +70,13 @@ class _RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     if 'Content-Length' in self.headers:
       cl = int(self.headers['Content-Length'])
       text = self.rfile.read(cl).encode('utf8')
-      obj = DynObject.loads(text)
+      try:
+        if text != '':
+          obj = DynObject.loads(text)
+        else:
+          obj = None
+      except ValueError:
+        raise Exception("Payload was unparseable: [%s]" % text)
     else:
       obj = None
 

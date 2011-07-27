@@ -62,9 +62,9 @@ class DBIndexTestBase(object):
 
 class DBIndexTestMT(unittest.TestCase, DBIndexTestBase):
   def setUp(self,*args,**kwargs):
+    self.threaded = True
     unittest.TestCase.setUp(self,*args,**kwargs)
     DBIndexTestBase.setUp(self)
-    self.threaded = True
 
   def tearDown(self):
     DBIndexTestBase.tearDown(self)
@@ -72,8 +72,9 @@ class DBIndexTestMT(unittest.TestCase, DBIndexTestBase):
 class DBIndexTestST(unittest.TestCase, DBIndexTestBase):
   def setUp(self,*args,**kwargs):
     unittest.TestCase.setUp(self,*args,**kwargs)
-    DBIndexTestBase.setUp(self)
     self.threaded = False
+    DBIndexTestBase.setUp(self)
+
 
   def tearDown(self):
     DBIndexTestBase.tearDown(self)

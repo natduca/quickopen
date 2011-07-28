@@ -15,6 +15,7 @@
 
 - Better matching with partials:
    rwhwin -> render_widget_host_view_win
+   rwfsp -> render_widget_fullscreen_pepper
 
 - Extension queries: What shoudl abc.c match?
 

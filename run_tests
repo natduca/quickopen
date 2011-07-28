@@ -91,7 +91,7 @@ if __name__ == "__main__":
       pdb.pm()
     sys.excepthook = hook
 
-  # make sure cwd is the base quickopen directory!
+  # make sure cwd is the base directory!
   os.chdir(os.path.dirname(__file__))
 
   if len(args) > 0:

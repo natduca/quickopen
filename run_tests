@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import logging
 import optparse
 import os
 import re
@@ -68,8 +69,18 @@ def discover(filters):
 
 if __name__ == "__main__":
   parser = optparse.OptionParser()
+  parser.add_option(
+      '-v', '--verbose', action='count', default=0,
+      help='Increase verbosity level (repeat as needed)')
   parser.add_option('--debug', dest='debug', action='store_true', help='Hostname to listen on')
   (options, args) = parser.parse_args()
+
+  if options.verbose >= 2:
+    logging.basicConfig(level=logging.DEBUG)
+  elif options.verbose:
+    logging.basicConfig(level=logging.INFO)
+  else:
+    logging.basicConfig(level=logging.WARNING)
 
   # install hook on set_trace if --debug
   if options.debug:

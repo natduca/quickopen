@@ -1,3 +1,15 @@
+fi for feature_info.cpp, but also matches FontInfo, Full Text Index, FastISel, FontLoweringInfo, reflect_float_frag_ivaryingconst_ref.frag
+
+wg3d and wgc3d for webgraphicscontext3d_in_process_impl
+e3dcr for Extensions3DChromium
+
+
+if query is pending when they hit ok, wait for query to complete...
+
+Implement rescan database button
+
+random hangs in emacs when i pick something
+
 - Make search_async on the proxy
 - Distinguish between search-failed-because-of-sync vs
   sync-failed-unexpectedly

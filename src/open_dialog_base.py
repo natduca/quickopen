@@ -11,12 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitaions under the License.
+import json
 import logging
 import re
+import os
+import time
 
 class OpenDialogBase(object):
   def __init__(self, settings, db):
     settings.register("filter_text", str, "")
+    settings.register("query_log", str, "") 
     self._filter_text = settings.filter_text
     self._settings = settings
     self._db = db
@@ -35,6 +39,15 @@ class OpenDialogBase(object):
 
   def set_filter_text(self, text):
     self._filter_text = text
+    if self._settings.query_log != "":
+      try:
+        f = open(os.path.expanduser(self._settings.query_log), 'a')
+        f.write(json.dumps({"ts": time.time(), "query": text}))
+        f.write("\n");
+        f.close()
+      except IOError:
+        import traceback; traceback.print_exc()
+        pass
 
   def rescan(self):
     self._db.sync()

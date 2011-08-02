@@ -1,3 +1,10 @@
+CCLayerTreeHost --- is that lth? clth? cclth?
+
+if you type in emacs while the prompt is up, then it hits the current buffer
+  after you return. thats bad because there's a delay before the window comes up.
+
+Cache recent queries
+
 fi for feature_info.cpp, but also matches FontInfo, Full Text Index, FastISel, FontLoweringInfo, reflect_float_frag_ivaryingconst_ref.frag
 
 wg3d and wgc3d for webgraphicscontext3d_in_process_impl

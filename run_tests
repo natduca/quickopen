@@ -48,8 +48,11 @@ def discover(filters):
           if re.search(f,name):
             return True
         return False
-  
-      base_suite = loader.loadTestsFromModule(module)
+
+      if hasattr(module, 'suite'):
+        base_suite = module.suite()
+      else:
+        base_suite = loader.loadTestsFromModule(module)
       new_suite = unittest.TestSuite()
       for t in base_suite:
         if isinstance(t, unittest.TestSuite):
@@ -67,12 +70,14 @@ def discover(filters):
 
   return unittest.TestSuite(subsuites)
 
-if __name__ == "__main__":
+def main():
   parser = optparse.OptionParser()
   parser.add_option(
       '-v', '--verbose', action='count', default=0,
       help='Increase verbosity level (repeat as needed)')
-  parser.add_option('--debug', dest='debug', action='store_true', help='Hostname to listen on')
+  parser.add_option('--debug', dest='debug', action='store_true', default=False, help='Break into pdb when an assertion fails')
+  parser.add_option('--incremental', dest='incremental', action='store_true', default=False, help='Run tests one at a time.')
+  parser.add_option('--stop', dest='stop_on_error', action='store_true', default=False, help='Stop running tests on error.')
   (options, args) = parser.parse_args()
 
   if options.verbose >= 2:
@@ -102,6 +107,19 @@ if __name__ == "__main__":
       pdb.pm()
     sys.excepthook = hook
 
+  else:
+    def hook(exc, value, tb):
+      import traceback
+      if not str(value).startswith("_noprint"):
+        traceback.print_exception(exc, value, tb)
+      import src.message_loop
+      if src.message_loop.is_main_loop_running():
+        if not str(value).startswith("_noprint"):
+          print "Untrapped exception! Exiting message loop with exception."
+        src.message_loop.quit_main_loop(quit_with_exception=True)
+
+    sys.excepthook = hook
+
   # make sure cwd is the base directory!
   os.chdir(os.path.dirname(__file__))
 
@@ -109,5 +127,36 @@ if __name__ == "__main__":
     suites = discover(args)
   else:
     suites = discover(['.*'])
+
   r = unittest.TextTestRunner()
-  r.run(suites)
+  if not options.incremental:
+    res = r.run(suites)
+    if res.wasSuccessful():
+      return 0
+    return 255
+  else:
+    ok = True
+    for s in suites:
+      if isinstance(s, unittest.TestSuite):
+        for t in s:
+          print '----------------------------------------------------------------------'
+          print 'Running %s' % str(t)
+          res = r.run(t)
+          if not res.wasSuccessful():
+            ok = False
+            if options.stop_on_error:
+              break
+        if ok == False and options.stop_on_error:
+          break
+      else:
+        res = r.run(s)
+        if not res.wasSuccessful():
+          ok = False
+          if options.stop_on_error:
+            break
+    if ok:
+      return 0
+    return 255
+
+if __name__ == "__main__":
+  sys.exit(main())

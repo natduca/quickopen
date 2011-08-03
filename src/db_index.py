@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import fixed_size_dict
 import os
 import multiprocessing
 import matcher
@@ -56,6 +57,7 @@ class LocalPool(object):
 
 class DBIndex(object):
   def __init__(self, indexer, threaded = True):
+    self.query_cache = fixed_size_dict.FixedSizeDict(256)
     self.files = []
     self.files_by_lower_basename = dict()
     for basename,files_with_basename in indexer.files_by_basename.items():
@@ -118,6 +120,15 @@ class DBIndex(object):
       res.truncated = False
       return res
 
+    if query in self.query_cache:
+      res = self.query_cache[query]
+      return res
+
+    res = self.search_nocache(query, max_hits)
+    self.query_cache[query] = res
+    return res
+
+  def search_nocache(self, query, max_hits = 100):
     slashIdx = query.rfind('/')
     if slashIdx != -1:
       dirpart = query[:slashIdx]

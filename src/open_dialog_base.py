@@ -36,9 +36,6 @@ class OpenDialogBase(object):
   def set_filter_text(self, text):
     self._filter_text = text
 
-  def rescan(self):
-    self._db.sync()
-
   def on_tick(self,*args):
     if self._pending_search:
       self.set_status("DB Status: %s" % "searching")

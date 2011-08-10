@@ -39,12 +39,8 @@ class OpenDialogWx(wx.Dialog, OpenDialogBase):
 
     top_box = wx.BoxSizer(wx.HORIZONTAL)
 
-    rescan_bn = wx.Button(self, -1, "Rescan database")
-    rescan_bn.Bind(wx.EVT_BUTTON, lambda *args: self.rescan())
-
     self.status_text = wx.StaticText(self, -1, '')
 
-    top_box.Add(rescan_bn)
     top_box.Add((10,0))
     top_box.Add(self.status_text,1, wx.EXPAND | wx.ALL | wx.ALIGN_CENTER_VERTICAL)
     refresh_bn = wx.Button(self, -1, "Refresh")

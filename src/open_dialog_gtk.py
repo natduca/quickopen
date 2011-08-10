@@ -54,10 +54,6 @@ class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
     refresh_button = gtk.Button("_Refresh")
     refresh_button.connect('clicked', lambda *args: self.refresh())
 
-    reset_button = gtk.Button("Rescan Database")
-    reset_button.connect('clicked', lambda *args: self.rescan())
-
-
     status_label = gtk.Label()
     self.status_label = status_label
 
@@ -76,7 +72,6 @@ class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
 
     vbox.pack_start(table_vbox,True,True,1)
     table_vbox.pack_start(table_options_hbox,False,False,0)
-    table_options_hbox.pack_start(reset_button,False,False,0)
     table_options_hbox.pack_start(status_label,False,False,10)
     table_options_hbox.pack_end(refresh_button,False,False,0)
     table_vbox.pack_start(treeview_scroll_window,True,True,0)

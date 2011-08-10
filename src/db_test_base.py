@@ -14,6 +14,7 @@
 import db
 import os
 import test_data
+import time
 
 # TODO, some of this stuff into db_indexer test
 
@@ -63,6 +64,17 @@ class DBTestBase(object):
     res = self.db.search('MySubSystem.c')
     self.assertEquals(1, len(res.hits))    
     self.assertEquals(os.path.join(self.test_data_dir, 'project1/MySubSystem.c'), res.hits[0])
+
+  def test_search_finds_new_file(self):
+    self.db.add_dir(self.test_data_dir)
+    self.db.sync()
+    res = self.db.search('MySubSystem_NEW.c')
+    self.assertEquals(0, len(res.hits))    
+    time.sleep(1.2) # let st_mtime advance a second
+    self.test_data.write1('project1/MySubSystem_NEW.c')
+    self.db.sync()
+    res = self.db.search('MySubSystem_NEW.c')
+    self.assertEquals(1, len(res.hits))    
 
   def test_dir_query(self):
     self.db.add_dir(self.test_data_dir)

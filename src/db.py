@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import hashlib
+import logging
 import os
 
 from db_index import DBIndex
@@ -55,6 +56,9 @@ class DB(object):
 
     self._dir_cache = DirCache() # thread only state
 
+    # if we are currently looking for changed dirs, this is the iterator
+    # directories remaining to be checked
+    self._pending_up_to_date_generator = None 
 
     self.settings.register('dirs', list, [], self._on_settings_dirs_changed)
     self._on_settings_dirs_changed(None, self.settings.dirs)
@@ -127,6 +131,35 @@ class DB(object):
   def is_up_to_date(self):
     return self._pending_indexer == None
 
+  def check_up_to_date(self):
+    if not self.is_up_to_date:
+      return False
+    import time
+    self.check_up_to_date_a_bit_more()
+    while self._pending_up_to_date_generator:
+      self.check_up_to_date_a_bit_more()
+
+  def check_up_to_date_a_bit_more(self):
+    if not self.is_up_to_date:
+      return
+
+    if self._pending_up_to_date_generator == None:
+      logging.debug("Starting to check for changed directories.")
+      self._pending_up_to_date_generator = self._dir_cache.iterdirnames().__iter__()
+
+    for i in range(100):
+      try:
+        d = self._pending_up_to_date_generator.next()
+      except StopIteration:
+        self._pending_up_to_date_generator = None
+        logging.debug("Done checking for changed directories.")
+        break
+      if self._dir_cache.listdir_with_changed_status(d)[1]:
+        logging.debug("Change detected in %s!", d)
+        self._pending_up_to_date_generator = None
+        self._set_dirty()
+        break
+
   def _set_dirty(self):
     was_indexing = self._pending_indexer != None
     if self._pending_indexer:
@@ -170,6 +203,7 @@ class DB(object):
 
   def sync(self):
     """Ensures database index is up-to-date"""
+    self.check_up_to_date()
     while self._pending_indexer:
       self.step_indexer()
 

@@ -58,8 +58,17 @@ class DirCache(object):
           return True
     return False
 
-  def listdir(self, d):
-    """Lists contents of a dir, but only using its realpath."""
+  def iterdirnames(self):
+    return self.dirs.iterkeys()
+
+  def listdir_with_changed_status(self, d):
+    """
+    Lists contents of a dir, but only using its realpath.
+    
+    Returns tuple ([array of entries],changed)
+
+    Changed is only True if the current directory changed. Will not change if the child directory changes.
+    """
     if d in self.dirs:
       de = self.dirs[d]
       try:
@@ -68,21 +77,35 @@ class DirCache(object):
         st_mtime = 0
         del self.dirs[d]
         logging.debug("directory %s gone", d)
-        return []
+        return ([], True)
 
       if st_mtime == de.st_mtime:
-        return de.ents
+        return (de.ents, False)
       else:
-        logging.debug("directory %s changed", d)
+        cur_ents = self.dirs[d].ents
         del self.dirs[d]
-    try:
-      st = os.stat(d)
-      st_mtime = st.st_mtime
-      ents = os.listdir(d)
-    except OSError:
-      return []
+        new_ents = self.listdir_with_changed_status(d)[0]
+        changed = set(new_ents) != set(cur_ents)
+        if changed:
+          logging.debug("directory %s really changed", d)
+        else:
+          logging.debug("directory %s contents not changed", d)
+        return (new_ents, changed)
+    else:
+      # directory is not in cache...
+      try:
+        st = os.stat(d)
+        st_mtime = st.st_mtime
+        ents = os.listdir(d)
+      except OSError:
+        return ([], False)
 
-    ents = [e for e in ents if not self.is_ignored(e, os.path.join(d, e))]
-    de = DirEnt(st_mtime, ents)
-    self.dirs[d] = de
-    return de.ents
+      logging.debug("found directory %s mt=%s", d, st_mtime)
+      ents = [e for e in ents if not self.is_ignored(e, os.path.join(d, e))]
+      de = DirEnt(st_mtime, ents)
+      self.dirs[d] = de
+      return (de.ents, True)
+    
+  def listdir(self, d):
+    """Lists contents of a dir, but only using its realpath."""
+    return self.listdir_with_changed_status(d)[0]

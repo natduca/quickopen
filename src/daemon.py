@@ -136,7 +136,8 @@ class Daemon(BaseHTTPServer.HTTPServer):
     self.port_ = args[0][1]
     self.routes = []
     self.test_mode = test_mode
-    self.idle = Event()
+    self.hi_idle = Event() # event that is fired every 0.05sec as long as no transactions are pending
+    self.lo_idle = Event() # event that is fired once a second
     if test_mode:
       self.add_json_route('/exit', self.on_exit, ['POST', 'GET'])
       import daemon_test
@@ -166,16 +167,20 @@ class Daemon(BaseHTTPServer.HTTPServer):
   def serve_forever(self):
     self.is_running_ = True
     while self.is_running_:
-      if self.idle.has_listeners:
+      if self.hi_idle.has_listeners:
         delay = 0.05
+        fire_lo_idle_listeners = False
       else:
         delay = 1
-      
+        fire_lo_idle_listeners = True
+
       r, w, e = select.select([self], [], [], delay)
       if r:
         self.handle_request()
       else:
-        self.idle.fire()
+        self.hi_idle.fire()
+      if fire_lo_idle_listeners:
+        self.lo_idle.fire()
 
   def shutdown(self):
     self.is_running_ = False

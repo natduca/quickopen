@@ -66,3 +66,13 @@ class MatcherTest(unittest.TestCase):
     ensure_matches (superfuzzy, "f*oo", "*")
     ensure_nonmatch(superfuzzy, "foo", "*")
     ensure_nonmatch(superfuzzy, "foo", "_")
+
+  def test_wordstart_matcher(self):
+    m = matcher.Matcher({
+        "render_widget_host.cpp": ["a/render_widget_host.cpp","b/render_widget_host.cpp"],
+        "foo.cpp": ["foo.cpp"],
+        "bar.cpp": ["bar.cpp"],
+        })
+    
+    hits, truncated = m.search_basenames("rwh", 10000)
+    self.assertTrue("render_widget_host.cpp" in hits)

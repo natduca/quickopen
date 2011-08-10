@@ -44,7 +44,7 @@ class DBProxy(object):
     args = ['./quickopend']
     sys.stderr.write('No quickopend running. Launching it...\n')
     self.proc = subprocess.Popen(args)
-    
+
     sys.stderr.write('Making sure it came up on port %i\n' % self._port_for_autostart)
     ok = False
     for i in range(10):

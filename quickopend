@@ -6,6 +6,7 @@ import sys
 import optparse
 import os
 import re
+import time
 
 import src.daemon
 import src.db_stub
@@ -26,10 +27,23 @@ def load_settings(options):
 
   return settings
 
+def is_port_listening(host, port):
+  import socket
+  s = socket.socket()
+  try:
+    s.connect((host, port))
+  except socket.error:
+    return False
+  s.close()
+  return True
+
 def CMDrun(parser, args):
   """Runs the quickopen daemon"""
   (options, args) = parser.parse_args(args)
   settings = load_settings(options)
+  if is_port_listening(settings.host, settings.port):
+    print "%s:%s in use. Try 'quickopend stop' first?" % (settings.host, settings.port)
+    return 255
   daemon = src.daemon.create(settings.host, settings.port, options.test)
   db_stub = src.db_stub.DBStub(settings, daemon)
   daemon.run()
@@ -40,18 +54,9 @@ def CMDstatus(parser, args):
   """Gets the status of the quickopen daemon"""
   (options, args) = parser.parse_args(args)
   settings = load_settings(options)
-  def is_port_listening(host, port):
-    import socket
-    s = socket.socket()
-    try:
-      s.connect((host, port))
-    except socket.error:
-      return False
-    s.close()
-    return True
   if not is_port_listening(settings.host, settings.port):
     print "Not running"
-    return 0
+    return 255
 
   try:
     conn = httplib.HTTPConnection(settings.host, settings.port, True)
@@ -59,15 +64,62 @@ def CMDstatus(parser, args):
     resp = conn.getresponse()
   except:
     print "Not responding"
-    return 0
+    return 255
 
   if resp.status != 200:
     print "Service running on %s:%i is probaby not quickopend" % (settings.host, settings.port)
-    return 0
+    return 255
 
   status_str = resp.read()
   status = json.loads(status_str)
   print status["status"]
+  return 0
+
+def CMDstop(parser, args):
+  """Gets the status of the quickopen daemon"""
+  (options, args) = parser.parse_args(args)
+  settings = load_settings(options)
+  try:
+    conn = httplib.HTTPConnection(settings.host, settings.port, True)
+    conn.request('GET', '/exit')
+    resp = conn.getresponse()
+  except:
+    print "Not responding"
+    return 255
+
+  if resp.status != 200:
+    print "Service running on %s:%i is probaby not quickopend" % (settings.host, settings.port)
+    return 255
+
+  status_str = resp.read()
+  status = json.loads(status_str)
+  if status["status"] != "OK":
+    print "Stop failed with unexpected result %s" % status["status"]
+    return 255
+  print "Existing quickopend on %s:%i stopped" % (settings.host, settings.port)
+  return 0
+
+def CMDrestart(parser, in_args):
+  """Restarts the quickopen daemon"""
+  (options, args) = parser.parse_args(in_args)
+  settings = load_settings(options)
+
+  ret = CMDstop(parser, args)
+  if ret != 0:
+    return ret
+  time.sleep(0.25)
+
+  tries = 0
+  while is_port_listening(settings.host, settings.port) and tries < 10:
+    tries += 1
+    time.sleep(0.1)
+  if tries == 10:
+    print "Previous quickopend did not stop."
+    return 255
+  pid = os.fork()
+  if pid == 0:
+    CMDrun(parser, args)
+    return 0
   return 0
 
 # Subcommand addins to optparse, taken from git-cl.py,

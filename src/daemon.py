@@ -138,14 +138,17 @@ class Daemon(BaseHTTPServer.HTTPServer):
     self.test_mode = test_mode
     self.hi_idle = Event() # event that is fired every 0.05sec as long as no transactions are pending
     self.lo_idle = Event() # event that is fired once a second
+
+    self.add_json_route('/exit', self.on_exit, ['POST', 'GET'])
+
     if test_mode:
-      self.add_json_route('/exit', self.on_exit, ['POST', 'GET'])
       import daemon_test
       daemon_test.add_test_handlers_to_daemon(self)
 
   def on_exit(self, m, verb, data):
     logging.info("Exiting upon request.")
     self.shutdown()
+    return {"status": "OK"}
 
   def add_json_route(self, path_regex, handler, allowed_verbs):
     re.compile(path_regex)
@@ -196,4 +199,3 @@ class Daemon(BaseHTTPServer.HTTPServer):
 
 def create(host, port, test_mode):
   return Daemon(test_mode, (host,port), _RequestHandler)
-

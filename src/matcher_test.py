@@ -20,6 +20,7 @@ class MatcherTest(unittest.TestCase):
     m = matcher.Matcher({})
     camelcase = m.get_camelcase_wordstart_filter
     delimited = m.get_delimited_wordstart_filter
+    substring = m.get_substring_filter
     superfuzzy = m.get_superfuzzy_filter
 
     def check_match(getflt, example, query, expected):
@@ -60,9 +61,27 @@ class MatcherTest(unittest.TestCase):
     ensure_nonmatch(delimited, "render_widget", "ei")
     ensure_nonmatch(delimited, "foo_render_widget", "_")
 
+    # substring tests
+    ensure_matches (superfuzzy, "RenderWidgetHost", "ren")
+    ensure_matches (superfuzzy, "RenderWidgetHost", "renderwidget")
+    ensure_matches (superfuzzy, "RenderWidgetHost", "enderwidget")
+    ensure_nonmatch(superfuzzy, "RenderWidgetHost", "renderview")
+
     # superfuzzy tests
     ensure_matches (superfuzzy, "RenderWidgetHost", "rwh")
     ensure_matches (superfuzzy, "RenderWidgetHost", "endgethost")
     ensure_matches (superfuzzy, "f*oo", "*")
     ensure_nonmatch(superfuzzy, "foo", "*")
     ensure_nonmatch(superfuzzy, "foo", "_")
+
+
+
+  def test_wordstart_matcher(self):
+    m = matcher.Matcher({
+        "render_widget_host.cpp": ["a/render_widget_host.cpp","b/render_widget_host.cpp"],
+        "foo.cpp": ["foo.cpp"],
+        "bar.cpp": ["bar.cpp"],
+        })
+    
+    hits, truncated = m.search_basenames("rwh", 10000)
+    self.assertTrue("render_widget_host.cpp" in hits)

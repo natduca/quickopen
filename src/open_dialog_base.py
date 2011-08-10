@@ -49,9 +49,6 @@ class OpenDialogBase(object):
         import traceback; traceback.print_exc()
         pass
 
-  def rescan(self):
-    self._db.sync()
-
   def on_tick(self,*args):
     if self._pending_search:
       self.set_status("DB Status: %s" % "searching")
@@ -77,9 +74,9 @@ class OpenDialogBase(object):
       else:
         # poll status
         try:
-          stat = self._db.sync_status()
+          stat = self._db.status()
           status = stat.status
-          enabled = stat.is_syncd
+          enabled = stat.has_index
         except Exception, ex:
           status = "quickopend not running"
           enabled = False

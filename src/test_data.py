@@ -61,12 +61,20 @@ class TestData(object):
     return p.returncode
 
   def rm_rf(self, dirname):
+    self.system('rm -rf -- %s' % dirname)
+
+  def rm(self, dirname):
     assert os.path.exists(dirname)
     self.system('rm -rf -- %s' % dirname)
 
   def write1(self, dirname):
     f = open(os.path.join(self.test_data_dir, dirname), 'w')
     f.write('1\n')
+    f.close()
+
+  def write2(self, dirname):
+    f = open(os.path.join(self.test_data_dir, dirname), 'w')
+    f.write('2\n')
     f.close()
 
   def close(self):

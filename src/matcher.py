@@ -18,19 +18,38 @@ from ranker import Ranker
 
 class Matcher(object):
   def __init__(self, files_by_basename):
-    self.files_by_basename = files_by_basename
 
-    self.files_by_lower_basename = dict()
+    files_by_lower_basename = dict()
     for basename,files_with_basename in files_by_basename.items():
       lower_basename = basename.lower()
-      if lower_basename in self.files_by_lower_basename:
-        self.files_by_lower_basename[lower_basename].extend(files_with_basename)
+      if lower_basename in files_by_lower_basename:
+        files_by_lower_basename[lower_basename].extend(files_with_basename)
       else:
-        self.files_by_lower_basename[lower_basename] = files_with_basename
+        files_by_lower_basename[lower_basename] = files_with_basename
 
-    self.basenames_unsplit = ("\n" + "\n".join(self.files_by_basename.keys()) + "\n").encode('utf8')
-    self.lower_basenames_unsplit = ("\n" + "\n".join(self.files_by_lower_basename.keys()) + "\n").encode('utf8')
+    self.basenames_unsplit = ("\n" + "\n".join(files_by_basename.keys()) + "\n").encode('utf8')
+    self.lower_basenames_unsplit = ("\n" + "\n".join(files_by_lower_basename.keys()) + "\n").encode('utf8')
     assert type(self.lower_basenames_unsplit) == str
+
+    ranker = Ranker()
+    wordstarts = {}
+    for basename,files_with_basename in files_by_basename.items():
+      start_letters = ranker.get_start_letters(basename)
+      if len(start_letters) <= 1:
+        continue
+      lower_basename = basename.lower()
+      for i in range(len(start_letters) + 1 - 2): # abcd -> ab abc abcd
+        ws = ''.join(start_letters[0:2+i])
+        if ws not in wordstarts:
+          wordstarts[ws] = []
+        loss = len(start_letters) - (2 + i)
+        wordstarts[ws].append((lower_basename, loss))
+
+    # now, order the actual entries so high qualities are at front
+    self.basenames_by_wordstarts = {}
+    for ws,items in wordstarts.iteritems():
+      items.sort(lambda x,y: cmp(x[1],y[1]))
+      self.basenames_by_wordstarts[ws] = [i[0] for i in items]
 
   def search_basenames(self, query, max_hits):
     lower_query = query.lower()
@@ -38,13 +57,32 @@ class Matcher(object):
     hits = dict()
 
     # word starts first
-    self.add_all_matching( hits, query, self.get_camelcase_wordstart_filter(lower_query), max_hits )
-    self.add_all_matching( hits, query, self.get_delimited_wordstart_filter(lower_query), max_hits )
+    self.add_all_wordstarts_matching( hits, query, max_hits )
 
-    # add in superfuzzy matches
-    self.add_all_matching( hits, query, self.get_superfuzzy_filter(lower_query), max_hits )
+    # add in substring matches
+    self.add_all_matching( hits, query, self.get_substring_filter(lower_query), max_hits )
+
+    # add in superfuzzy matches ONLY if we have no high-quality hit
+    has_hq = False
+    for hit,rank in hits.iteritems():
+      if rank > 2:
+        has_hq = True
+        break
+    if not has_hq:
+      self.add_all_matching( hits, query, self.get_superfuzzy_filter(lower_query), max_hits )
 
     return hits, len(hits) == max_hits
+
+  def add_all_wordstarts_matching( self, hits, query, max_hits ):
+    lower_query = query.lower()
+    if lower_query in self.basenames_by_wordstarts:
+      ranker = Ranker()
+      for basename in self.basenames_by_wordstarts[lower_query]:
+        rank = ranker.rank(query, basename)
+        hits[basename] = rank
+        if len(hits) >= max_hits:
+          return
+
 
   def get_delimited_wordstart_filter(self, query):
     query = [re.escape(query[i]) for i in range(len(query))]
@@ -69,6 +107,12 @@ class Matcher(object):
       tmp.append("[^A-Z\n]%s" % query[i])
     flt = "\n.*%s.*\n" % '.*'.join(tmp)
     return (flt, True)
+
+  def get_substring_filter(self, query):
+    query = re.escape(query.lower())
+    # abc -> *abc*
+    flt = "\n.*%s.*\n" % query
+    return (flt, False)
 
   def get_superfuzzy_filter(self, query):
     tmp = []
@@ -107,7 +151,7 @@ class Matcher(object):
         else:
           hits[hit] = rank
         base = m.end() - 1
-        if len(hits) > max_hits:
+        if len(hits) >= max_hits:
           truncated = True
           break
       else:

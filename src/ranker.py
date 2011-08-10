@@ -46,6 +46,11 @@ class Ranker(object):
       base += len(w) + 1
     return res
 
+  def get_start_letters(self, s):
+    starts = self.get_starts(s)
+    s_lower = s.lower()
+    return [s_lower[i] for i in starts]
+    
   def get_num_hits_on_word_starts(self, query, orig_hit, truncated = False):
     starts = self.get_starts(orig_hit)
     if len(starts) == 0:

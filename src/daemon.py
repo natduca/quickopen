@@ -48,12 +48,15 @@ class _RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
       text = obj.as_json()
     else:
       text = json.dumps(obj)
-    self.send_response(200, 'OK')
-    self.send_header('Cache-Control', 'no-cache')
-    self.send_header('Content-Type', 'applicaiton/json')
-    self.send_header('Content-Length', len(text))
-    self.end_headers()
-    self.wfile.write(text)
+    try:
+      self.send_response(200, 'OK')
+      self.send_header('Cache-Control', 'no-cache')
+      self.send_header('Content-Type', 'applicaiton/json')
+      self.send_header('Content-Length', len(text))
+      self.end_headers()
+      self.wfile.write(text)
+    except IOError:
+      return
 
   def send_result(self, route, obj):
     if route.output == 'json':
@@ -93,12 +96,15 @@ class _RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         except Exception, ex:
           if not isinstance(ex,SilentException):
             traceback.print_exc()
-          if isinstance(ex,NotFoundException):
-            self.send_response(404, 'NotFound')
-          else:
-            self.send_response(500, 'Exception in handler')
-          self.send_header('Content-Length', 0)
-          self.end_headers()
+          try:
+            if isinstance(ex,NotFoundException):
+              self.send_response(404, 'NotFound')
+            else:
+              self.send_response(500, 'Exception %s in handler' % ex)
+            self.send_header('Content-Length', 0)
+            self.end_headers()
+          except IOError:
+            return
       else:
         self.send_response(405, 'Method Not Allowed')
         self.send_header('Content-Length', 0)
@@ -130,7 +136,8 @@ class Daemon(BaseHTTPServer.HTTPServer):
     self.port_ = args[0][1]
     self.routes = []
     self.test_mode = test_mode
-    self.idle = Event()
+    self.hi_idle = Event() # event that is fired every 0.05sec as long as no transactions are pending
+    self.lo_idle = Event() # event that is fired once a second
     if test_mode:
       self.add_json_route('/exit', self.on_exit, ['POST', 'GET'])
       import daemon_test
@@ -160,16 +167,20 @@ class Daemon(BaseHTTPServer.HTTPServer):
   def serve_forever(self):
     self.is_running_ = True
     while self.is_running_:
-      if self.idle.has_listeners:
+      if self.hi_idle.has_listeners:
         delay = 0.05
+        fire_lo_idle_listeners = False
       else:
         delay = 1
-      
+        fire_lo_idle_listeners = True
+
       r, w, e = select.select([self], [], [], delay)
       if r:
         self.handle_request()
       else:
-        self.idle.fire()
+        self.hi_idle.fire()
+      if fire_lo_idle_listeners:
+        self.lo_idle.fire()
 
   def shutdown(self):
     self.is_running_ = False

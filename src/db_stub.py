@@ -20,9 +20,9 @@ from dyn_object import *
 class DBStub(object):
   def __init__(self, settings, server):
     self.db = db.DB(settings)
-    self.db.needs_sync.add_listener(self.on_db_needs_sync)
+    self.db.needs_indexing.add_listener(self.on_db_needs_indexing)
     self.server = server
-    self.idle_hook_added = False
+    self.hi_idle_hook_added = False
 
     server.add_json_route('/dirs/add', self.add_dir, ['POST'])
     server.add_json_route('/dirs', self.list_dirs, ['GET'])
@@ -32,22 +32,26 @@ class DBStub(object):
     server.add_json_route('/ignores/add', self.ignores_add, ['POST'])
     server.add_json_route('/ignores/remove', self.ignores_remove, ['POST'])
     server.add_json_route('/sync', self.sync, ['POST'])
-    server.add_json_route('/sync_status', self.sync_status, ['GET'])
+    server.add_json_route('/status', self.status, ['GET'])
     server.add_json_route('/search', self.search, ['POST'])
-    if not self.db.is_syncd:
-      self.on_db_needs_sync()
+    if not self.db.is_up_to_date:
+      self.on_db_needs_indexing()
+    self.server.hi_idle.add_listener(self.on_daemon_lo_idle)
 
-  def on_db_needs_sync(self):
-    if self.idle_hook_added:
+  def on_db_needs_indexing(self):
+    if self.hi_idle_hook_added:
       return
-    self.server.idle.add_listener(self.on_daemon_idle)
+    self.server.hi_idle.add_listener(self.on_daemon_hi_idle)
 
-  def on_daemon_idle(self):
-    self.db.step_sync()
+  def on_daemon_lo_idle(self):
+    self.db.check_up_to_date_a_bit_more()
 
-    if self.db.is_syncd:
-      self.server.idle.remove_listener(self.on_daemon_idle)
-      self.idle_hook_added = False
+  def on_daemon_hi_idle(self):
+    self.db.step_indexer()
+
+    if self.db.is_up_to_date:
+      self.server.hi_idle.remove_listener(self.on_daemon_hi_idle)
+      self.hi_idle_hook_added = False
 
   def add_dir(self, m, verb, data):
     d = self.db.add_dir(data.path)
@@ -88,15 +92,12 @@ class DBStub(object):
 
   def search(self, m, verb, data):
     q = re.compile(data)
-    try:
-      res = self.db.search(data)
-    except db.NotSyncdException:
-      raise daemon.SilentException()
+    res = self.db.search(data)
     return res
 
   def sync(self, m, verb, data):
     self.db.sync()
     return {"status": "OK"}
 
-  def sync_status(self, m, verb, data):
-    return self.db.sync_status()
+  def status(self, m, verb, data):
+    return self.db.status()

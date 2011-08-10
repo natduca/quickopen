@@ -34,6 +34,7 @@ class DBIndexTestBase(object):
     self.assertTrue('~/chrome/src/content/browser/renderer_host/render_widget_host_gtk.cc' in self.index.search('rwh').hits)
     self.assertTrue('~/chrome/src/content/browser/renderer_host/render_widget_host_gtk.cc' in self.index.search('rwhg').hits)
 
+  def test_wordstart_query2(self):
     self.assertTrue('~/chrome/src/third_party/WebKit/Source/WebCore/css/MediaFeatureNames.cpp' in self.index.search('mfn').hits)
     self.assertTrue('~/chrome/src/third_party/WebKit/Source/WebCore/css/MediaFeatureNames.cpp' in self.index.search('MFN').hits)
 

@@ -113,13 +113,7 @@ class DBIndex(object):
         p.terminate()
 
   def search(self, query, max_hits = 100):
-    if query == '':
-      res = DynObject()
-      res.hits = []
-      res.ranks = []
-      res.truncated = False
-      return res
-
+    assert len(query) > 0
     if query in self.query_cache:
       res = self.query_cache[query]
       return res

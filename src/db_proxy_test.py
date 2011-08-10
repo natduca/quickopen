@@ -28,7 +28,8 @@ class DBProxyTest(db_test_base.DBTestBase, unittest.TestCase):
 
   def test_search_async(self):
     self.db.add_dir(self.test_data_dir)
-    self.assertEquals(False, self.db.is_syncd)
+    self.assertEquals(False, self.db.has_index)
+    self.assertEquals(False, self.db.is_up_to_date)
     self.db.sync()
 
     a = self.db.search_async('MySubSystem.c')

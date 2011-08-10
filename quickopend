@@ -3,13 +3,74 @@ import logging
 import sys
 import optparse
 import os
+import re
 
 import src.daemon
 import src.db_stub
 import src.settings
 
 
-def main():
+def load_settings(options):
+  settings_file = os.path.expanduser(options.settings)
+  settings = src.settings.Settings(settings_file)
+  settings.register('host', str, '')
+  settings.register('port', int, 10248)
+
+  if options.port:
+    settings.port = int(options.port)
+
+  if options.host != None:
+    settings.host = options.host
+
+  return settings
+
+def CMDrun(parser, args):
+  """Runs the quickopen daemon"""
+  (options, args) = parser.parse_args(args)
+  settings = load_settings(options)
+  daemon = src.daemon.create(settings.host, settings.port, options.test)
+  db_stub = src.db_stub.DBStub(settings, daemon)
+  daemon.run()
+  return 0
+
+# Subcommand addins to optparse, taken from git-cl.py,
+# http://src.chromium.org/svn/trunk/tools/depot_tools/git_cl.py
+###########################################################################
+
+def Command(name):
+  return getattr(sys.modules[__name__], 'CMD' + name, None)
+
+
+def CMDhelp(parser, args):
+  """print list of commands or help for a specific command"""
+  _, args = parser.parse_args(args)
+  if len(args) == 1:
+    return main(args + ['--help'])
+  parser.print_help()
+  return 0
+
+
+def GenUsage(parser, command):
+  """Modify an OptParse object with the function's documentation."""
+  obj = Command(command)
+  more = getattr(obj, 'usage_more', '')
+  if command == 'help':
+    command = '<command>'
+  else:
+    # OptParser.description prefer nicely non-formatted strings.
+    parser.description = re.sub('[\r\n ]{2,}', ' ', obj.__doc__)
+  parser.set_usage('usage: %%prog %s [options] %s' % (command, more))
+
+
+def main(argv):
+  """Doesn't parse the arguments here, just find the right subcommand to
+  execute."""
+  # Do it late so all commands are listed.
+  CMDhelp.usage_more = ('\n\nCommands are:\n' + '\n'.join([
+      '  %-10s %s' % (fn[3:], Command(fn[3:]).__doc__.split('\n')[0].strip())
+      for fn in dir(sys.modules[__name__]) if fn.startswith('CMD')]))
+
+  # Create the option parse and add --verbose support.
   parser = optparse.OptionParser()
   parser.add_option('--host', dest='host', action='store', help='Hostname to listen on')
   parser.add_option('--port', dest='port', action='store', help='Port to run on')
@@ -18,32 +79,30 @@ def main():
   parser.add_option(
       '-v', '--verbose', action='count', default=0,
       help='Increase verbosity level (repeat as needed)')
-  (options, args) = parser.parse_args()
-  if options.verbose >= 2:
-    logging.basicConfig(level=logging.DEBUG)
-  elif options.verbose:
-    logging.basicConfig(level=logging.INFO)
-  else:
-    logging.basicConfig(level=logging.WARNING)
+  old_parser_args = parser.parse_args
+  def Parse(args):
+    options, args = old_parser_args(args)
+    if options.verbose >= 2:
+      logging.basicConfig(level=logging.DEBUG)
+    elif options.verbose:
+      logging.basicConfig(level=logging.INFO)
+    else:
+      logging.basicConfig(level=logging.WARNING)
+    return options, args
+  parser.parse_args = Parse
 
-  settings_file = os.path.expanduser(options.settings)
-  settings = src.settings.Settings(settings_file)
-  settings.register('host', str, '')
-  settings.register('port', int, 10248)
-
-  if options.port:
-    options.port = int(options.port)
-  else:
-    options.port = settings.port
-
-  if not options.host:
-    options.host = settings.host
-    
-  daemon = src.daemon.create(options.host, options.port, options.test)
-  db_stub = src.db_stub.DBStub(settings, daemon)
-
-  daemon.run()
+  if argv:
+    command = Command(argv[0])
+    if command:
+      # "fix" the usage and the description now that we know the subcommand.
+      GenUsage(parser, argv[0])
+      return command(parser, argv[1:])
+    # Not a known command. Default to help.
+    GenUsage(parser, 'help')
+    return CMDhelp(parser, argv)
+  else: # default command
+    GenUsage(parser, 'run')
+    return CMDrun(parser, argv)
 
 if __name__ == '__main__':
-  main()
-  sys.exit(0)
+  sys.exit(main(sys.argv[1:]))

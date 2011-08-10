@@ -59,8 +59,17 @@ class Matcher(object):
     # word starts first
     self.add_all_wordstarts_matching( hits, query, max_hits )
 
-    # add in superfuzzy matches
-    self.add_all_matching( hits, query, self.get_superfuzzy_filter(lower_query), max_hits )
+    # add in substring matches
+    self.add_all_matching( hits, query, self.get_substring_filter(lower_query), max_hits )
+
+    # add in superfuzzy matches ONLY if we have no high-quality hit
+    has_hq = False
+    for hit,rank in hits.iteritems():
+      if rank > 2:
+        has_hq = True
+        break
+    if not has_hq:
+      self.add_all_matching( hits, query, self.get_superfuzzy_filter(lower_query), max_hits )
 
     return hits, len(hits) == max_hits
 
@@ -98,6 +107,12 @@ class Matcher(object):
       tmp.append("[^A-Z\n]%s" % query[i])
     flt = "\n.*%s.*\n" % '.*'.join(tmp)
     return (flt, True)
+
+  def get_substring_filter(self, query):
+    query = re.escape(query.lower())
+    # abc -> *abc*
+    flt = "\n.*%s.*\n" % query
+    return (flt, False)
 
   def get_superfuzzy_filter(self, query):
     tmp = []

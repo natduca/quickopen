@@ -1,42 +1,35 @@
+Queries
+---------------------------------------------------------------------------
 CCLayerTreeHost --- is that lth? clth? cclth?
 
 if you type in emacs while the prompt is up, then it hits the current buffer
   after you return. thats bad because there's a delay before the window comes up.
-
-Cache recent queries
 
 fi for feature_info.cpp, but also matches FontInfo, Full Text Index, FastISel, FontLoweringInfo, reflect_float_frag_ivaryingconst_ref.frag
 
 wg3d and wgc3d for webgraphicscontext3d_in_process_impl
 e3dcr for Extensions3DChromium
 
+rendererglcontext -> renderer_gl_context
 
-if query is pending when they hit ok, wait for query to complete...
+   rwhwin -> render_widget_host_view_win
+   rwfsp -> render_widget_fullscreen_pepper
 
-Implement rescan database button
+Features
+---------------------------------------------------------------------------
+- If query is pending on ok, wait for query to complete
 
-random hangs in emacs when i pick something
+- Fix word detection for WG3D (reports wgd now)
+- Fix word detection for "BlahBlah-blah"
 
-- Make search_async on the proxy
-- Distinguish between search-failed-because-of-sync vs
-  sync-failed-unexpectedly
-
-- Improve query perf [got slow with word matchers]
-
-
-- Warning bar if search().truncated
+- Remove extensions from db_index, add extensions after basic basename search
 
 - Emacs C-N C-P move selection up and down
 
 - Have vim survive if quickopen throws exception
 
-
-
 - Better matching with partials:
-   rwhwin -> render_widget_host_view_win
-   rwfsp -> render_widget_fullscreen_pepper
-
-- Extension queries: What shoudl abc.c match?
 
 - Speed up empty-dir-query, e.g. foo/
-- Support wildcard-dir-query, e.g. f*b/*
+
+- Warning bar if search().truncated

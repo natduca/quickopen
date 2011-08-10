@@ -125,7 +125,7 @@ def CMDrawsearch(parser, args):
   db = open_db(settings, options)
   if len(args) != 1:
     parser.error('Expected: <query>')
-  if not db.is_syncd:
+  if not db.has_index:
     print "Database is not fully indexed. Wait a bit or try quickopen status"
     return 255
   res = db.search(args[0])

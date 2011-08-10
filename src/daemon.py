@@ -48,12 +48,15 @@ class _RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
       text = obj.as_json()
     else:
       text = json.dumps(obj)
-    self.send_response(200, 'OK')
-    self.send_header('Cache-Control', 'no-cache')
-    self.send_header('Content-Type', 'applicaiton/json')
-    self.send_header('Content-Length', len(text))
-    self.end_headers()
-    self.wfile.write(text)
+    try:
+      self.send_response(200, 'OK')
+      self.send_header('Cache-Control', 'no-cache')
+      self.send_header('Content-Type', 'applicaiton/json')
+      self.send_header('Content-Length', len(text))
+      self.end_headers()
+      self.wfile.write(text)
+    except IOError:
+      return
 
   def send_result(self, route, obj):
     if route.output == 'json':
@@ -93,12 +96,15 @@ class _RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         except Exception, ex:
           if not isinstance(ex,SilentException):
             traceback.print_exc()
-          if isinstance(ex,NotFoundException):
-            self.send_response(404, 'NotFound')
-          else:
-            self.send_response(500, 'Exception in handler')
-          self.send_header('Content-Length', 0)
-          self.end_headers()
+          try:
+            if isinstance(ex,NotFoundException):
+              self.send_response(404, 'NotFound')
+            else:
+              self.send_response(500, 'Exception %s in handler' % ex)
+            self.send_header('Content-Length', 0)
+            self.end_headers()
+          except IOError:
+            return
       else:
         self.send_response(405, 'Method Not Allowed')
         self.send_header('Content-Length', 0)

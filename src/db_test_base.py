@@ -51,13 +51,15 @@ class DBTestBase(object):
     self.db.add_dir(self.test_data_dir)
     bad_dir = os.path.join(self.test_data_dir, 'xxx')
     self.db.sync()
+    self.assertTrue(self.db.has_index and self.db.is_up_to_date)
 
   def test_add_nested_dir_doesnt_dup(self):
     self.db.add_dir(self.test_data_dir)
     sub_dir = os.path.join(self.test_data_dir, 'project1')
     self.db.add_dir(sub_dir)
-    self.assertEquals(False, self.db.is_syncd)
+    self.assertFalse(self.db.is_up_to_date)
     self.db.sync()
+    self.assertTrue(self.db.has_index and self.db.is_up_to_date)
     res = self.db.search('MySubSystem.c')
     self.assertEquals(1, len(res.hits))    
     self.assertEquals(os.path.join(self.test_data_dir, 'project1/MySubSystem.c'), res.hits[0])
@@ -66,34 +68,38 @@ class DBTestBase(object):
     self.db.add_dir(self.test_data_dir)
     sub_dir = os.path.join(self.test_data_dir, 'project1/')
     self.db.add_dir(sub_dir)
-    self.assertEquals(False, self.db.is_syncd)
+    self.assertFalse(self.db.is_up_to_date)
     self.db.sync()
+    self.assertTrue(self.db.has_index and self.db.is_up_to_date)
     res = self.db.search('MySubSystem.c')
     self.assertTrue(len(res.hits) >= 1)
     self.assertTrue(os.path.join(self.test_data_dir, 'project1/MySubSystem.c') in res.hits)
 
   def test_search_unique(self):
     self.db.add_dir(self.test_data_dir)
-    self.assertEquals(False, self.db.is_syncd)
+    self.assertFalse(self.db.is_up_to_date)
     self.db.sync()
+    self.assertTrue(self.db.has_index and self.db.is_up_to_date)
     res = self.db.search('MySubSystem.c')
     self.assertEquals(1, len(res.hits))
     self.assertEquals(os.path.join(self.test_data_dir, 'project1/MySubSystem.c'), res.hits[0])
 
   def test_search_with_dir(self):
     self.db.add_dir(self.test_data_dir)
-    self.assertEquals(False, self.db.is_syncd)
-    self.assertFalse(self.db.sync_status().is_syncd)
-    self.assertTrue(self.db.sync_status().status != '')
+    self.assertFalse(self.db.is_up_to_date)
+    self.assertFalse(self.db.status().is_up_to_date)
+    self.assertTrue(self.db.status().status != '')
     self.db.sync()
+    self.assertTrue(self.db.has_index and self.db.is_up_to_date)
     res = self.db.search('project1/MySubSystem.c')
     self.assertEquals(1, len(res.hits))
     self.assertEquals(os.path.join(self.test_data_dir, 'project1/MySubSystem.c'), res.hits[0])
 
   def test_partial_search(self):
     self.db.add_dir(self.test_data_dir)
-    self.assertEquals(False, self.db.is_syncd)
+    self.assertFalse(self.db.is_up_to_date)
     self.db.sync()
+    self.assertTrue(self.db.has_index and self.db.is_up_to_date)
     res = self.db.search('MyClass')
     self.assertTrue(len(res.hits) >= 2)
     self.assertTrue(os.path.join(self.test_data_dir, 'project1/MyClass.c') in res.hits)
@@ -104,8 +110,9 @@ class DBTestBase(object):
 
   def test_ignores(self):
     self.db.add_dir(self.test_data_dir)
-    self.assertEquals(False, self.db.is_syncd)
+    self.assertFalse(self.db.is_up_to_date)
     self.db.sync()
+    self.assertTrue(self.db.has_index and self.db.is_up_to_date)
 
     # .git should not be found
     res = self.db.search('packed-refs')
@@ -125,6 +132,7 @@ class DBTestBase(object):
     self.db.add_dir(self.test_data_dir)
     self.db.ignore(os.path.join(self.test_data_dir, 'something/*'))
     self.db.sync()
+    self.assertTrue(self.db.has_index and self.db.is_up_to_date)
     self.assertEquals([], self.db.search('something_file.txt').hits)
 
   def test_ignore_inside_symlink(self):
@@ -137,6 +145,7 @@ class DBTestBase(object):
     project1_symlink_dir = os.path.join(self.test_data_dir, "project1_symlink/")
     self.db.add_dir(project1_symlink_dir)
     self.db.sync()
+    self.assertTrue(self.db.has_index and self.db.is_up_to_date)
 
     ref_file = os.path.join(self.test_data_dir, "project1/module/project1_module1.txt")
 
@@ -147,12 +156,20 @@ class DBTestBase(object):
     # now ignore something inside project1_symlink
     self.db.ignore(os.path.join(self.test_data_dir, 'project1_symlink/module/*'))
     self.db.sync()
+    self.assertTrue(self.db.has_index and self.db.is_up_to_date)
+
     hits = self.db.search('project1_module1.txt').hits
     self.assertTrue(ref_file not in hits)
 
   def test_ignore_ctl(self):
     self.db.add_dir(self.test_data_dir)
     self.db.sync()
+    self.assertEquals([], self.db.search('').hits)
+
+  def test_ignore_ctl(self):
+    self.db.add_dir(self.test_data_dir)
+    self.db.sync()
+    self.assertTrue(self.db.has_index and self.db.is_up_to_date)
 
     res = self.db.search('svn_should_not_show_up.txt')
     self.assertEquals(0, len(res.hits))
@@ -160,36 +177,40 @@ class DBTestBase(object):
     orig = list(self.db.ignores)
     for i in orig:
       self.db.unignore(i)
-    self.assertEquals(False, self.db.is_syncd)
+    self.assertFalse(self.db.is_up_to_date)
     self.db.sync()
+    self.assertTrue(self.db.has_index and self.db.is_up_to_date)
 
     res = self.db.search('svn_should_not_show_up.txt')
     self.assertEquals(1, len(res.hits))
 
     for i in orig:
       self.db.ignore(i)
-    self.assertEquals(False, self.db.is_syncd)
+    self.assertFalse(self.db.is_up_to_date)
     self.db.sync()
+    self.assertTrue(self.db.has_index and self.db.is_up_to_date)
 
     res = self.db.search('svn_should_not_show_up.txt')
     self.assertEquals(0, len(res.hits))
 
   def test_sync(self):
     self.db.add_dir(self.test_data_dir)
-    self.assertEquals(False, self.db.is_syncd)
+    self.assertFalse(self.db.is_up_to_date)
     self.db.sync()
-    self.assertEquals(True, self.db.is_syncd)
+    self.assertTrue(self.db.has_index and self.db.is_up_to_date)
 
   def test_sync(self):
     self.db.add_dir(self.test_data_dir)
-    self.assertEquals(False, self.db.is_syncd)
+    self.assertFalse(self.db.is_up_to_date)
     self.db.sync()
-    self.assertEquals(True, self.db.is_syncd)
+    self.assertTrue(self.db.has_index)
+    self.assertTrue(self.db.is_up_to_date)
 
   def test_search_unsync(self):
     self.db.add_dir(self.test_data_dir)
-    self.assertEquals(False, self.db.is_syncd)
-    self.assertRaises(db.NotSyncdException, lambda: self.db.search("foo"))
+    self.assertFalse(self.db.is_up_to_date)
+    self.assertFalse(self.db.has_index)
+    self.assertEquals([], self.db.search("foo").hits)
 
   def test_dup_ignore_ctl(self):
     self.db.add_dir(self.test_data_dir)
@@ -201,4 +222,4 @@ class DBTestBase(object):
 
     self.db.unignore("foo")
     self.assertRaises(Exception, lambda: self.db.unignore("foo"))
-    self.assertEquals(False, self.db.is_syncd)
+    self.assertFalse(self.db.is_up_to_date)

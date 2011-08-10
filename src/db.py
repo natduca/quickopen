@@ -29,13 +29,6 @@ DEFAULT_IGNORES=[
   "#*",
 ]
 
-"""
-Exception thrown when a search fails due to the DB being unsyncd
-"""
-class NotSyncdException(Exception):
-  def __init__(self,*args):
-    Exception.__init__(self, *args)
-
 class DBDir(object):
   def __init__(self, d):
     self.path = d
@@ -56,8 +49,7 @@ class DBDir(object):
 class DB(object):
   def __init__(self, settings):
     self.settings = settings
-    self.needs_sync = Event() # fired when the database gets dirtied and needs syncing
-    self._dirty = True # whether the settings have dirtied the db
+    self.needs_indexing = Event() # fired when the database gets dirtied and needs syncing
     self._pending_indexer = None # non-None if a DBIndex is running
     self._cur_index = None # the last DBIndex object --> actually runs the searches
 
@@ -128,55 +120,76 @@ class DB(object):
   ###########################################################################
 
   @property
-  def is_syncd(self):
-    return self.sync_status().is_syncd
+  def has_index(self):
+    return self._cur_index != None
+
+  @property
+  def is_up_to_date(self):
+    return self._pending_indexer == None
 
   def _set_dirty(self):
+    was_indexing = self._pending_indexer != None
     if self._pending_indexer:
       self._pending_indexer = None
-    was_dirty = self._dirty
-    self._dirty = True
-    if not was_dirty:
-      self.needs_sync.fire()
+    self._pending_indexer = 1 # set to 1 as indication to step_indexer to create new indexer
+    if not was_indexing:
+      self.needs_indexing.fire()
 
-  def sync_status(self):
-    if self._dirty:
-      if self._pending_indexer:
-        status = "syncing: %s" % self._pending_indexer.progress
+  def status(self):
+    if self._pending_indexer:
+      if isinstance(self._pending_indexer, DBIndexer): # is an integer briefly between _set_dirty and first step_indexer
+        if self._cur_index:
+          status = "syncing: %s, %s" % (self._pending_indexer.progress, self._cur_index.status)
+        else:
+          status = "first-time sync: %s" % self._pending_indexer.progress
       else:
-        status = "dirty but not synchronized"
+        status = "sync scheduled"
     else:
-      status = "up-to-date: %s" % self._cur_index.status
+      if self._cur_index:
+        status = "up-to-date: %s" % self._cur_index.status
+      else:
+        status = "sync required"
 
-    return DynObject({"is_syncd": not self._dirty,
+    return DynObject({"is_up_to_date": self.is_up_to_date,
+                      "has_index": self.has_index,
                       "status": status})
 
-  def step_sync(self):
-    if self._pending_indexer:
-      if self._pending_indexer.complete:
-        self._cur_index = DBIndex(self._pending_indexer)
-        self._pending_indexer = None
-        self._dirty = False
-      else:
-        self._pending_indexer.index_a_bit_more()
+  def step_indexer(self):
+    if not self._pending_indexer:
       return
 
-    # start new sync
-    self._dir_cache.set_ignores(self.settings.ignores)
-    self._pending_indexer = DBIndexer(self.settings.dirs, self._dir_cache)
+    if not isinstance(self._pending_indexer, DBIndexer):
+      self._dir_cache.set_ignores(self.settings.ignores)
+      self._pending_indexer = DBIndexer(self.settings.dirs, self._dir_cache)
+
+    if self._pending_indexer.complete:
+      self._cur_index = DBIndex(self._pending_indexer)
+      self._pending_indexer = None
+    else:
+      self._pending_indexer.index_a_bit_more()
 
   def sync(self):
     """Ensures database index is up-to-date"""
-    while self._dirty:
-      self.step_sync()
+    while self._pending_indexer:
+      self.step_indexer()
 
   ###########################################################################
+  def _empty_result(self):
+    res = DynObject()
+    res.hits = []
+    res.ranks = []
+    res.truncated = False
+    return res
+    
   def search(self, query, max_hits = -1):
-    if not self.is_syncd:
-      self.step_sync()
+    if self._pending_indexer:
+      self.step_indexer()
       # step sync might change the db sync status
-      if not self.is_syncd:
-        raise NotSyncdException("DB not syncd")
+      if not self._cur_index:
+        return self._empty_result()
+
+    if query == '':
+      return self._empty_result()
 
     if max_hits == -1:
       return self._cur_index.search(query)

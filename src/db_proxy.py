@@ -129,24 +129,24 @@ class DBProxy(object):
       raise "Pattern not found"
 
   def search(self, q):
-    try:
-      ret = self._req('POST', '/search', q)
-    except Exception:
-      raise db.NotSyncdException()
-    return ret
+    return self._req('POST', '/search', q)
 
   def search_async(self, q):
     return AsyncSearch(self.host, self.port, q)
-    
+
   @property
-  def is_syncd(self):
-    return self.sync_status().is_syncd
+  def is_up_to_date(self):
+    return self.status().is_up_to_date
+
+  @property
+  def has_index(self):
+    return self.status().has_index
 
   def sync(self):
     ret = self._req('POST', '/sync')
 
-  def sync_status(self):
-    return self._req('GET', '/sync_status')
+  def status(self):
+    return self._req('GET', '/status')
 
 class AsyncSearchError(object): 
   pass

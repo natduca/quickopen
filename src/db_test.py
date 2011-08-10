@@ -40,7 +40,7 @@ class DBTest(DBTestBase, unittest.TestCase):
     d1 = os.path.join(self.test_data_dir, 'project1')
     d2 = os.path.join(self.test_data_dir, 'something')
     self.db.add_dir(d1)
-    self.db.step_sync()
+    self.db.step_indexer()
     self.db.add_dir(d2)
     self.db.sync()
     res = self.db.search('something_file.txt')

@@ -20,7 +20,7 @@ from dyn_object import *
 class DBStub(object):
   def __init__(self, settings, server):
     self.db = db.DB(settings)
-    self.db.needs_sync.add_listener(self.on_db_needs_sync)
+    self.db.needs_indexing.add_listener(self.on_db_needs_indexing)
     self.server = server
     self.idle_hook_added = False
 
@@ -32,20 +32,20 @@ class DBStub(object):
     server.add_json_route('/ignores/add', self.ignores_add, ['POST'])
     server.add_json_route('/ignores/remove', self.ignores_remove, ['POST'])
     server.add_json_route('/sync', self.sync, ['POST'])
-    server.add_json_route('/sync_status', self.sync_status, ['GET'])
+    server.add_json_route('/status', self.status, ['GET'])
     server.add_json_route('/search', self.search, ['POST'])
-    if not self.db.is_syncd:
-      self.on_db_needs_sync()
+    if not self.db.is_up_to_date:
+      self.on_db_needs_indexing()
 
-  def on_db_needs_sync(self):
+  def on_db_needs_indexing(self):
     if self.idle_hook_added:
       return
     self.server.idle.add_listener(self.on_daemon_idle)
 
   def on_daemon_idle(self):
-    self.db.step_sync()
+    self.db.step_indexer()
 
-    if self.db.is_syncd:
+    if self.db.is_up_to_date:
       self.server.idle.remove_listener(self.on_daemon_idle)
       self.idle_hook_added = False
 
@@ -88,15 +88,12 @@ class DBStub(object):
 
   def search(self, m, verb, data):
     q = re.compile(data)
-    try:
-      res = self.db.search(data)
-    except db.NotSyncdException:
-      raise daemon.SilentException()
+    res = self.db.search(data)
     return res
 
   def sync(self, m, verb, data):
     self.db.sync()
     return {"status": "OK"}
 
-  def sync_status(self, m, verb, data):
-    return self.db.sync_status()
+  def status(self, m, verb, data):
+    return self.db.status()

@@ -21,6 +21,20 @@ import types
 import traceback
 import unittest
 
+class ImportTest(unittest.TestCase):
+  def __init__(self,*args):
+    unittest.TestCase.__init__(self, *args)
+    self.module = None
+
+  def test_import(self):
+    __import__(self.module,fromlist=[True])
+
+  def shortDescription(self):
+    return "%s.import" % self.module
+
+  def id(self):
+    return "%s.import" % self.module
+  
 def discover(filters):
   if hasattr(unittest.TestLoader, 'discover'):
     return unittest.TestLoader().discover('src')
@@ -39,8 +53,10 @@ def discover(filters):
       try:
         module = __import__(fqn,fromlist=[True])
       except:
-        print "While importing [%s]\n" % fqn
-        traceback.print_exc()
+        # convert into a test so it will fail...
+        it = ImportTest("test_import")
+        it.module = fqn
+        subsuites.append(it)
         continue
 
       def test_is_selected(name):
@@ -76,7 +92,6 @@ def main():
       '-v', '--verbose', action='count', default=0,
       help='Increase verbosity level (repeat as needed)')
   parser.add_option('--debug', dest='debug', action='store_true', default=False, help='Break into pdb when an assertion fails')
-  parser.add_option('--incremental', dest='incremental', action='store_true', default=False, help='Run tests one at a time.')
   parser.add_option('--stop', dest='stop_on_error', action='store_true', default=False, help='Stop running tests on error.')
   (options, args) = parser.parse_args()
 
@@ -129,7 +144,7 @@ def main():
     suites = discover(['.*'])
 
   r = unittest.TextTestRunner()
-  if not options.incremental:
+  if not options.stop_on_error:
     res = r.run(suites)
     if res.wasSuccessful():
       return 0
@@ -144,16 +159,14 @@ def main():
           res = r.run(t)
           if not res.wasSuccessful():
             ok = False
-            if options.stop_on_error:
-              break
-        if ok == False and options.stop_on_error:
+            break
+        if ok == False:
           break
       else:
         res = r.run(s)
         if not res.wasSuccessful():
           ok = False
-          if options.stop_on_error:
-            break
+          break
     if ok:
       return 0
     return 255

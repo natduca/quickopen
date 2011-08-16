@@ -154,17 +154,25 @@ def GenUsage(parser, command):
 def main(argv):
   """Doesn't parse the arguments here, just find the right subcommand to
   execute."""
+
+  # Create the option parse and add --verbose support.
+  sys.path.append(os.path.join(os.path.dirname(__file__), "third_party/py_trace_event/"))
+  try:
+    import trace_event
+  except:
+    trace_event = None
+
   # Do it late so all commands are listed.
   CMDhelp.usage_more = ('\n\nCommands are:\n' + '\n'.join([
       '  %-10s %s' % (fn[3:], Command(fn[3:]).__doc__.split('\n')[0].strip())
       for fn in dir(sys.modules[__name__]) if fn.startswith('CMD')]))
-
-  # Create the option parse and add --verbose support.
   parser = optparse.OptionParser()
   parser.add_option('--host', dest='host', action='store', help='Hostname to listen on')
   parser.add_option('--port', dest='port', action='store', help='Port to run on')
   parser.add_option('--settings', dest='settings', action='store', default='~/.quickopend', help='Settings file to use')
   parser.add_option('--test', dest='test', action='store_true', default=False, help='Adds test hooks')
+  if trace_event:
+    parser.add_option('--trace', dest='trace', action='store_true', default=False, help='Enables trace_event instrumentation.')
   parser.add_option(
       '-v', '--verbose', action='count', default=0,
       help='Increase verbosity level (repeat as needed)')
@@ -177,6 +185,11 @@ def main(argv):
       logging.basicConfig(level=logging.INFO)
     else:
       logging.basicConfig(level=logging.WARNING)
+
+    if options.trace:
+      sys.path.append(os.path.join(os.path.dirname(__file__), "third_party/trace_event/"))
+      import trace_event
+      trace_event.enable("quickopend.trace")
     return options, args
   parser.parse_args = Parse
 
@@ -192,6 +205,8 @@ def main(argv):
   else: # default command
     GenUsage(parser, 'run')
     return CMDrun(parser, argv)
+
+    
 
 if __name__ == '__main__':
   sys.exit(main(sys.argv[1:]))

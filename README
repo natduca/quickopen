@@ -4,6 +4,16 @@ directory-trees containing hundreds of thousands of files.
 Inspired by FuzzyFilter for Vim and FuzzyMatch for Emacs, but with focus on
 performance and user interface.
 
+Dependencies
+===========================================================================
+Linux:
+        python-gtk2
+
+OSX:
+        http://www.wxpython.org/download.php#stable
+        wxPython 2.8-osx-unicode-2.6
+
+
 VIM Bindings
 --------------------------------------------------------------------------------
 0. Use pathogen, if you're not using it already:

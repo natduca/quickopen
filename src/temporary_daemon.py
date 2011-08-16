@@ -52,7 +52,7 @@ class TemporaryDaemon(object):
       raise Exception("Daemon running")
 
     self.daemon_settings_file = tempfile.NamedTemporaryFile()
-    args = ['./quickopend', '--settings', self.daemon_settings_file.name, '--port', str(TEST_PORT)]
+    args = ['./quickopend', 'run', '--settings', self.daemon_settings_file.name, '--port', str(TEST_PORT)]
     args.append('--test')
 
     self.proc = subprocess.Popen(args)

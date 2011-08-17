@@ -99,6 +99,7 @@ def CMDsearch(parser, args):
       return src.open_dialog_wx.run(settings, db)
   res = run()
   if not res:
+    print "pygtk nor WxPython found. Please install one and try again.\n"
     return 255
   else:
     if options.ok:
@@ -233,11 +234,11 @@ def main(argv):
 
 if __name__ == '__main__':
   if platform.system() == 'Darwin':
-    if os.getenv('VERSIONER_PYTHON_PREFER_32_BIT') != 'yes':
-      os.putenv('VERSIONER_PYTHON_PREFER_32_BIT', 'yes')
+    if os.environ['VERSIONER_PYTHON_PREFER_32_BIT'] != 'yes':
+      os.environ['VERSIONER_PYTHON_PREFER_32_BIT'] = 'yes'
       args = [sys.executable]
       args.extend(sys.argv)
-      os.execv(args[0], args)
+      os.execve(args[0], args, os.environ)
     else:
       sys.exit(main(sys.argv[1:]))
   else:

@@ -97,18 +97,20 @@ def CMDsearch(parser, args):
     if has_wx:
       import src.open_dialog_wx
       return src.open_dialog_wx.run(settings, db)
-  res = run()
-  if not res:
+
+    raise ImportError()
+  
+  try:
+    res = run()
+  except ImportError:
     print "pygtk nor WxPython found. Please install one and try again.\n"
     return 255
-  else:
+
+  if res:
     if options.ok:
       print "OK"
     print "\n".join(res)
     return 0
-
-  # give up
-  raise Exception("No supported UI detected.")
 
 def CMDstatus(parser, args):
   """Checks the status of the quick open database"""

@@ -186,7 +186,7 @@ def main(argv):
     else:
       logging.basicConfig(level=logging.WARNING)
 
-    if options.trace:
+    if hasattr(options, "trace") and options.trace:
       sys.path.append(os.path.join(os.path.dirname(__file__), "third_party/trace_event/"))
       import trace_event
       trace_event.enable("quickopend.trace")

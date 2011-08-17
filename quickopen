@@ -234,12 +234,16 @@ def main(argv):
 
 if __name__ == '__main__':
   if platform.system() == 'Darwin':
-    if os.environ['VERSIONER_PYTHON_PREFER_32_BIT'] != 'yes':
-      os.environ['VERSIONER_PYTHON_PREFER_32_BIT'] = 'yes'
-      args = [sys.executable]
-      args.extend(sys.argv)
-      os.execve(args[0], args, os.environ)
-    else:
+    has_wx = False
+    try:
+      import wx
+      has_wx = True
+    except:
+      pass
+    if has_wx:
       sys.exit(main(sys.argv[1:]))
+    args = ["/usr/bin/arch", "-i386", sys.executable]
+    args.extend(sys.argv)
+    os.execv(args[0], args)
   else:
     sys.exit(main(sys.argv[1:]))

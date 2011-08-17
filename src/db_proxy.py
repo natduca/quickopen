@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import async_http_connection
-import db
 import httplib
 import subprocess
 import sys

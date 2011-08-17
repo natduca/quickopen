@@ -115,7 +115,7 @@ def CMDstatus(parser, args):
   (options, args) = parser.parse_args(args)
   settings = load_settings(options)
   db = open_db(settings, options)
-  print db.sync_status().status
+  print db.status().status
 
 def CMDrawsearch(parser, args):
   """Prints the raw database's results for <query>"""

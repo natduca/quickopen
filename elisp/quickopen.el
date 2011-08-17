@@ -69,3 +69,6 @@
 (global-set-key (kbd "A-O") (lambda ()
   (interactive "")
   (quickopen)))
+(global-set-key (kbd "s-O") (lambda ()
+  (interactive "")
+  (quickopen)))

@@ -19,6 +19,8 @@ Features
 ---------------------------------------------------------------------------
 - If query is pending on ok, wait for query to complete
 
+- Make indexer be multithreaded [move pool from index upward?]
+
 - Fix word detection for WG3D (reports wgd now)
 - Fix word detection for "BlahBlah-blah"
 

@@ -149,7 +149,7 @@ class DB(object):
       logging.debug("Starting to check for changed directories.")
       self._pending_up_to_date_generator = self._dir_cache.iterdirnames().__iter__()
 
-    for i in range(100):
+    for i in range(10):
       try:
         d = self._pending_up_to_date_generator.next()
       except StopIteration:

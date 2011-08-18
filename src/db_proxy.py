@@ -20,6 +20,7 @@ import json
 
 from dyn_object import DynObject
 from event import Event
+from trace_event import *
 
 class DBDirProxy(object):
   def __init__(self, id, path):

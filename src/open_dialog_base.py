@@ -17,6 +17,8 @@ import re
 import os
 import time
 
+from trace_event import *
+
 class OpenDialogBase(object):
   def __init__(self, settings, db):
     settings.register("filter_text", str, "")
@@ -37,6 +39,7 @@ class OpenDialogBase(object):
   def just_before_closed(self):
     self._settings.filter_text = self._filter_text
 
+  @trace
   def set_filter_text(self, text):
     self._filter_text = text
     if self._settings.query_log != "":
@@ -50,35 +53,44 @@ class OpenDialogBase(object):
         pass
 
   def on_tick(self,*args):
+    def begin_search():
+      self.set_status("DB Status: %s" % "searching")
+      self._last_search_query = self._filter_text
+      self._pending_search = self._db.search_async(self._last_search_query)
+
+    def on_ready():
+      try:
+        res = self._pending_search.result
+      except AsyncSearchError:
+        res = None
+      self._pending_search = None
+      if res:
+        self.update_results_list(res.hits,res.ranks)
+      else:
+        self.update_results_list([],[])
+      self._pending_search = None
+
+    def check_status():
+      try:
+        stat = self._db.status()
+        status = stat.status
+        enabled = stat.has_index
+      except Exception, ex:
+        status = "quickopend not running"
+        enabled = False
+      self.set_status("DB Status: %s" % status)
+      self.set_can_process_queries(enabled)
+
     if self._pending_search:
       self.set_status("DB Status: %s" % "searching")
       if self._pending_search.ready:
-        try:
-          res = self._pending_search.result
-        except AsyncSearchError:
-          res = None
-        self._pending_search = None
-        if res:
-          self.update_results_list(res.hits,res.ranks)
-        else:
-          self.update_results_list([],[])
-        self._pending_search = None
+        on_ready()
 
     # re-check the self._pending_search since we might have cleared it
     if not self._pending_search:
       # kick off a query
       if self._filter_text != self._last_search_query and self._can_process_queries:
-        self.set_status("DB Status: %s" % "searching")
-        self._last_search_query = self._filter_text
-        self._pending_search = self._db.search_async(self._last_search_query)
+        begin_search()
       else:
         # poll status
-        try:
-          stat = self._db.status()
-          status = stat.status
-          enabled = stat.has_index
-        except Exception, ex:
-          status = "quickopend not running"
-          enabled = False
-        self.set_status("DB Status: %s" % status)
-        self.set_can_process_queries(enabled)
+        check_status()

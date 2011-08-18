@@ -184,7 +184,7 @@ def main(argv):
     else:
       logging.basicConfig(level=logging.WARNING)
     if options.trace:
-      trace_enable("./%s.trace" % sys.argv[0])
+      trace_enable("%s.trace" % sys.argv[0])
     return options, args
   parser.parse_args = Parse
 

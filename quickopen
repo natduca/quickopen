@@ -77,6 +77,8 @@ def CMDsearch(parser, args):
   parser.add_option('--ok', dest='ok', action='store_true', default=False, help='Output "OK" before results')
   (options, args) = parser.parse_args(args)
   settings = load_settings(options)
+  if not trace_is_enabled() and settings.trace:
+    trace_enable("%s.trace" % sys.argv[0])
   db = open_db(settings, options)
 
   def run():
@@ -157,6 +159,7 @@ def load_settings(options):
   settings = src.settings.Settings(settings_file)
   settings.register('host', str, 'localhost')
   settings.register('port', int, 10248)
+  settings.register('trace', bool, False)
   return settings
 
 def open_db(settings,options):

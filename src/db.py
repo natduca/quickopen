@@ -20,6 +20,7 @@ from db_indexer import DBIndexer
 from dir_cache import DirCache
 from dyn_object import DynObject
 from event import Event
+from trace_event import *
 
 DEFAULT_IGNORES=[
   ".*",
@@ -139,6 +140,7 @@ class DB(object):
     while self._pending_up_to_date_generator:
       self.check_up_to_date_a_bit_more()
 
+  @trace
   def check_up_to_date_a_bit_more(self):
     if not self.is_up_to_date:
       return
@@ -168,6 +170,7 @@ class DB(object):
     if not was_indexing:
       self.needs_indexing.fire()
 
+  @trace
   def status(self):
     if self._pending_indexer:
       if isinstance(self._pending_indexer, DBIndexer): # is an integer briefly between _set_dirty and first step_indexer
@@ -187,6 +190,7 @@ class DB(object):
                       "has_index": self.has_index,
                       "status": status})
 
+  @trace
   def step_indexer(self):
     if not self._pending_indexer:
       return
@@ -215,6 +219,7 @@ class DB(object):
     res.truncated = False
     return res
     
+  @trace
   def search(self, query, max_hits = -1):
     if self._pending_indexer:
       self.step_indexer()

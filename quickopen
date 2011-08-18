@@ -124,7 +124,10 @@ def CMDstatus(parser, args):
   (options, args) = parser.parse_args(args)
   settings = load_settings(options)
   db = open_db(settings, options)
-  print db.status().status
+  try:
+    print db.status().status
+  except IOError:
+    print "quickopend not running."
 
 def CMDrawsearch(parser, args):
   """Prints the raw database's results for <query>"""
@@ -231,12 +234,15 @@ def main(argv):
     return options, args
   parser.parse_args = Parse
 
-  if argv:
-    command = Command(argv[0])
+  non_switch_args = [i for i in argv if not i.startswith('-')]
+  if non_switch_args:
+    command = Command(non_switch_args[0])
     if command:
       # "fix" the usage and the description now that we know the subcommand.
-      GenUsage(parser, argv[0])
-      return command(parser, argv[1:])
+      GenUsage(parser, non_switch_args[0])
+      new_args = list(argv)
+      new_args.remove(non_switch_args[0])
+      return command(parser, new_args)
     # Not a known command. Default to help.
     GenUsage(parser, 'help')
     return CMDhelp(parser, argv)

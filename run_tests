@@ -21,6 +21,13 @@ import types
 import traceback
 import unittest
 
+sys.path.append(os.path.join(os.path.dirname(__file__), "third_party/py_trace_event/"))
+try:
+  from trace_event import *
+except:
+  print "Could not find py_trace_event. Did you forget 'git submodule update --init'"
+  sys.exit(255)
+
 class ImportTest(unittest.TestCase):
   def __init__(self,*args):
     unittest.TestCase.__init__(self, *args)

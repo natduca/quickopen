@@ -8,10 +8,16 @@ import os
 import re
 import time
 
+sys.path.append(os.path.join(os.path.dirname(__file__), "third_party/py_trace_event/"))
+try:
+  from trace_event import *
+except:
+  print "Could not find py_trace_event. Did you forget 'git submodule update --init'"
+  sys.exit(255)
+
 import src.daemon
 import src.db_stub
 import src.settings
-
 
 def load_settings(options):
   settings_file = os.path.expanduser(options.settings)
@@ -155,13 +161,6 @@ def main(argv):
   """Doesn't parse the arguments here, just find the right subcommand to
   execute."""
 
-  # Create the option parse and add --verbose support.
-  sys.path.append(os.path.join(os.path.dirname(__file__), "third_party/py_trace_event/"))
-  try:
-    import trace_event
-  except:
-    trace_event = None
-
   # Do it late so all commands are listed.
   CMDhelp.usage_more = ('\n\nCommands are:\n' + '\n'.join([
       '  %-10s %s' % (fn[3:], Command(fn[3:]).__doc__.split('\n')[0].strip())
@@ -171,8 +170,7 @@ def main(argv):
   parser.add_option('--port', dest='port', action='store', help='Port to run on')
   parser.add_option('--settings', dest='settings', action='store', default='~/.quickopend', help='Settings file to use')
   parser.add_option('--test', dest='test', action='store_true', default=False, help='Adds test hooks')
-  if trace_event:
-    parser.add_option('--trace', dest='trace', action='store_true', default=False, help='Enables trace_event instrumentation.')
+  parser.add_option('--trace', dest='trace', action='store_true', default=False, help='Records performance tracing information to %s.trace' % sys.argv[0])
   parser.add_option(
       '-v', '--verbose', action='count', default=0,
       help='Increase verbosity level (repeat as needed)')
@@ -185,11 +183,8 @@ def main(argv):
       logging.basicConfig(level=logging.INFO)
     else:
       logging.basicConfig(level=logging.WARNING)
-
-    if hasattr(options, "trace") and options.trace:
-      sys.path.append(os.path.join(os.path.dirname(__file__), "third_party/trace_event/"))
-      import trace_event
-      trace_event.enable("quickopend.trace")
+    if options.trace:
+      trace_enable("./%s.trace" % sys.argv[0])
     return options, args
   parser.parse_args = Parse
 

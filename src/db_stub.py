@@ -14,7 +14,10 @@
 import daemon
 import db
 import re
+import time
+
 from dyn_object import *
+from trace_event import *
 
 # TODO(nduca): is Stub the right word for this class? Mehh
 class DBStub(object):
@@ -37,6 +40,7 @@ class DBStub(object):
     if not self.db.is_up_to_date:
       self.on_db_needs_indexing()
     self.server.hi_idle.add_listener(self.on_daemon_lo_idle)
+    self._last_flush_time = 0
 
   def on_db_needs_indexing(self):
     if self.hi_idle_hook_added:
@@ -45,6 +49,9 @@ class DBStub(object):
 
   def on_daemon_lo_idle(self):
     self.db.check_up_to_date_a_bit_more()
+    if time.time() - self._last_flush_time > 5:
+      trace_flush()
+      self._last_flush_time = time.time()
 
   def on_daemon_hi_idle(self):
     self.db.step_indexer()

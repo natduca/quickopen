@@ -19,6 +19,13 @@ import platform
 import re
 import sys
 
+sys.path.append(os.path.join(os.path.dirname(__file__), "third_party/py_trace_event/"))
+try:
+  from trace_event import *
+except:
+  print "Could not find py_trace_event. Did you forget 'git submodule update --init'"
+  sys.exit(255)
+
 import src.settings
 import src.db_proxy
 
@@ -209,6 +216,7 @@ def main(argv):
   parser.add_option('--host', dest='host', action='store', help='Hostname of quickopend server')
   parser.add_option('--port', dest='port', action='store', help='Port for quickopend')
   parser.add_option('--settings', dest='settings', action='store', default='~/.quickopen', help='Settings file to use, ~/.quickopen by default')
+  parser.add_option('--trace', dest='trace', action='store_true', default=False, help='Records performance tracing information to %s.trace' % sys.argv[0])
   old_parser_args = parser.parse_args
   def Parse(args):
     options, args = old_parser_args(args)
@@ -218,6 +226,8 @@ def main(argv):
       logging.basicConfig(level=logging.INFO)
     else:
       logging.basicConfig(level=logging.WARNING)
+    if options.trace:
+      trace_enable("./%s.trace" % sys.argv[0])
     return options, args
   parser.parse_args = Parse
 

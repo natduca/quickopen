@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python2.6
 # Copyright 2011 Google Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -236,16 +236,42 @@ def main(argv):
 
 if __name__ == '__main__':
   if platform.system() == 'Darwin':
-    has_wx = False
+    wx_found_but_failed = False
     try:
       import wx
-      has_wx = True
-    except:
-      pass
-    if has_wx:
+    except ImportError:
+      if str(sys.exc_value).find("no appropriate 64-bit"):
+        wx_found_but_failed = True
+
+    # To use wx-widgets on darwin, we need to be in 32 bit mode :'(
+    if wx_found_but_failed:
+      # try using the versioner trick
+      if '--triedenv' not in sys.argv:
+        os.putenv('VERSIONER_PYTHON_PREFER_32_BIT', 'yes')
+        args = [sys.executable, sys.argv[0], '--triedenv']
+        args.extend(sys.argv[1:])
+        os.execve(args[0], args, os.environ)
+
+      # last chance...
+      if '--triedarch' not in sys.argv:
+        args = ["/usr/bin/arch", "-i386", sys.executable, sys.argv[0], '--triedarch']
+        args.extend(sys.argv[1:])
+        os.execv(args[0], args)
+
+      # did we already try one of the tricks below? Bail out to prevent recursion...
+      print "Your system's python is 64 bit, and all the tricks we know to get it into 32b mode failed."
+      sys.exit(255)
+
+    else:
+      try:
+        sys.argv.remove('--triedenv')
+      except:
+        pass
+      try:
+        sys.argv.remove('--triedarch')
+      except:
+        pass
       sys.exit(main(sys.argv[1:]))
-    args = ["/usr/bin/arch", "-i386", sys.executable]
-    args.extend(sys.argv)
-    os.execv(args[0], args)
+
   else:
     sys.exit(main(sys.argv[1:]))

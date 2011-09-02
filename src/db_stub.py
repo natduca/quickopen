@@ -48,7 +48,7 @@ class DBStub(object):
     self.server.hi_idle.add_listener(self.on_daemon_hi_idle)
 
   def on_daemon_lo_idle(self):
-    self.db.check_up_to_date_a_bit_more()
+    # self.db.check_up_to_date_a_bit_more()
     if time.time() - self._last_flush_time > 5:
       trace_flush()
       self._last_flush_time = time.time()

@@ -21,6 +21,7 @@
     (goto-char (point-max))
     (let* ((prev-point (point)))
       (call-process (format "%s/%s" quickopen-dir-base "quickopen") nil t nil "search" "--ok")
+      (discard-input) ;; needed because call-process can take a WHILE
       (if (> (point) 1)
           (buffer-substring prev-point (- (point) prev-point))
         nil))))

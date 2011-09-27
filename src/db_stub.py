@@ -39,7 +39,7 @@ class DBStub(object):
     server.add_json_route('/search', self.search, ['POST'])
     if not self.db.is_up_to_date:
       self.on_db_needs_indexing()
-    self.server.hi_idle.add_listener(self.on_daemon_lo_idle)
+    self.server.lo_idle.add_listener(self.on_daemon_lo_idle)
     self._last_flush_time = 0
 
   def on_db_needs_indexing(self):

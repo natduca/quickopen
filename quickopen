@@ -13,9 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import sys
+import src.prelaunch as prelaunch
 import src.quickopen as quickopen
 
 if __name__ == '__main__':
+  prelaunch.handle_prelaunch(sys.argv)
+
+  # regular flow
   if sys.platform == 'darwin':
     import os
     wx_found_but_failed = False

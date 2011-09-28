@@ -30,6 +30,7 @@ except:
 import src.daemon
 import src.db_stub
 import src.settings
+import src.prelaunchd
 
 def load_settings(options):
   settings_file = os.path.expanduser(options.settings)
@@ -62,9 +63,15 @@ def CMDrun(parser, args):
   if is_port_listening(settings.host, settings.port):
     print "%s:%s in use. Try 'quickopend stop' first?" % (settings.host, settings.port)
     return 255
-  daemon = src.daemon.create(settings.host, settings.port, options.test)
-  db_stub = src.db_stub.DBStub(settings, daemon)
-  daemon.run()
+  prelaunchdaemon = None
+  try:
+    daemon = src.daemon.create(settings.host, settings.port, options.test)
+    db_stub = src.db_stub.DBStub(settings, daemon)
+    prelaunchd = src.prelaunchd.PrelaunchDaemon(daemon)
+    daemon.run()
+  finally:
+    if prelaunchdaemon:
+      prelaunchdaemon.stop()
   return 0
 
 

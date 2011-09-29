@@ -37,7 +37,6 @@ def is_prelaunch(args):
   return False
 
 def wait_for_command(control_port):
-  print "binding to %s" % control_port
   s = socket.socket()
   try:
     bound = False
@@ -125,7 +124,6 @@ def run_command_in_existing(daemon_host, daemon_port, args):
     # Wait for the result of the quickopening. It comes over as a repr'd string
     # so eval it to get the real multi-line string.
     l = eval(f.readline(), {}, {})
-    print "got: [%s]" % l
     return l
   finally:
     s.close()

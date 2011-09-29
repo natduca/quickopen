@@ -73,3 +73,11 @@ class QuickopenTestBase(object):
     s = self.qo("status")
     print s
     self.assertTrue(s.startswith("quickopend not running."))
+
+  def test_rawsearch(self):
+    x = self.qo("add",
+                self.test_data_dir)
+    self.assertEquals("", x)
+    
+    r = self.qo("rawsearch", "MySubSystem.c").split("\n")
+    self.assertEquals([self.test_data.path_to("project1/MySubSystem.c"), ''], r)

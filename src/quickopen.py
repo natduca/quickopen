@@ -165,7 +165,7 @@ def CMDprelaunch(parser, args):
     options.control_port = int(options.control_port)
     prelaunch.wait_for_command(options.control_port)
   else:
-    prelaunch.run_command_in_existing(options.host, options.port, args)
+    print prelaunch.run_command_in_existing(options.host, options.port, args)
 
 def load_settings(options):
   settings_file = os.path.expanduser(options.settings)

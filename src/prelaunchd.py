@@ -20,11 +20,11 @@ import os
 import subprocess
 import logging
 
-def _is_port_listening(host, port):
+def _is_port_bindable(host, port):
   import socket
   s = socket.socket()
   try:
-    s.connect((host, port))
+    s.bind((host, port))
   except socket.error:
     return False
   s.close()
@@ -43,7 +43,7 @@ class PrelaunchDaemon(object):
     self._cur_control_port += 1
     for i in range(100):
       p = self._cur_control_port + i
-      if _is_port_listening("localhost", p):
+      if not _is_port_bindable("", p):
         continue
       return p
     raise Exception("Could not find open control port")
@@ -54,8 +54,6 @@ class PrelaunchDaemon(object):
     assert os.path.exists(quickopen_script)
     
     self._cur_control_port = self._get_another_control_port()
-    assert not _is_port_listening("localhost", self._cur_control_port)
-
     self._quickopen = subprocess.Popen([quickopen_script,
                                         "prelaunch",
                                         "--wait",

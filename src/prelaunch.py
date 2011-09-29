@@ -89,8 +89,8 @@ def run_command_in_existing(daemon_host, daemon_port, args):
   try:
     conn.request('GET', '/existing_quickopen')
   except socket.error:
-    print "quickopend not running." # keep this synchronized with CMDstatus from quickopen.py
-    return
+    t = "quickopend not running." # keep this synchronized with CMDstatus from quickopen.py
+    return t
 
   res = conn.getresponse()
   assert res.status == 200
@@ -100,13 +100,15 @@ def run_command_in_existing(daemon_host, daemon_port, args):
   # We may have to try a few times --- it may be coming up still.
   connected = False
   s = None
-  for i in range(10):
+  for i in range(20): # 5 seconds
     try:
       s = socket.socket()
       s.connect(("localhost", port))
       break
     except:
       time.sleep(0.25)
+  if not s:
+    raise Exception("Could not connect to the provided process.")
   try:
     f = s.makefile()
 

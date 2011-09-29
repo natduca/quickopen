@@ -100,7 +100,7 @@ class TemporaryDaemon(object):
   @property
   def conn(self):
     if not self._conn:
-      self._conn = httplib.HTTPConnection('localhost', TEST_PORT, True)
+      self._conn = httplib.HTTPConnection(self.host, self.port, True)
     return self._conn
 
   @property

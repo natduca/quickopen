@@ -84,5 +84,7 @@ class PrelaunchDaemon(object):
     for p in self._in_use_processes:
       if not p.poll():
         logging.debug("killing %i" % p.pid)
-        p.kill()
-
+        try:
+          p.kill()
+        except:
+          pass

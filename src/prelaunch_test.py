@@ -30,10 +30,9 @@ class PrelaunchTest(unittest.TestCase, QuickopenTestBase):
     self.assertEquals(True, prelaunch.is_prelaunch(["", "prelaunch"]))
     self.assertEquals(True, prelaunch.is_prelaunch(["", "prelaunch", "search"]))
 
-  def qo(self, cmd, args):
-    print self.daemon.port
+  def qo(self, cmd, *args):
     full_args = [cmd]
-    full_args.extend(cmd)
+    full_args.extend(args)
     prelaunch.run_command_in_existing(self.daemon.host, self.daemon.port, full_args)
     
   def turn_off_daemon(self):

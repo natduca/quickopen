@@ -25,6 +25,7 @@
 import socket
 import sys
 import httplib
+import time
 
 def is_prelaunch(args):
   if len(args) >= 2 and args[1] == "prelaunch":
@@ -36,10 +37,14 @@ def is_prelaunch(args):
 
 def wait_for_command(control_port):
   s = socket.socket()
+  print "waiting on %s" % control_port
   s.bind(("", control_port))
-  s.listen(0)
+  s.listen(1)
   c, a = s.accept()
+  print "connection recvd"
   print c, a
+  f = c.makefile()
+  print f.readline()
   sys.exit(0)
 
 def run_command_in_existing(daemon_host, daemon_port, args):
@@ -53,6 +58,21 @@ def run_command_in_existing(daemon_host, daemon_port, args):
 
   res = conn.getresponse()
   assert res.status == 200
+  port = int(res.read())
   
-  print res.read()
-    
+  # get a connection to the prelaunched process
+  # we may have to wait a few seconds --- it may be coming up still...
+  connected = False
+  s = None
+  for i in range(10):
+    try:
+      s = socket.socket()
+      s.connect(("localhost", port))
+      break
+    except:
+      time.sleep(0.25)
+  print "connected"
+  f = s.makefile()
+  print args
+  f.write(repr(args))
+  

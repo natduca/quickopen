@@ -26,6 +26,7 @@ import socket
 import sys
 import httplib
 import time
+import StringIO
 
 def is_prelaunch(args):
   if len(args) >= 2 and args[1] == "prelaunch":
@@ -36,19 +37,54 @@ def is_prelaunch(args):
   return False
 
 def wait_for_command(control_port):
+  print "binding to %s" % control_port
   s = socket.socket()
-  print "waiting on %s" % control_port
-  s.bind(("", control_port))
-  s.listen(1)
-  c, a = s.accept()
-  print "connection recvd"
-  print c, a
-  f = c.makefile()
-  print f.readline()
-  sys.exit(0)
+  try:
+    bound = False
+    for i in range(10):
+      try:
+        s.bind(("", control_port))
+        bound = True
+      except socket.error:
+        time.sleep(0.1)
+    if not bound:
+      raise Exception("could not bind!")
+
+    s.listen(1)
+    c, a = s.accept()
+    f = c.makefile()
+
+    # The commandline comes in as a repr'd array
+    # Yes this is not very secure. Donations welcome.
+    args = eval(f.readline(), {}, {})
+
+    # We want to send the commandline args to quickopen's regular
+    # main now, and redirect the stdout output over to the prelauncher.
+    # We do this by overriding stdout to a StringIO. It works, though
+    # we could technically do better.
+    import quickopen
+    old_stdout = sys.stdout
+    new_stdout = StringIO.StringIO()
+    sys.stdout = new_stdout
+    try:
+      quickopen.main(args)
+    finally:
+      sys.stdout = old_stdout
+
+    # Finally, give the results back to the prelauncher so that
+    # it can do its work. Pass the string via repr so we can use
+    # a single readline command to do the heavy lifting for us. :)
+    v = new_stdout.getvalue()
+    f.write(repr(v))
+    f.write("\n")
+    f.close()
+  finally:
+    s.close()
+    sys.exit(0)
 
 def run_command_in_existing(daemon_host, daemon_port, args):
-  # get the pid of a prelaunch process...
+  # Get the pid of an existing quickopen process via
+  # quickopend. This routes through prelaunchd.py
   conn = httplib.HTTPConnection(daemon_host, daemon_port, True)
   try:
     conn.request('GET', '/existing_quickopen')
@@ -60,8 +96,8 @@ def run_command_in_existing(daemon_host, daemon_port, args):
   assert res.status == 200
   port = int(res.read())
   
-  # get a connection to the prelaunched process
-  # we may have to wait a few seconds --- it may be coming up still...
+  # Get a connection to the prelaunched process.
+  # We may have to try a few times --- it may be coming up still.
   connected = False
   s = None
   for i in range(10):
@@ -71,8 +107,23 @@ def run_command_in_existing(daemon_host, daemon_port, args):
       break
     except:
       time.sleep(0.25)
-  print "connected"
-  f = s.makefile()
-  print args
-  f.write(repr(args))
-  
+  try:
+    f = s.makefile()
+
+    # Send our commandline to the existing quickopend. Pass with it our
+    # daemon_host and daemon_port so that it tries talking to the same quickopend
+    # instance as us.
+    full_args = list(args)
+    full_args.extend(["--host", daemon_host])
+    full_args.extend(["--port", str(daemon_port)])
+    f.write(repr(full_args))
+    f.write("\n")
+    f.flush()
+
+    # Wait for the result of the quickopening. It comes over as a repr'd string
+    # so eval it to get the real multi-line string.
+    l = eval(f.readline(), {}, {})
+    print "got: [%s]" % l
+    return l
+  finally:
+    s.close()

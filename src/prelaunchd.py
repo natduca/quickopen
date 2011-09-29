@@ -36,14 +36,24 @@ class PrelaunchDaemon(object):
     server.exit.add_listener(self._on_exit)
     server.lo_idle.add_listener(self._join_in_use_processes)
     self._quickopen = None
-    self._cur_control_port = 24712
+    self._cur_control_port = 27412
     self._in_use_processes = []
+
+  def _get_another_control_port(self):
+    self._cur_control_port += 1
+    for i in range(100):
+      p = self._cur_control_port + i
+      if _is_port_listening("localhost", p):
+        continue
+      return p
+    raise Exception("Could not find open control port")
 
   def _launch_new_quickopen(self):
     assert not self._quickopen
     quickopen_script = os.path.join(os.path.dirname(__file__), "../quickopen")
     assert os.path.exists(quickopen_script)
     
+    self._cur_control_port = self._get_another_control_port()
     assert not _is_port_listening("localhost", self._cur_control_port)
 
     self._quickopen = subprocess.Popen([quickopen_script,
@@ -60,9 +70,9 @@ class PrelaunchDaemon(object):
       self._quickopen = None
       return self._cur_control_port
     finally:
-      # todo, move this to another place. :)
-      self._cur_control_port += 1
-      self._launch_new_quickopen()
+      # todo, move this to another place... ideally, when the previous prelaunch quits
+      #self._launch_new_quickopen()
+      pass
 
   def _on_exit(self):
     self.stop()

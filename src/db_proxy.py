@@ -13,6 +13,7 @@
 # limitations under the License.
 import async_http_connection
 import httplib
+import socket
 import subprocess
 import sys
 import time
@@ -78,6 +79,8 @@ class DBProxy(object):
     try:
       self.conn.request(method, path, data)
     except httplib.CannotSendRequest:
+      self.conn = None
+    except socket.error:
       self.conn = None
     if not self.conn:
       if self._start_if_needed:

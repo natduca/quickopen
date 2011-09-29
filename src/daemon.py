@@ -138,6 +138,7 @@ class Daemon(BaseHTTPServer.HTTPServer):
     self.test_mode = test_mode
     self.hi_idle = Event() # event that is fired every 0.05sec as long as no transactions are pending
     self.lo_idle = Event() # event that is fired once a second
+    self.exit = Event()
 
     self.add_json_route('/exit', self.on_exit, ['POST', 'GET'])
 
@@ -148,6 +149,7 @@ class Daemon(BaseHTTPServer.HTTPServer):
   def on_exit(self, m, verb, data):
     logging.info("Exiting upon request.")
     self.shutdown()
+    self.exit.fire()
     return {"status": "OK"}
 
   def add_json_route(self, path_regex, handler, allowed_verbs):

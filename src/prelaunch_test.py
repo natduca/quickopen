@@ -17,20 +17,29 @@ import temporary_daemon
 import unittest
 from quickopen_test_base import QuickopenTestBase
 
-#class PrelaunchTest(unittest.TestCase, QuickopenTestBase):
-class PrelaunchTest(unittest.TestCase):
+class PrelaunchTest(unittest.TestCase, QuickopenTestBase):
   def setUp(self):
     unittest.TestCase.setUp(self)
-#    QuickopenTestBase.setUp(self)
+    QuickopenTestBase.setUp(self)
     self.daemon = temporary_daemon.TemporaryDaemon()
 
-  def qo(self, args):
-    prelaunch.run_command_in_existing(self.daemon.host, self.daemon.port, args)
+  def test_is_prelaunch(self):
+    self.assertEquals(False, prelaunch.is_prelaunch([""]))
+    self.assertEquals(False, prelaunch.is_prelaunch(["", "search", "--host"]))
+    self.assertEquals(False, prelaunch.is_prelaunch(["", "prelaunch", "--host"]))
+    self.assertEquals(True, prelaunch.is_prelaunch(["", "prelaunch"]))
+    self.assertEquals(True, prelaunch.is_prelaunch(["", "prelaunch", "search"]))
+
+  def qo(self, cmd, args):
+    print self.daemon.port
+    full_args = [cmd]
+    full_args.extend(cmd)
+    prelaunch.run_command_in_existing(self.daemon.host, self.daemon.port, full_args)
     
   def turn_off_daemon(self):
-    pass
+    self.daemon.close()
 
   def tearDown(self):
     unittest.TestCase.tearDown(self)
-#    QuickopenTestBase.tearDown(self)
+    QuickopenTestBase.tearDown(self)
     self.daemon.close()

@@ -32,11 +32,13 @@ def _is_port_listening(host, port):
 class PrelaunchDaemon(object):
   def __init__(self, server):
     server.add_json_route('/existing_quickopen', self.get_existing_quickopen, ['GET'])
+    server.exit.add_listener(self._on_exit)
+    server.lo_idle.add_listener(self._join_in_use_processes)
     self._quickopen = None
     self._cur_control_port = 24712
+    self._in_use_processes = []
 
   def _launch_new_quickopen(self):
-    print "launching quickopen"
     assert not self._quickopen
     quickopen_script = os.path.join(os.path.dirname(__file__), "../quickopen")
     assert os.path.exists(quickopen_script)
@@ -50,16 +52,37 @@ class PrelaunchDaemon(object):
                                         str(self._cur_control_port)])
 
   def get_existing_quickopen(self, m, verb, data):
-    if self.quickopen == None:
+    if self._quickopen == None:
       self._launch_new_quickopen()
     try:
+      self._in_use_processes.append(self._quickopen)
+      self._quickopen = None
       return self._cur_control_port
     finally:
+      # todo, move this to another place. :)
       self._cur_control_port += 1
-      self._quickopen = None
       self._launch_new_quickopen()
 
+  def _on_exit(self):
+    self.stop()
+
+  def _join_in_use_processes(self):
+    procs = list(self._in_use_processes)
+    del self._in_use_processes[:]
+    for p in procs:
+      if not p.poll():
+        self._in_use_processes.append(p)
+      else:
+        #print "%s dead" % p
+        pass
+
   def stop(self):
+    print "closing prelaunched quickopen"
     if self._quickopen:
       self._quickopen.kill()
+    self._join_in_use_processes()
+    for p in self._in_use_processes:
+      if not p.poll():
+        print "killing %s" % p
+        p.kill()
 

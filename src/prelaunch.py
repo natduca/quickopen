@@ -27,14 +27,17 @@ import sys
 import httplib
 
 def is_prelaunch(args):
-  if args[1] == "prelaunch":
-    return args[2] != "--host"
+  if len(args) >= 2 and args[1] == "prelaunch":
+    if len(args) >= 3:
+      return args[2] != "--host"
+    else:
+      return True
   return False
 
 def wait_for_command(control_port):
   s = socket.socket()
   s.bind(("", control_port))
-  s.listen()
+  s.listen(0)
   c, a = s.accept()
   print c, a
   sys.exit(0)
@@ -42,9 +45,13 @@ def wait_for_command(control_port):
 def run_command_in_existing(daemon_host, daemon_port, args):
   # get the pid of a prelaunch process...
   conn = httplib.HTTPConnection(daemon_host, daemon_port, True)
-  conn.request('GET', '/existing_quickopen')
+  try:
+    conn.request('GET', '/existing_quickopen')
+  except socket.error:
+    print "quickopend not running." # keep this synchronized with CMDstatus from quickopen.py
+    return
 
-  res = self.conn.getresponse()
+  res = conn.getresponse()
   assert res.status == 200
   
   print res.read()

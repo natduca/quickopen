@@ -17,9 +17,10 @@ import src.prelaunch as prelaunch
 import src.quickopen as quickopen
 
 if __name__ == '__main__':
-  prelaunch.handle_prelaunch(sys.argv)
+  # skip the darwin detection if this is a prelaunch
+  if prelaunch.is_prelaunch(sys.argv):
+    sys.exit(quickopen.main(sys.argv[1:]))    
 
-  # regular flow
   if sys.platform == 'darwin':
     import os
     wx_found_but_failed = False

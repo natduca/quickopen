@@ -36,6 +36,7 @@ class PrelaunchDaemon(object):
     self._cur_control_port = 24712
 
   def _launch_new_quickopen(self):
+    print "launching quickopen"
     assert not self._quickopen
     quickopen_script = os.path.join(os.path.dirname(__file__), "../quickopen")
     assert os.path.exists(quickopen_script)
@@ -43,7 +44,9 @@ class PrelaunchDaemon(object):
     assert not _is_port_listening("localhost", self._cur_control_port)
 
     self._quickopen = subprocess.Popen([quickopen_script,
-                                        "--host-prelaunch",
+                                        "prelaunch",
+                                        "--wait",
+                                        "--control-port",
                                         str(self._cur_control_port)])
 
   def get_existing_quickopen(self, m, verb, data):

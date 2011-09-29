@@ -24,20 +24,28 @@
 # commandline to that instance (via magic).
 import socket
 import sys
+import httplib
 
-def handle_prelaunch(args):
-  print "hpr: ", args
-  if "--host-prelaunch" in args:
-    return host_prelaunch(args)
-  elif "--prelaunch" in args:
-    return prelaunch(args)
-  else:
-    return
+def is_prelaunch(args):
+  if args[1] == "prelaunch":
+    return args[2] != "--host"
+  return False
+
+def wait_for_command(control_port):
+  s = socket.socket()
+  s.bind(("", control_port))
+  s.listen()
+  c, a = s.accept()
+  print c, a
+  sys.exit(0)
+
+def run_command_in_existing(daemon_host, daemon_port, args):
+  # get the pid of a prelaunch process...
+  conn = httplib.HTTPConnection(daemon_host, daemon_port, True)
+  conn.request('GET', '/existing_quickopen')
+
+  res = self.conn.getresponse()
+  assert res.status == 200
   
-def host_prelaunch(args):
-  args.remove("--host-prelaunch")
-  sys.exit(0)
-
-def prelaunch(args):
-  args.remove("--prelaunch")  
-  sys.exit(0)
+  print res.read()
+    

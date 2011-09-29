@@ -21,7 +21,10 @@ import time
 class DBTestBase(object):
   def setUp(self):
     self.test_data = test_data.TestData()
-    self.test_data_dir = self.test_data.test_data_dir
+
+  @property
+  def test_data_dir(self):
+    return self.test_data.test_data_dir
 
   def tearDown(self):
     self.test_data.close()

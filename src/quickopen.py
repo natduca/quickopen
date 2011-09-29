@@ -16,6 +16,7 @@ import logging
 import optparse
 import os
 import platform
+import prelaunch
 import re
 import sys
 
@@ -35,7 +36,7 @@ def CMDadd(parser, args):
   """Adds a directory to the index"""
   (options, args) = parser.parse_args(args)
   settings = load_settings(options)
-  db = open_db(settings, options)
+  db = open_db(options)
   if len(args) == 0:
     parser.error('Expected at least one directory')
   for d in args:
@@ -46,7 +47,7 @@ def CMDdirs(parser, args):
   """Lists currently-indexed directories"""
   (options, args) = parser.parse_args(args)
   settings = load_settings(options)
-  db = open_db(settings, options)
+  db = open_db(options)
   if len(args):
     parser.error('Unrecognized args: %s' % ' '.join(args))
   print "\n".join([x.path for x in db.dirs])
@@ -56,7 +57,7 @@ def CMDrmdir(parser, args):
   """Removes a currently-indexed directory"""
   (options, args) = parser.parse_args(args)
   settings = load_settings(options)
-  db = open_db(settings, options)
+  db = open_db(options)
   dmap = {}
   for d in db.dirs:
     dmap[d.path] = d
@@ -79,7 +80,7 @@ def CMDsearch(parser, args):
   settings = load_settings(options)
   if not trace_is_enabled() and settings.trace:
     trace_enable("%s.trace" % sys.argv[0])
-  db = open_db(settings, options)
+  db = open_db(options)
 
   def run():
     # try using gtk
@@ -125,7 +126,7 @@ def CMDstatus(parser, args):
   """Checks the status of the quick open database"""
   (options, args) = parser.parse_args(args)
   settings = load_settings(options)
-  db = open_db(settings, options)
+  db = open_db(options)
   try:
     print db.status().status
   except IOError:
@@ -137,7 +138,7 @@ def CMDrawsearch(parser, args):
   (options, args) = parser.parse_args(args)
 
   settings = load_settings(options)
-  db = open_db(settings, options)
+  db = open_db(options)
   if len(args) != 1:
     parser.error('Expected: <query>')
   if not db.has_index:
@@ -154,28 +155,40 @@ def CMDrawsearch(parser, args):
     return 0
   return 255
 
+def CMDprelaunch(parser, args):
+  """Prestarts a quickopen instance pending network control"""
+  parser.add_option("--wait", action="store_true", dest="wait")
+  parser.add_option("--control-port", action="store", dest="control_port")
+  (options, args) = parser.parse_args(args)
+  settings = load_settings(options)
+  if options.wait:
+    prelaunch.wait_for_command(options.control_port)
+  else:
+    prelaunch.send_command_to_existing(options.host, options.port, args)
+
 def load_settings(options):
   settings_file = os.path.expanduser(options.settings)
   settings = src.settings.Settings(settings_file)
   settings.register('host', str, 'localhost')
-  settings.register('port', int, 10248)
+  settings.register('port', int, -1)
   settings.register('trace', bool, False)
-  return settings
 
-def open_db(settings,options):
+  if settings.port == -1:
+    # Open the quickopend settings file to get the default
+    # port for the daemon. Then, push that value to the quickopen settings
+    daemon_settings_file = os.path.expanduser("~/.quickopend")
+    daemon_settings = src.settings.Settings(daemon_settings_file)
+    daemon_settings.register('port', int, 10248)
+    settings.port = daemon_settings.port
+
   if not options.host:
     options.host = settings.host
   if not options.port:
     options.port = settings.port
+  return settings
 
-  # Open the quickopend settings file to get the default
-  # port for the daemon.
-  daemon_settings_file = os.path.expanduser("~/.quickopend")
-  settings = src.settings.Settings(daemon_settings_file)
-  settings.register('port', int, 10248) # keep in sync with quickopend default
-
-  db = src.db_proxy.DBProxy(options.host, options.port, start_if_needed=True, port_for_autostart=settings.port)
-  return db
+def open_db(options):
+  return src.db_proxy.DBProxy(options.host, options.port, start_if_needed=True, port_for_autostart=options.port)
 
 # Subcommand addins to optparse, taken from git-cl.py, 
 # http://src.chromium.org/svn/trunk/tools/depot_tools/git_cl.py

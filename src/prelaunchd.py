@@ -18,6 +18,7 @@
 # clients.
 import os
 import subprocess
+import logging
 
 def _is_port_listening(host, port):
   import socket
@@ -73,16 +74,15 @@ class PrelaunchDaemon(object):
       if not p.poll():
         self._in_use_processes.append(p)
       else:
-        #print "%s dead" % p
-        pass
+        logging.debug("prelaunched pid=%i is gone" % p.pid)
 
   def stop(self):
-    print "closing prelaunched quickopen"
+    logging.debug("closing prelaunched quickopen")
     if self._quickopen:
       self._quickopen.kill()
     self._join_in_use_processes()
     for p in self._in_use_processes:
       if not p.poll():
-        print "killing %s" % p
+        logging.debug("killing %i" % p.pid)
         p.kill()
 

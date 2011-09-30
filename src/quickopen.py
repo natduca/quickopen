@@ -157,15 +157,30 @@ def CMDrawsearch(parser, args):
 
 def CMDprelaunch(parser, args):
   """Prestarts a quickopen instance pending network control"""
-  parser.add_option("--wait", action="store_true", dest="wait")
-  parser.add_option("--control-port", action="store", dest="control_port")
-  (options, args) = parser.parse_args(args)
-  settings = load_settings(options)
-  if options.wait:
+  if "--wait" in args:
+    parser.add_option("--wait", action="store_true", dest="wait")
+    parser.add_option("--control-port", action="store", dest="control_port")
+    (options, args) = parser.parse_args(args)
+    settings = load_settings(options)
+    assert options.wait
     options.control_port = int(options.control_port)
     prelaunch.wait_for_command(options.control_port)
   else:
-    print prelaunch.run_command_in_existing(options.host, options.port, args)
+    # split up args into stuff before the prelaunch command and stuff after
+    before_args = []
+    after_args = None
+    for i in range(len(args)):
+      if args[i].startswith("-"):
+        before_args.append(args[i])
+      else:
+        after_args = args[i:]
+        break
+    if not after_args:
+      GenUsage(parser, 'prelaunch')
+      return CMDhelp(parser, args)
+    (options, args) = parser.parse_args(before_args)
+    settings = load_settings(options)
+    print prelaunch.run_command_in_existing(options.host, options.port, after_args)
 
 def load_settings(options):
   settings_file = os.path.expanduser(options.settings)

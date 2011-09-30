@@ -81,3 +81,11 @@ class QuickopenTestBase(object):
     
     r = self.qo("rawsearch", "MySubSystem.c").split("\n")
     self.assertEquals([self.test_data.path_to("project1/MySubSystem.c"), ''], r)
+
+  def test_rawsearch_with_rank(self):
+    x = self.qo("add",
+                self.test_data_dir)
+    self.assertEquals("", x)
+    
+    r = self.qo("rawsearch", "--show-rank", "MySubSystem.c").split("\n")
+    self.assertEquals(["2," + self.test_data.path_to("project1/MySubSystem.c"), ''], r)

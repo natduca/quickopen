@@ -31,7 +31,7 @@ import StringIO
 def is_prelaunch(args):
   if len(args) >= 2 and args[1] == "prelaunch":
     if len(args) >= 3:
-      return args[2] != "--host"
+      return args[2] != "--wait"
     else:
       return True
   return False

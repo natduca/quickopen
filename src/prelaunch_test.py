@@ -25,8 +25,8 @@ class PrelaunchTest(unittest.TestCase, QuickopenTestBase):
 
   def test_is_prelaunch(self):
     self.assertEquals(False, prelaunch.is_prelaunch([""]))
-    self.assertEquals(False, prelaunch.is_prelaunch(["", "search", "--host"]))
-    self.assertEquals(False, prelaunch.is_prelaunch(["", "prelaunch", "--host"]))
+    self.assertEquals(False, prelaunch.is_prelaunch(["", "search", "--wait"]))
+    self.assertEquals(False, prelaunch.is_prelaunch(["", "prelaunch", "--wait"]))
     self.assertEquals(True, prelaunch.is_prelaunch(["", "prelaunch"]))
     self.assertEquals(True, prelaunch.is_prelaunch(["", "prelaunch", "search"]))
 

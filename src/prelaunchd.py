@@ -69,7 +69,7 @@ class PrelaunchDaemon(object):
       return self._cur_control_port
     finally:
       # todo, move this to another place... ideally, when the previous prelaunch quits
-      #self._launch_new_quickopen()
+      self._launch_new_quickopen()
       pass
 
   def _on_exit(self):

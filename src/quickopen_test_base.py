@@ -74,11 +74,21 @@ class QuickopenTestBase(object):
     print s
     self.assertTrue(s.startswith("quickopend not running."))
 
+  def _wait_for_up_to_date(self):
+    utd = False
+    for i in range(10):
+      s = self.qo("status")
+      if s.startswith("up-to-date: "):
+        utd = True
+        break
+    self.assertTrue(utd)
+
   def test_rawsearch(self):
     x = self.qo("add",
                 self.test_data_dir)
     self.assertEquals("", x)
     
+    self._wait_for_up_to_date()
     r = self.qo("rawsearch", "MySubSystem.c").split("\n")
     self.assertEquals([self.test_data.path_to("project1/MySubSystem.c"), ''], r)
 
@@ -86,6 +96,7 @@ class QuickopenTestBase(object):
     x = self.qo("add",
                 self.test_data_dir)
     self.assertEquals("", x)
+    self._wait_for_up_to_date()
     
     r = self.qo("rawsearch", "--show-rank", "MySubSystem.c").split("\n")
     self.assertEquals(["2," + self.test_data.path_to("project1/MySubSystem.c"), ''], r)

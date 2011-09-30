@@ -18,7 +18,7 @@ function! QuickOpenPrompt()
   let quickopen_dir = strpart(s:QuickOpenFile, 0, strridx(s:QuickOpenFile,'/plugin'))
   let quickopen_app = quickopen_dir . '/quickopen'
   echo quickopen_app
-  return system(quickopen_app)
+  return system(quickopen_app . " prelaunch search")
 endfunction
 
 function! QuickFind()

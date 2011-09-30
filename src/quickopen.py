@@ -180,7 +180,7 @@ def CMDprelaunch(parser, args):
       return CMDhelp(parser, args)
     (options, args) = parser.parse_args(before_args)
     settings = load_settings(options)
-    print prelaunch.run_command_in_existing(options.host, options.port, after_args)
+    sys.stdout.write(prelaunch.run_command_in_existing(options.host, options.port, after_args))
 
 def load_settings(options):
   settings_file = os.path.expanduser(options.settings)

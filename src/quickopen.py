@@ -201,10 +201,12 @@ def load_settings(options):
     options.host = settings.host
   if not options.port:
     options.port = settings.port
+  else:
+    options.port = int(options.port)
   return settings
 
 def open_db(options):
-  return src.db_proxy.DBProxy(options.host, options.port, start_if_needed=True, port_for_autostart=options.port)
+  return src.db_proxy.DBProxy(options.host, options.port, start_if_needed=False, port_for_autostart=options.port)
 
 # Subcommand addins to optparse, taken from git-cl.py, 
 # http://src.chromium.org/svn/trunk/tools/depot_tools/git_cl.py

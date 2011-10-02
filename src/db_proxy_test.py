@@ -39,7 +39,7 @@ class DBProxyTest(db_test_base.DBTestBase, unittest.TestCase):
 
     self.assertEquals(1, len(res.hits))
     self.assertEquals(os.path.join(self.test_data_dir, 'project1/MySubSystem.c'), res.hits[0])
-    
+
   def tearDown(self):
     self.daemon.close()
     db_test_base.DBTestBase.tearDown(self)

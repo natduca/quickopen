@@ -21,7 +21,7 @@ import time
 from trace_event import *
 
 class OpenDialogBase(object):
-  def __init__(self, settings, db):
+  def __init__(self, settings, options, db):
     settings.register("filter_text", str, "")
     settings.register("query_log", str, "") 
     self._filter_text = settings.filter_text
@@ -30,15 +30,13 @@ class OpenDialogBase(object):
     self._can_process_queries = False
     self._last_search_query = None
     self._pending_search = None
+    self._options = options
 
   def set_can_process_queries(self, can_process):
     could_process = self._can_process_queries
     self._can_process_queries = can_process
 
     self.set_results_enabled(can_process)
-
-  def just_before_closed(self):
-    self._settings.filter_text = self._filter_text
 
   @trace
   def set_filter_text(self, text):
@@ -96,14 +94,29 @@ class OpenDialogBase(object):
         # poll status
         check_status()
 
-class OpenDialog(object):
-  def __init__(self):
+  def on_done(self, canceled):
+    self._settings.filter_text = self._filter_text.encode('utf8')
+    if canceled:
+      res = []
+    else:
+      res = self.get_selected_items()
+    if self._options.ok and not canceled:
+      print "OK"
+    print "\n".join(res)
+    message_loop.quit_main_loop() # end of the line, no further output will happen
+
+def run(settings, options, db):
+  def _pick_open_dialog():
     if message_loop.is_gtk:
-      self._mod = __import__("src.open_dialog_gtk", {}, {}, True)
+      return __import__("src.open_dialog_gtk", {}, {}, True).OpenDialogGtk
     elif message_loop.is_wx:
-      self._mod = __import__("src.open_dialog_wx", {}, {}, True)
+      return __import__("src.open_dialog_wx", {}, {}, True).OpenDialogWx
     else:
       raise "Unsupported"
 
-  def run(self, settings, db):
-    return self._mod.run(settings, db)
+  def go():
+    OpenDialog = _pick_open_dialog()
+    dlg = OpenDialog(settings, options, db)
+
+  message_loop.post_task(go)
+  message_loop.run_main_loop()

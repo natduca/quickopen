@@ -19,12 +19,12 @@ import os
 
 from info_bar_gtk import *
 
-from open_dialog_base import OpenDialogBase
+from open_dialog import OpenDialogBase
 
 class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
-  def __init__(self, settings, db):
+  def __init__(self, settings, options, db):
     gtk.Dialog.__init__(self)
-    OpenDialogBase.__init__(self, settings, db)
+    OpenDialogBase.__init__(self, settings, options, db)
 
     self.set_title("Quick open...")
     self.set_size_request(1000,400)
@@ -90,14 +90,15 @@ class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
     filter_entry.grab_focus()
 
     glib.timeout_add(100, self.on_timeout_fired)
+    self.show_all()
 
   def on_timeout_fired(self):
     self.on_tick()
     return True # renews the timeout
 
   def response(self, arg):
-    self.just_before_closed()
-    gtk.Dialog.response(self, arg)
+    canceled = arg == gtk.RESPONSE_CANCEL
+    self.on_done(canceled)
 
   def on_destroy(self, *args):
     self.response(gtk.RESPONSE_CANCEL)
@@ -168,8 +169,7 @@ class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
   def _on_treeview_selection_changed(self, selection):
     self.set_response_sensitive(gtk.RESPONSE_OK,selection.count_selected_rows() != 0)
 
-  @property
-  def selected_files(self):
+  def get_selected_items(self):
     model,rows = self._treeview.get_selection().get_selected_rows()
 
     files = []
@@ -179,18 +179,8 @@ class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
       files.append(obj)
     return files
 
-def run(settings, db):
-  dlg = OpenDialogGtk(settings, db)
-  resp = dlg.run()
-  dlg.hide()
-  if resp == gtk.RESPONSE_OK:
-    res = dlg.selected_files
-  else:
-    res = None
-  #dlg.destroy()
-  return res
-
 if __name__ == "__main__":
+  # BROKEN by message loop changes
   import db_test_base
   import settings
   import tempfile

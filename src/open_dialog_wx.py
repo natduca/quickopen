@@ -19,7 +19,7 @@ import wx.lib.mixins.listctrl  as  listmix
 import wx.lib.evtmgr as evtmgr
 import sys
 
-from open_dialog_base import OpenDialogBase
+from open_dialog import OpenDialogBase
 
 class TestListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin):
     def __init__(self, parent, ID, pos=wx.DefaultPosition,
@@ -28,9 +28,9 @@ class TestListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin):
         listmix.ListCtrlAutoWidthMixin.__init__(self)
 
 class OpenDialogWx(wx.Dialog, OpenDialogBase):
-  def __init__(self, settings, db):
+  def __init__(self, settings, options, db):
     wx.Dialog.__init__(self, None, wx.ID_ANY, "Quick open...", style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER, size=(1000,400))
-    OpenDialogBase.__init__(self, settings, db)
+    OpenDialogBase.__init__(self, settings, options, db)
 
     if wx.Platform == "__WXMAC__":
       wx.SystemOptions.SetOptionInt("mac.listctrl.always_use_generic", False)
@@ -77,6 +77,20 @@ class OpenDialogWx(wx.Dialog, OpenDialogBase):
     self.Bind(wx.EVT_TIMER, self.on_tick, self._timer)
     self._timer.Start(100,False)
     self.on_tick()
+
+    self.CenterOnScreen()
+    self.Show()
+
+    ok = self.FindWindowById(wx.ID_OK)
+    cancel = self.FindWindowById(wx.ID_CANCEL)
+    ok.Bind(wx.EVT_BUTTON, self.on_ok)
+    cancel.Bind(wx.EVT_BUTTON, self.on_cancel)
+    
+  def on_ok(self, event):
+    self.on_done(False)
+
+  def on_cancel(self, event):
+    self.on_done(True)
 
   def set_status(self,status_text):
     self.status_text.SetLabel(status_text)
@@ -169,25 +183,13 @@ class OpenDialogWx(wx.Dialog, OpenDialogBase):
       if cur == -1:
         break
       all.append(cur)
-
     return all
 
   def get_selected_items(self):
     return map(lambda i: self._cur_results[i], self.get_selected_indices())
 
-def run(settings, db):
-  app = wx.App(False)
-  dlg = OpenDialogWx(settings, db)
-  dlg.CenterOnScreen()
-  val = dlg.ShowModal()
-  if val == wx.ID_OK:
-    res = dlg.get_selected_items()
-  else:
-    res = None
-  dlg.Destroy()
-  return res
-
 if __name__ == "__main__":
+  # KNOWN BROKEN by work to integrate with message_loop
   import db_test_base
   import settings
   import tempfile

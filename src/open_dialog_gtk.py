@@ -89,12 +89,7 @@ class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
 
     filter_entry.grab_focus()
 
-    glib.timeout_add(100, self.on_timeout_fired)
     self.show_all()
-
-  def on_timeout_fired(self):
-    self.on_tick()
-    return True # renews the timeout
 
   def response(self, arg):
     canceled = arg == gtk.RESPONSE_CANCEL

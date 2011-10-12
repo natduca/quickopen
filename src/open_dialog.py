@@ -31,7 +31,8 @@ class OpenDialogBase(object):
     self._last_search_query = None
     self._pending_search = None
     self._options = options
-
+    message_loop.post_delayed_task(self.on_tick, 0.1)
+    
   def set_can_process_queries(self, can_process):
     could_process = self._can_process_queries
     self._can_process_queries = can_process
@@ -93,6 +94,9 @@ class OpenDialogBase(object):
       else:
         # poll status
         check_status()
+
+    # renew the tick
+    message_loop.post_delayed_task(self.on_tick, 0.1)
 
   def on_done(self, canceled):
     self._settings.filter_text = self._filter_text.encode('utf8')

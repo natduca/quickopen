@@ -73,10 +73,6 @@ class OpenDialogWx(wx.Dialog, OpenDialogBase):
 
     self._filter_ctrl.SetFocus()
 
-    self._timer = wx.Timer(self, -1)
-    self.Bind(wx.EVT_TIMER, self.on_tick, self._timer)
-    self._timer.Start(100,False)
-    self.on_tick()
 
     self.CenterOnScreen()
     self.Show()

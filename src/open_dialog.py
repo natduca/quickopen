@@ -10,9 +10,10 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitaions under the License.
+# limitations under the License.
 import json
 import logging
+import message_loop
 import re
 import os
 import time
@@ -35,7 +36,7 @@ class OpenDialogBase(object):
     self._can_process_queries = can_process
 
     self.set_results_enabled(can_process)
-    
+
   def just_before_closed(self):
     self._settings.filter_text = self._filter_text
 
@@ -94,3 +95,15 @@ class OpenDialogBase(object):
       else:
         # poll status
         check_status()
+
+class OpenDialog(object):
+  def __init__(self):
+    if message_loop.is_gtk:
+      self._mod = __import__("src.open_dialog_gtk", {}, {}, True)
+    elif message_loop.is_wx:
+      self._mod = __import__("src.open_dialog_wx", {}, {}, True)
+    else:
+      raise "Unsupported"
+
+  def run(self, settings, db):
+    return self._mod.run(settings, db)

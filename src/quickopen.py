@@ -82,39 +82,9 @@ def CMDsearch(parser):
     trace_enable("%s.trace" % sys.argv[0])
   db = open_db(options)
 
-  def run():
-    # try using gtk
-    has_gtk = False
-    try:
-      import pygtk
-      pygtk.require('2.0')
-      has_gtk = True
-    except ImportError:
-      pass
-
-    if has_gtk:
-      import src.open_dialog_gtk
-      return src.open_dialog_gtk.run(settings, db)
-
-    # if that didn't work, try using wx
-    has_wx = False
-    try:
-      import wx
-      has_wx = True
-    except ImportError:
-      pass
-
-    if has_wx:
-      import src.open_dialog_wx
-      return src.open_dialog_wx.run(settings, db)
-
-    raise ImportError()
-  
-  try:
-    res = run()
-  except ImportError:
-    print "pygtk nor WxPython found. Please install one and try again.\n"
-    return 255
+  import src.open_dialog as open_dialog
+  dlg = open_dialog.OpenDialog()
+  res = dlg.run(settings, db)
 
   if res:
     if options.ok:

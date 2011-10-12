@@ -12,53 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import sys
-import src.prelaunch as prelaunch
-import src.quickopen as quickopen
-
 if __name__ == '__main__':
-  # skip the darwin detection if this is a prelaunch
-  if prelaunch.is_prelaunch(sys.argv):
-    sys.exit(quickopen.main(sys.argv[1:]))    
-
-  if sys.platform == 'darwin':
-    import os
-    wx_found_but_failed = False
-    try:
-      import wx
-    except ImportError:
-      if str(sys.exc_value).find("no appropriate 64-bit"):
-        wx_found_but_failed = True
-
-    # To use wx-widgets on darwin, we need to be in 32 bit mode :'(
-    if wx_found_but_failed:
-      # try using the versioner trick
-      if '--triedenv' not in sys.argv:
-        os.putenv('VERSIONER_PYTHON_PREFER_32_BIT', 'yes')
-        args = [sys.executable, sys.argv[0], '--triedenv']
-        args.extend(sys.argv[1:])
-        os.execve(args[0], args, os.environ)
-
-      # last chance...
-      if '--triedarch' not in sys.argv:
-        args = ["/usr/bin/arch", "-i386", sys.executable, sys.argv[0], '--triedarch']
-        args.extend(sys.argv[1:])
-        os.execv(args[0], args)
-
-      # did we already try one of the tricks below? Bail out to prevent recursion...
-      print "Your system's python is 64 bit, and all the tricks we know to get it into 32b mode failed."
-      sys.exit(255)
-
-    else:
-      try:
-        sys.argv.remove('--triedenv')
-      except:
-        pass
-      try:
-        sys.argv.remove('--triedarch')
-      except:
-        pass
-      sys.exit(quickopen.main(sys.argv[1:]))
-
-  else:
-    sys.exit(quickopen.main(sys.argv[1:]))
+  import sys
+  import src.bootstrap as bootstrap
+  sys.exit(bootstrap.main('src.quickopen'))

@@ -32,9 +32,9 @@ import src.db_proxy
 
 ###########################################################################
 
-def CMDadd(parser, args):
+def CMDadd(parser):
   """Adds a directory to the index"""
-  (options, args) = parser.parse_args(args)
+  (options, args) = parser.parse_args()
   settings = load_settings(options)
   db = open_db(options)
   if len(args) == 0:
@@ -43,9 +43,9 @@ def CMDadd(parser, args):
     db.add_dir(d)
   return 0
 
-def CMDdirs(parser, args):
+def CMDdirs(parser):
   """Lists currently-indexed directories"""
-  (options, args) = parser.parse_args(args)
+  (options, args) = parser.parse_args()
   settings = load_settings(options)
   db = open_db(options)
   if len(args):
@@ -53,9 +53,9 @@ def CMDdirs(parser, args):
   print "\n".join([x.path for x in db.dirs])
   return 0
 
-def CMDrmdir(parser, args):
+def CMDrmdir(parser):
   """Removes a currently-indexed directory"""
-  (options, args) = parser.parse_args(args)
+  (options, args) = parser.parse_args()
   settings = load_settings(options)
   db = open_db(options)
   dmap = {}
@@ -73,10 +73,10 @@ def CMDrmdir(parser, args):
     return 0
   return 255
 
-def CMDsearch(parser, args):
+def CMDsearch(parser):
   """Search for a file"""
   parser.add_option('--ok', dest='ok', action='store_true', default=False, help='Output "OK" before results')
-  (options, args) = parser.parse_args(args)
+  (options, args) = parser.parse_args()
   settings = load_settings(options)
   if not trace_is_enabled() and settings.trace:
     trace_enable("%s.trace" % sys.argv[0])
@@ -122,9 +122,9 @@ def CMDsearch(parser, args):
     print "\n".join(res)
     return 0
 
-def CMDstatus(parser, args):
+def CMDstatus(parser):
   """Checks the status of the quick open database"""
-  (options, args) = parser.parse_args(args)
+  (options, args) = parser.parse_args()
   settings = load_settings(options)
   db = open_db(options)
   try:
@@ -132,10 +132,10 @@ def CMDstatus(parser, args):
   except IOError:
     print "quickopend not running."
 
-def CMDrawsearch(parser, args):
+def CMDrawsearch(parser):
   """Prints the raw database's results for <query>"""
   parser.add_option('--show-rank', '-r', dest='show_rank', action='store_true', help='Show the ranking of results')
-  (options, args) = parser.parse_args(args)
+  (options, args) = parser.parse_args()
 
   settings = load_settings(options)
   db = open_db(options)
@@ -155,12 +155,13 @@ def CMDrawsearch(parser, args):
     return 0
   return 255
 
-def CMDprelaunch(parser, args):
+def CMDprelaunch(parser):
   """Prestarts a quickopen instance pending network control"""
+  args = sys.argv[1:]
   if "--wait" in args:
     parser.add_option("--wait", action="store_true", dest="wait")
     parser.add_option("--control-port", action="store", dest="control_port")
-    (options, args) = parser.parse_args(args)
+    (options, args) = parser.parse_args()
     settings = load_settings(options)
     assert options.wait
     options.control_port = int(options.control_port)
@@ -177,8 +178,10 @@ def CMDprelaunch(parser, args):
         break
     if not after_args:
       GenUsage(parser, 'prelaunch')
-      return CMDhelp(parser, args)
-    (options, args) = parser.parse_args(before_args)
+      return CMDhelp(parser)
+    sys.argv = [sys.argv[0]]
+    sys.argv.extend(before_args)
+    (options, args) = parser.parse_args()
     settings = load_settings(options)
     sys.stdout.write(prelaunch.run_command_in_existing(options.host, options.port, after_args))
 
@@ -216,11 +219,14 @@ def Command(name):
   return getattr(sys.modules[__name__], 'CMD' + name, None)
 
 
-def CMDhelp(parser, args):
+def CMDhelp(parser):
   """print list of commands or help for a specific command"""
-  _, args = parser.parse_args(args)
+  _, args = parser.parse_args()
   if len(args) == 1:
-    return main(args + ['--help'])
+    sys.argv = [args[0], '--help']
+    GenUsage(parser, 'help')
+    return CMDhelp(parser)
+  # Do it late so all commands are listed.
   parser.print_help()
   return 0
 
@@ -236,50 +242,47 @@ def GenUsage(parser, command):
     parser.description = re.sub('[\r\n ]{2,}', ' ', obj.__doc__)
   parser.set_usage('usage: %%prog %s [options] %s' % (command, more))
 
+def main_usage():
+  return "Usage: quickopen [global options] <command> [command arguments]"
 
-def main(argv):
+def main(parser):
   """Doesn't parse the arguments here, just find the right subcommand to
   execute."""
-  # Do it late so all commands are listed.
-  CMDhelp.usage_more = ('\n\nCommands are:\n' + '\n'.join([
-      '  %-10s %s' % (fn[3:], Command(fn[3:]).__doc__.split('\n')[0].strip())
-      for fn in dir(sys.modules[__name__]) if fn.startswith('CMD')]))
-
   # Create the option parse and add --verbose support.
-  parser = optparse.OptionParser()
-  parser.add_option(
-      '-v', '--verbose', action='count', default=0,
-      help='Increase verbosity level (repeat as needed)')
   parser.add_option('--host', dest='host', action='store', help='Hostname of quickopend server')
   parser.add_option('--port', dest='port', action='store', help='Port for quickopend')
   parser.add_option('--settings', dest='settings', action='store', default='~/.quickopen', help='Settings file to use, ~/.quickopen by default')
   parser.add_option('--trace', dest='trace', action='store_true', default=False, help='Records performance tracing information to %s.trace' % sys.argv[0])
   old_parser_args = parser.parse_args
-  def Parse(args):
-    options, args = old_parser_args(args)
-    if options.verbose >= 2:
-      logging.basicConfig(level=logging.DEBUG)
-    elif options.verbose:
-      logging.basicConfig(level=logging.INFO)
-    else:
-      logging.basicConfig(level=logging.WARNING)
+  def parse():
+    options, args = old_parser_args()
     if options.trace:
       trace_enable("./%s.trace" % sys.argv[0])
     return options, args
-  parser.parse_args = Parse
+  parser.parse_args = parse
 
-  non_switch_args = [i for i in argv if not i.startswith('-')]
+  non_switch_args = [i for i in sys.argv[1:] if not i.startswith('-')]
   if non_switch_args:
     command = Command(non_switch_args[0])
     if command:
+      if non_switch_args[0] == 'help':
+        CMDhelp.usage_more = ('\n\nCommands are:\n' + '\n'.join([
+              '  %-10s %s' % (fn[3:], Command(fn[3:]).__doc__.split('\n')[0].strip())
+              for fn in dir(sys.modules[__name__]) if fn.startswith('CMD')]))
+
       # "fix" the usage and the description now that we know the subcommand.
       GenUsage(parser, non_switch_args[0])
-      new_args = list(argv)
+      new_args = list(sys.argv[1:])
       new_args.remove(non_switch_args[0])
-      return command(parser, new_args)
-    # Not a known command. Default to help.
-    GenUsage(parser, 'help')
-    return CMDhelp(parser, argv)
+      new_args.insert(0, sys.argv[0])
+      sys.argv = new_args
+      return command(parser)
+    else:
+      # Not a known command. Default to help.
+      print "Unrecognized command: %s\n" % non_switch_args[0]
   else: # default command
+    CMDsearch.usage_more = ('\n\nCommands are:\n' + '\n'.join([
+          '  %-10s %s' % (fn[3:], Command(fn[3:]).__doc__.split('\n')[0].strip())
+          for fn in dir(sys.modules[__name__]) if fn.startswith('CMD')]))
     GenUsage(parser, 'search')
-    return CMDsearch(parser, argv)
+    return CMDsearch(parser)

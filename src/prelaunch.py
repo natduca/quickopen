@@ -62,12 +62,22 @@ def wait_for_command(control_port):
     # We do this by overriding stdout to a StringIO. It works, though
     # we could technically do better.
     import quickopen
+    import optparse
     old_stdout = sys.stdout
     new_stdout = StringIO.StringIO()
     sys.stdout = new_stdout
+    old_argv = sys.argv
     try:
-      quickopen.main(args)
+      sys.argv = [sys.argv[0]]
+      sys.argv.extend(args)
+      parser = optparse.OptionParser(usage=quickopen.main_usage())
+      quickopen.main(parser)
+    except:
+      sys.stdout = old_stdout
+      import traceback
+      traceback.print_exc()
     finally:
+      sys.argv = old_argv
       sys.stdout = old_stdout
 
     # Finally, give the results back to the prelauncher so that

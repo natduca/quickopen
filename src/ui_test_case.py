@@ -18,6 +18,9 @@ import sys
 import tempfile
 import unittest
 
+class UITestException(Exception):
+  pass
+
 class UITestCase(unittest.TestCase):
   def __init__(self, method_name, is_in_slave = False):
     unittest.TestCase.__init__(self, method_name)

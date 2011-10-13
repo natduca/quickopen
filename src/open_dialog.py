@@ -109,18 +109,17 @@ class OpenDialogBase(object):
     print "\n".join(res)
     message_loop.quit_main_loop() # end of the line, no further output will happen
 
+def _pick_open_dialog():
+  if message_loop.is_gtk:
+    return __import__("src.open_dialog_gtk", {}, {}, True).OpenDialogGtk
+  elif message_loop.is_wx:
+    return __import__("src.open_dialog_wx", {}, {}, True).OpenDialogWx
+  else:
+    raise "Unsupported"
+OpenDialog = _pick_open_dialog()
+
 def run(settings, options, db):
-  def _pick_open_dialog():
-    if message_loop.is_gtk:
-      return __import__("src.open_dialog_gtk", {}, {}, True).OpenDialogGtk
-    elif message_loop.is_wx:
-      return __import__("src.open_dialog_wx", {}, {}, True).OpenDialogWx
-    else:
-      raise "Unsupported"
-
   def go():
-    OpenDialog = _pick_open_dialog()
-    dlg = OpenDialog(settings, options, db)
-
+    OpenDialog(settings, options, db)
   message_loop.post_task(go)
   message_loop.run_main_loop()

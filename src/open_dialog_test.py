@@ -38,7 +38,8 @@ class OpenDialogTest(ui_test_case.UITestCase):
     self.db_test_base.tearDown()
 
   def test_open_dialog(self):
-    def timeout(self):
-      message_loop.quit_main_loop()
     x = open_dialog.OpenDialog(self.client_settings, self.options, self.db)
-    message_loop.post_delayed_task(timeout, 1000)
+    def timeout():
+      x.destroy()
+      message_loop.quit_main_loop()
+    message_loop.post_delayed_task(timeout, 3)

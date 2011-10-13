@@ -78,6 +78,7 @@ class TestData(object):
     f.close()
 
   def close(self):
-    if os.path.exists(self.test_data_dir):
-      self.rm_rf(self.test_data_dir)
-    self.test_data_dir = None
+    if self.test_data_dir:
+      if os.path.exists(self.test_data_dir):
+        self.rm_rf(self.test_data_dir)
+      self.test_data_dir = None

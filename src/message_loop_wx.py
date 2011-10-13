@@ -53,7 +53,7 @@ def init_main_loop():
   global _app
   if not _app:
     _app = wx.App(False)
-    _app.SetAppName("TraceViewer")
+    _app.SetAppName("QuickOpen")
 
     global _wx_frame
     _wx_frame = wx.Frame(None, -1, "KeepMainLoopAlive");

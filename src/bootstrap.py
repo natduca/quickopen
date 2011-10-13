@@ -109,13 +109,11 @@ def main(main_name):
         sys.argv.remove('--triedarch')
       except:
         pass
-      import src
       sys.argv.insert(1, '--main-name')
       sys.argv.insert(2, main_name)
       sys.exit(run())
 
   else:
-    import src
     sys.argv.insert(1, '--main-name')
     sys.argv.insert(2, main_name)
     sys.exit(run())

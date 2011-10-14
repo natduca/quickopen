@@ -132,8 +132,10 @@ def _pick_open_dialog():
     return __import__("src.open_dialog_wx", {}, {}, True).OpenDialogWx
   elif message_loop.is_curses:
     return __import__("src.open_dialog_curses", {}, {}, True).OpenDialogCurses
+  elif message_loop.is_objc:
+    return __import__("src.open_dialog_objc", {}, {}, True).OpenDialogObjc
   else:
-    raise "Unsupported"
+    raise Exception("Unrecognized message loop type.")
 OpenDialog = _pick_open_dialog()
 
 def run(settings, options, db):

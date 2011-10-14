@@ -130,11 +130,18 @@ class UITestCase(unittest.TestCase):
     f.close()
     result.close()
 
-    try:
-      childTestResult = eval(r)
-    except:
-      print "could not eval [%s]" % r
-      raise
+    if not len(r):
+      childTestResult = {
+          "testsRun": 1,
+          "errors": ["Target crashed!"],
+          "failures": [],
+          "shouldStop": False}
+    else:
+      try:
+        childTestResult = eval(r)
+      except:
+        print "could not eval [%s]" % r
+        raise
     testResult.startTest(self)
     for e in childTestResult["errors"]:
       try:

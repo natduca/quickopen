@@ -30,43 +30,62 @@ def _is_port_bindable(host, port):
   s.close()
   return True
 
+class PrelaunchedProcess(object):
+  def __init__(self, proc, port):
+    if not isinstance(proc, subprocess.Popen):
+      raise "Expected subprocess"
+    self.proc = proc
+    self.port = port
+
+  @property
+  def pid(self):
+    return self.proc.pid
+
+  def poll(self):
+    return self.proc.poll()
+
+  def kill(self):
+    self.proc.kill()
+
 class PrelaunchDaemon(object):
   def __init__(self, server):
     server.add_json_route('/existing_quickopen', self.get_existing_quickopen, ['GET'])
     server.exit.add_listener(self._on_exit)
     server.lo_idle.add_listener(self._join_in_use_processes)
     self._quickopen = None
-    self._cur_control_port = 27412
     self._in_use_processes = []
+    self._next_control_port = 27412
 
   def _get_another_control_port(self):
-    self._cur_control_port += 1
+    self._next_control_port += 1
     for i in range(100):
-      p = self._cur_control_port + i
-      if not _is_port_bindable("", p):
+      self._next_control_port += 1
+      if not _is_port_bindable("", self._next_control_port):
         continue
-      return p
+      return self._next_control_port
     raise Exception("Could not find open control port")
 
   def _launch_new_quickopen(self):
     assert not self._quickopen
     quickopen_script = os.path.join(os.path.dirname(__file__), "../quickopen")
     assert os.path.exists(quickopen_script)
-    
-    self._cur_control_port = self._get_another_control_port()
-    self._quickopen = subprocess.Popen([quickopen_script,
-                                        "prelaunch",
-                                        "--wait",
-                                        "--control-port",
-                                        str(self._cur_control_port)])
+
+    control_port = self._get_another_control_port()
+    proc = subprocess.Popen([quickopen_script,
+                             "prelaunch",
+                             "--wait",
+                             "--control-port",
+                             str(control_port)])
+    self._quickopen = PrelaunchedProcess(proc, control_port)
 
   def get_existing_quickopen(self, m, verb, data):
     if self._quickopen == None:
       self._launch_new_quickopen()
     try:
       self._in_use_processes.append(self._quickopen)
+      port = self._quickopen.port
       self._quickopen = None
-      return self._cur_control_port
+      return port
     finally:
       # todo, move this to another place... ideally, when the previous prelaunch quits
       self._launch_new_quickopen()

@@ -49,10 +49,10 @@ class PrelaunchedProcess(object):
 
 class PrelaunchDaemon(object):
   def __init__(self, server):
-    server.add_json_route('/existing_quickopen', self.get_existing_quickopen, ['GET'])
+    server.add_json_route('/existing_quickopen/(.+)', self.get_existing_quickopen, ['GET'])
     server.exit.add_listener(self._on_exit)
     server.lo_idle.add_listener(self._join_in_use_processes)
-    self._quickopen = None
+    self._quickopen = {}
     self._in_use_processes = []
     self._next_control_port = 27412
 
@@ -65,8 +65,8 @@ class PrelaunchDaemon(object):
       return self._next_control_port
     raise Exception("Could not find open control port")
 
-  def _launch_new_quickopen(self):
-    assert not self._quickopen
+  def _launch_new_quickopen(self, display):
+    assert display not in self._quickopen
     quickopen_script = os.path.join(os.path.dirname(__file__), "../quickopen")
     assert os.path.exists(quickopen_script)
 
@@ -76,19 +76,21 @@ class PrelaunchDaemon(object):
                              "--wait",
                              "--control-port",
                              str(control_port)])
-    self._quickopen = PrelaunchedProcess(proc, control_port)
+    self._quickopen[display] = PrelaunchedProcess(proc, control_port)
 
   def get_existing_quickopen(self, m, verb, data):
-    if self._quickopen == None:
-      self._launch_new_quickopen()
+    display = m.group(1)
+    if display not in self._quickopen:
+      self._launch_new_quickopen(display)
     try:
-      self._in_use_processes.append(self._quickopen)
-      port = self._quickopen.port
-      self._quickopen = None
-      return port
+      proc = self._quickopen[display]
+      del self._quickopen[display]
+
+      self._in_use_processes.append(proc)
+      return proc.port
     finally:
       # todo, move this to another place... ideally, when the previous prelaunch quits
-      self._launch_new_quickopen()
+      self._launch_new_quickopen(display)
       pass
 
   def _on_exit(self):
@@ -105,8 +107,10 @@ class PrelaunchDaemon(object):
 
   def stop(self):
     logging.debug("closing prelaunched quickopen")
-    if self._quickopen:
-      self._quickopen.kill()
+    for proc in self._quickopen.values():
+      proc.kill()
+    self._quickopen = {}
+
     self._join_in_use_processes()
     for p in self._in_use_processes:
       if not p.poll():

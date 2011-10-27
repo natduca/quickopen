@@ -18,10 +18,11 @@
 # Importing python GUI libraries is actually quite slow. We want to give
 # users of quickopen a nice snappy experience. So, the prelaunchd counterpart
 # of this code keeps around a "warmed up" quickopen instance in the background.
-# 
+#
 # When a new quickopen comes around with a --use-prelaunch, it consults
 # the daemon for prelaunched instance handle and then delegates its actual
 # commandline to that instance (via magic).
+import os
 import socket
 import sys
 import httplib
@@ -92,11 +93,23 @@ def wait_for_command(control_port):
     sys.exit(0)
 
 def run_command_in_existing(daemon_host, daemon_port, args):
+  # Prelaunched processes are DISPLAY-specific
+  if sys.platform == 'darwin':
+    if os.getenv('DISPLAY'):
+      display = os.getenv('DISPLAY')
+    else:
+      display = 'cocoa'
+  else:
+    if os.getenv('DISPLAY'):
+      display = os.getenv('DISPLAY')
+    else:
+      display = 'terminal';
+
   # Get the pid of an existing quickopen process via
   # quickopend. This routes through prelaunchd.py
   conn = httplib.HTTPConnection(daemon_host, daemon_port, True)
   try:
-    conn.request('GET', '/existing_quickopen')
+    conn.request('GET', '/existing_quickopen/%s' % display)
   except socket.error:
     t = "quickopend not running." # keep this synchronized with CMDstatus from quickopen.py
     return t
@@ -104,7 +117,7 @@ def run_command_in_existing(daemon_host, daemon_port, args):
   res = conn.getresponse()
   assert res.status == 200
   port = int(res.read())
-  
+
   # Get a connection to the prelaunched process.
   # We may have to try a few times --- it may be coming up still.
   connected = False

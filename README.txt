@@ -35,6 +35,9 @@ OSX:
         http://www.wxpython.org/download.php#stable
         wxPython 2.8-osx-unicode-2.6
 
+Experimental:
+        ./quickopen --curses 
+
 
 VIM Bindings
 ================================================================================

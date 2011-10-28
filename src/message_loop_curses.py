@@ -18,8 +18,11 @@ import sys
 import time
 import traceback
 import unittest
+import cStringIO
 
-DEBUG = True
+# Set the following to True in order to redirect stdout to
+#   /tmp/quickopen.stdout
+DEBUG = False
 
 _main_loop_running = False
 
@@ -120,17 +123,19 @@ def set_active_test(test, result):
 def is_main_loop_running():
   return _main_loop_running
 
-_stdout_hooked = False
 def run_main_loop():
-  global _stdout_hooked
-  if DEBUG and not _stdout_hooked:
-    _stdout_hooked = True
-    old_stdout = sys.stdout
-    old_stderr = sys.stderr
+  global _old_std
+  _old_std = [ sys.stdout, sys.stderr ]
 
-    sys.stdout = open('/tmp/quickopen.stderr', 'w', 0)
+  if DEBUG:
+    tempStdout = open('/tmp/quickopen.stdout', 'w', 0)
+    sys.stdout = tempStdout
     sys.stderr = sys.stdout
-
+  else:
+    tempStdout = cStringIO.StringIO()
+    sys.stdout = tempStdout
+    sys.stderr = sys.stdout
+  
   assert not is_main_loop_running()
   if _unittests_running and not _active_test:
     del _pending_delayed_tasks[:]
@@ -167,7 +172,13 @@ def run_main_loop():
     _quitting = False
     _main_loop_running = False
     del _pending_delayed_tasks[:]
-  print "done"
+    sys.stdout = _old_std[0]
+    sys.stderr = _old_std[1]
+    if DEBUG:
+      tempStdout.seek(0)
+      sys.stdout.write(tempStdout.read())
+    else:
+      sys.stdout.write(tempStdout.getvalue())
 
 def quit_main_loop():
   global _quitting

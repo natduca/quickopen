@@ -149,7 +149,6 @@ class OpenDialogCurses(OpenDialogBase):
         t = spad(l, w)
         if i == self._selected_index:
           a = curses.color_pair(1) | curses.A_REVERSE
-          print a
         else:
           a = 0
         self._stdscr.addstr(y + i, x, t, a)
@@ -163,7 +162,7 @@ class OpenDialogCurses(OpenDialogBase):
     self._invalidate()
 
   def get_selected_items(self):
-    return []
+    return [self._result_files[self._selected_index]]
 
   def destroy(self):
     pass

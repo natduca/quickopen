@@ -21,35 +21,42 @@ import sys
 #  2. refactor to be class based. Right now, its function based and fugly.
 
 def detect_toolkit():
+  # use curses if its specified
+  if '--curses' in sys.argv:
+    return (False, False, False, True)
+
   # try using PyObjC on mac
   if sys.platform == 'darwin':
     if '--objc' in sys.argv:
       try:
         import objc
-        return (False, False, True)
+        return (False, False, True, False)
       except ImportError:
         pass
-
   # try using gtk
   try:
     import pygtk
     pygtk.require('2.0')
-    return (True, False, False)
+    return (True, False, False, False)
   except ImportError:
     pass
 
   # if that didn't work, try using wx
   try:
     import wx
-    return (False, True, False)
+    return (False, True, False, False)
   except ImportError:
     pass
 
-  return (False, False, False)
+  # use curses as a last resort
+  if '--curses' in sys.argv:
+    return (False, False, False, True)
 
-is_gtk, is_wx, is_objc = detect_toolkit()
+  return (False, False, False, False)
 
-has_toolkit = is_gtk or is_wx or is_objc
+is_gtk, is_wx, is_objc, is_curses = detect_toolkit()
+
+has_toolkit = is_gtk or is_wx or is_objc or is_curses
 
 if is_gtk:
   import message_loop_gtk as platform_message_loop
@@ -57,6 +64,8 @@ elif is_wx:
   import message_loop_wx as platform_message_loop
 elif is_objc:
   import message_loop_objc as platform_message_loop
+elif is_curses:
+  import message_loop_curses as platform_message_loop
 
 
 def post_task(cb, *args):

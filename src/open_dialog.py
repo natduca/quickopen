@@ -114,6 +114,8 @@ def _pick_open_dialog():
     return __import__("src.open_dialog_gtk", {}, {}, True).OpenDialogGtk
   elif message_loop.is_wx:
     return __import__("src.open_dialog_wx", {}, {}, True).OpenDialogWx
+  elif message_loop.is_curses:
+    return __import__("src.open_dialog_curses", {}, {}, True).OpenDialogCurses
   else:
     raise "Unsupported"
 OpenDialog = _pick_open_dialog()

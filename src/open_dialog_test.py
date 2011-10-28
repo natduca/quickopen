@@ -20,6 +20,10 @@ import tempfile
 import temporary_daemon
 import ui_test_case
 
+# Special indicator to TestRunner to only let us run when
+# run_unit_tests is passed -m from the commandline.
+requires_manual_handling = True
+
 class OpenDialogTest(ui_test_case.UITestCase):
   def setUp(self):
     self.db_test_base = db_test_base.DBTestBase()
@@ -39,7 +43,3 @@ class OpenDialogTest(ui_test_case.UITestCase):
 
   def test_open_dialog(self):
     x = open_dialog.OpenDialog(self.client_settings, self.options, self.db)
-    def timeout():
-      x.destroy()
-      message_loop.quit_main_loop()
-    message_loop.post_delayed_task(timeout, 3)

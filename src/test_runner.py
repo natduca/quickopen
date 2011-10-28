@@ -23,7 +23,7 @@ import types
 import traceback
 import unittest
 
-def discover(filters):
+def discover(filters, manual_handling_allowed):
   # poor mans unittest.discover, but that ignores classes
   # that start with _
   loader = unittest.TestLoader()
@@ -48,6 +48,16 @@ def discover(filters):
           if re.search(f,name):
             return True
         return False
+
+      if hasattr(module, 'requires_manual_handling'):
+        requires_manual_handling = module.requires_manual_handling
+      else:
+        requires_manual_handling = False
+
+      if requires_manual_handling and not manual_handling_allowed:
+        continue
+      if not requires_manual_handling and manual_handling_allowed:
+        continue
 
       if hasattr(module, 'suite'):
         base_suite = module.suite()
@@ -80,6 +90,7 @@ def main(parser):
   parser.add_option('--debug', dest='debug', action='store_true', default=False, help='Break into pdb when an assertion fails')
   parser.add_option('-i', '--incremental', dest='incremental', action='store_true', default=False, help='Run tests one at a time.')
   parser.add_option('-s', '--stop', dest='stop_on_error', action='store_true', default=False, help='Stop running tests on error.')
+  parser.add_option('-m', '--manually-handled-tests', dest='manual_handling_allowed', action='store_true', default=False, help='Only run tests flagged with a \'requires_manual_handling\' attribute.')
   (options, args) = parser.parse_args()
 
   # install hook on set_trace if --debug
@@ -109,9 +120,9 @@ def main(parser):
   os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
   if len(args) > 0:
-    suites = discover(args)
+    suites = discover(args, options.manual_handling_allowed)
   else:
-    suites = discover(['.*'])
+    suites = discover(['.*'], options.manual_handling_allowed)
 
   r = unittest.TextTestRunner()
   if not options.incremental:

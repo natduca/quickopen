@@ -16,7 +16,7 @@
 
 (provide 'quickopen)
 
-(defun quickopen-run ()
+(defun quickopen-run-gui ()
   (with-temp-buffer
     (goto-char (point-max))
     (let* ((prev-point (point)))
@@ -26,9 +26,9 @@
           (buffer-substring prev-point (- (point) prev-point))
         nil))))
 
-(defun quickopen()
+(defun quickopen-gui()
   (interactive "")
-  (let* ((result (quickopen-run)))
+  (let* ((result (quickopen-run-gui)))
     (when result
       (if (string-equal (substring result 0 3) "OK\n")
           (progn
@@ -64,12 +64,30 @@
 
 (message (format "QuickOpen loaded at %s" quickopen-dir-base))
 
-(global-set-key (kbd "M-O") (lambda ()
-  (interactive "")
-  (quickopen)))
-(global-set-key (kbd "A-O") (lambda ()
-  (interactive "")
-  (quickopen)))
-(global-set-key (kbd "s-O") (lambda ()
-  (interactive "")
-  (quickopen)))
+(defun quickopen-has-gui ()
+  (when (fboundp 'window-system)
+    (when window-system
+      1)))
+
+(defun quickopen-curses ()
+  (message "Not implemented")
+  )
+
+(if (quickopen-has-gui)
+    (progn
+      (global-set-key (kbd "M-O") (lambda ()
+                                    (interactive "")
+                                    (quickopen)))
+      (global-set-key (kbd "A-O") (lambda ()
+                                    (interactive "")
+                                    (quickopen)))
+      (global-set-key (kbd "s-O") (lambda ()
+                                    (interactive "")
+                                    (quickopen)))
+      )
+  (progn
+      (global-set-key (kbd "ESC O") (lambda ()
+                                    (interactive "")
+                                    (quickopen-curses)))
+    )
+  )

@@ -181,8 +181,10 @@ def run_main_loop():
     sys.stdout = _old_std[0]
     sys.stderr = _old_std[1]
     if DEBUG:
-      tempStdout.seek(0)
-      sys.stdout.write(tempStdout.read())
+      tempStdout.close()
+      res = open('/tmp/quickopen.stdout')
+      sys.stdout.write(res.read())
+      res.close()
     else:
       sys.stdout.write(tempStdout.getvalue())
 

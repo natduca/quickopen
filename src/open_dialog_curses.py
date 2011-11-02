@@ -17,6 +17,7 @@ import message_loop
 import message_loop_curses
 import time
 import os
+import ranker
 
 from open_dialog import OpenDialogBase
 
@@ -68,6 +69,12 @@ class OpenDialogCurses(OpenDialogBase):
   def _on_readable(self):
     kcode = self._stdscr.getch()
     k = curses.keyname(kcode)
+    if k == '^[':
+      n = self._stdscr.getch()
+      nk = curses.keyname(n)
+      kcode = kcode << 8 | n
+      k = "M-%s" % curses.keyname(n)
+
     if hasattr(self, '_keylog'):
       self._keylog.write('k=[%10s] kcode=[%s]\n' % (k, kcode))
 
@@ -79,7 +86,7 @@ class OpenDialogCurses(OpenDialogBase):
       self._selected_index += 1
       self._clamp_selected_index()
       self._update_results()
-    elif kcode == ascii.ESC or k == '^G':
+    elif k == '^G':
       self.on_done(True)
       return
     elif kcode == ascii.NL:
@@ -111,12 +118,34 @@ class OpenDialogCurses(OpenDialogBase):
       self._filter_text_point += 1
       self._filter_text_point = max(0, min(self._filter_text_point, len(self._filter_text)))
       self._update_filter_text()
+    elif k == 'M-b':
+      wordstarts = ranker.Ranker().get_starts(self._filter_text)
+      wordstarts.append(len(self._filter_text))
+      candidates = []
+      for start in wordstarts:
+        if start < self._filter_text_point:
+          candidates.append(start)
+      if len(candidates):
+        self._filter_text_point = candidates[-1]
+        self._filter_text_point = max(0, min(self._filter_text_point, len(self._filter_text)))
+        self._update_filter_text()
+    elif k == 'M-f':
+      wordstarts = ranker.Ranker().get_starts(self._filter_text)
+      wordstarts.append(len(self._filter_text))
+      candidates = []
+      for start in wordstarts:
+        if start > self._filter_text_point:
+          candidates.append(start)
+      if len(candidates):
+        self._filter_text_point = candidates[0]
+        self._filter_text_point = max(0, min(self._filter_text_point, len(self._filter_text)))
+        self._update_filter_text()
     elif k == '^K':
         before = self._filter_text[0:self._filter_text_point]
         self._filter_text = before
         self._update_filter_text()
     else:
-      if not (k.startswith('^') or k.startswith('KEY_')):
+      if not (k.startswith('^') or k.startswith('KEY_') or k.startswith('M-')):
         before = self._filter_text[0:self._filter_text_point]
         after = self._filter_text[self._filter_text_point:]
         self._filter_text = "%s%s%s" % (before, k, after)

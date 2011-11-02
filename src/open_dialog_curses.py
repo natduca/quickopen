@@ -55,50 +55,54 @@ class OpenDialogCurses(OpenDialogBase):
 
     curses.init_pair(1, 1, curses.COLOR_BLACK)
 
+    # Uncomment to store keypresses to a logfile
+    # This is for DEBUGGING purposes only.
+    #self._keylog = open('/tmp/quickopen.keylog', 'w', False)
+
   def _update_border(self):
     self._stdscr.addstr(0, 0, 'QuickOpen: %s' % self._status)
 
   def _on_readable(self):
     k = self._stdscr.getkey()
     kcode = ord(k[0])
-    if k.startswith('KEY_'):
-      self._on_key(k)
-      return
-    elif kcode == ascii.BS or kcode == 127:
-      self._filter_text = self._filter_text[:-1]
-      self._update_filter_text()
-      return
-    elif kcode == ascii.ESC:
-      self.on_done(True)
-      return
-    elif kcode == ascii.NL:
-      self.on_done(False)
-      return
-    else:
-      self._filter_text += k
-      self._update_filter_text()
-      self.set_filter_text(self._filter_text)
+    if len(k) == 1:
+      k = curses.keyname(kcode)
 
-  def _clamp_selected_index(self):
-    if self._selected_index < 0:
-      self._selected_index = 0
-    if self._selected_index > len(self._result_files):
-      self._selected_index = len(self._result_files) - 1
+    if hasattr(self, '_keylog'):
+      self._keylog.write('k=[%s] kcode=[%s] kn=[%s]\n' % (k, kcode, curses.keyname(kcode)))
 
-  def _on_key(self, k):
-    if k == 'KEY_UP':
+    if k == 'KEY_UP' or k == '^P':
       self._selected_index -= 1
       self._clamp_selected_index()
       self._update_results()
-    elif k == 'KEY_DOWN':
+    elif k == 'KEY_DOWN' or k == '^N':
       self._selected_index += 1
       self._clamp_selected_index()
       self._update_results()
     elif k == 'KEY_BACKSPACE':
       self._filter_text = self._filter_text[:-1]
       self._update_filter_text()
+    elif kcode == ascii.BS or kcode == 127:
+      self._filter_text = self._filter_text[:-1]
+      self._update_filter_text()
+      return
+    elif kcode == ascii.ESC or k == '^G':
+      self.on_done(True)
+      return
+    elif kcode == ascii.NL:
+      self.on_done(False)
+      return
     else:
-      print 'unrecognized: %s' % k
+      if not (k.startswith('^') or k.startswith('KEY_')):
+        self._filter_text += k
+        self._update_filter_text()
+        self.set_filter_text(self._filter_text)
+
+  def _clamp_selected_index(self):
+    if self._selected_index < 0:
+      self._selected_index = 0
+    if self._selected_index > len(self._result_files):
+      self._selected_index = len(self._result_files) - 1
 
   def _invalidate(self):
     if self._refresh_pending:

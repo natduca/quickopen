@@ -76,6 +76,7 @@ def CMDrmdir(parser):
 def CMDsearch(parser):
   """Search for a file"""
   parser.add_option('--ok', dest='ok', action='store_true', default=False, help='Output "OK" before results')
+  parser.add_option('--lisp-results', dest='lisp_results', action='store_true', default=False, help='Output results as a lisp-formatted list')
   (options, args) = parser.parse_args()
   settings = load_settings(options)
   if not trace_is_enabled() and settings.trace:

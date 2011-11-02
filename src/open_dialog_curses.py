@@ -162,6 +162,8 @@ class OpenDialogCurses(OpenDialogBase):
     self._invalidate()
 
   def get_selected_items(self):
+    if self._selected_index < 0 or self._selected_index > len(self._result_files):
+      return []
     return [self._result_files[self._selected_index]]
 
   def destroy(self):

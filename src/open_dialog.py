@@ -106,7 +106,10 @@ class OpenDialogBase(object):
       res = self.get_selected_items()
     if self._options.ok and not canceled:
       print "OK"
-    print "\n".join(res)
+    if self._options.lisp_results:
+      print "(%s)\n" % (" ".join(['"%s"' % x for x in res]))
+    else:
+      print "\n".join(res)
     message_loop.quit_main_loop() # end of the line, no further output will happen
 
 def _pick_open_dialog():

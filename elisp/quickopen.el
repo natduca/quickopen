@@ -89,11 +89,14 @@ the time")
   )
 
 ;; override linum-on to prevent
-(defun linum-on ()
-  "* When linum is running globally, disable line number in modes defined in `linum-disabled-modes-list'. Changed by linum-off. Also turns off numbering in starred modes like *scratch*"
-
-  (unless (string= "*quickopen*" (buffer-name))
-    (linum-mode 1)))
+(when (fboundp 'linum-on)
+  (defadvice linum-on (after quickopen-after-linum-on)
+    (when (string= "*quickopen*" (buffer-name))
+      (linum-mode 0)
+      )
+    )
+  (ad-activate 'linum-on)
+  )
 
 (defun quickopen-get-results-from-current-buffer()
   (let (x y res)

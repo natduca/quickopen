@@ -53,11 +53,14 @@ class OpenDialogCurses(OpenDialogBase):
     self._result_files = []
     self._result_ranks = []
 
+    # The location of the "cursor" in the filter text "readline" area
+    self._filter_text_point = len(self._filter_text)
+
     curses.init_pair(1, 1, curses.COLOR_BLACK)
 
     # Uncomment to store keypresses to a logfile
     # This is for DEBUGGING purposes only.
-    #self._keylog = open('/tmp/quickopen.keylog', 'w', False)
+    self._keylog = open('/tmp/quickopen.keylog', 'w', False)
 
   def _update_border(self):
     self._stdscr.addstr(0, 0, 'QuickOpen: %s' % self._status)
@@ -79,22 +82,50 @@ class OpenDialogCurses(OpenDialogBase):
       self._selected_index += 1
       self._clamp_selected_index()
       self._update_results()
-    elif k == 'KEY_BACKSPACE':
-      self._filter_text = self._filter_text[:-1]
-      self._update_filter_text()
-    elif kcode == ascii.BS or kcode == 127:
-      self._filter_text = self._filter_text[:-1]
-      self._update_filter_text()
-      return
     elif kcode == ascii.ESC or k == '^G':
       self.on_done(True)
       return
     elif kcode == ascii.NL:
       self.on_done(False)
       return
+    elif k == 'KEY_BACKSPACE' or k == '^?':
+      if self._filter_text_point > 0:
+        before = self._filter_text[0:self._filter_text_point]
+        after = self._filter_text[self._filter_text_point:]
+        self._filter_text = "%s%s" % (before[:-1], after)
+        self._filter_text_point -= 1
+        self._update_filter_text()
+    elif k == '^D':
+      if self._filter_text_point > 0:
+        before = self._filter_text[0:self._filter_text_point]
+        after = self._filter_text[self._filter_text_point:]
+        self._keylog.write("b=%s a=%s" % (before, after))
+        self._filter_text = "%s%s" % (before, after[1:])
+        self._update_filter_text()
+    elif k == '^A':
+      self._filter_text_point = 0
+      self._update_filter_text()
+    elif k == '^E':
+      self._filter_text_point = len(self._filter_text)
+      self._update_filter_text()
+    elif k == '^B':
+      self._filter_text_point -= 1
+      self._filter_text_point = max(0, min(self._filter_text_point, len(self._filter_text)))
+      self._update_filter_text()
+    elif k == '^F':
+      self._filter_text_point += 1
+      self._filter_text_point = max(0, min(self._filter_text_point, len(self._filter_text)))
+      self._update_filter_text()
+    elif k == '^K':
+        before = self._filter_text[0:self._filter_text_point]
+        self._filter_text = before
+        self._update_filter_text()
     else:
       if not (k.startswith('^') or k.startswith('KEY_')):
-        self._filter_text += k
+        before = self._filter_text[0:self._filter_text_point]
+        after = self._filter_text[self._filter_text_point:]
+        self._filter_text = "%s%s%s" % (before, k, after)
+        self._filter_text_point += 1
         self._update_filter_text()
         self.set_filter_text(self._filter_text)
 
@@ -112,10 +143,11 @@ class OpenDialogCurses(OpenDialogBase):
 
   def _refresh(self):
     self._refresh_pending = False
-    t = "Filter: " + self._filter_text
+    tstart = "Filter: "
+    t = tstart + self._filter_text
     h,w = self._stdscr.getmaxyx()
     self._stdscr.addstr(h - 2, 0, spad(t, w - 2))
-    self._stdscr.move(h - 2, len(t))
+    self._stdscr.move(h - 2, len(tstart) + self._filter_text_point)
     self._stdscr.refresh()
 
   def set_results_enabled(self, en):
@@ -166,7 +198,7 @@ class OpenDialogCurses(OpenDialogBase):
     self._invalidate()
 
   def get_selected_items(self):
-    if self._selected_index < 0 or self._selected_index > len(self._result_files):
+    if self._selected_index < 0 or self._selected_index >= len(self._result_files):
       return []
     return [self._result_files[self._selected_index]]
 

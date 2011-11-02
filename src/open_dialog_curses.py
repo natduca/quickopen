@@ -108,11 +108,11 @@ class OpenDialogCurses(OpenDialogBase):
     elif k == '^E':
       self._filter_text_point = len(self._filter_text)
       self._update_filter_text()
-    elif k == '^B':
+    elif k == '^B' or k == 'KEY_LEFT':
       self._filter_text_point -= 1
       self._filter_text_point = max(0, min(self._filter_text_point, len(self._filter_text)))
       self._update_filter_text()
-    elif k == '^F':
+    elif k == '^F' or k == 'KEY_RIGHT':
       self._filter_text_point += 1
       self._filter_text_point = max(0, min(self._filter_text_point, len(self._filter_text)))
       self._update_filter_text()

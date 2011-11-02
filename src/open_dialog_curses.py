@@ -66,13 +66,10 @@ class OpenDialogCurses(OpenDialogBase):
     self._stdscr.addstr(0, 0, 'QuickOpen: %s' % self._status)
 
   def _on_readable(self):
-    k = self._stdscr.getkey()
-    kcode = ord(k[0])
-    if len(k) == 1:
-      k = curses.keyname(kcode)
-
+    kcode = self._stdscr.getch()
+    k = curses.keyname(kcode)
     if hasattr(self, '_keylog'):
-      self._keylog.write('k=[%s] kcode=[%s] kn=[%s]\n' % (k, kcode, curses.keyname(kcode)))
+      self._keylog.write('k=[%10s] kcode=[%s]\n' % (k, kcode))
 
     if k == 'KEY_UP' or k == '^P':
       self._selected_index -= 1

@@ -150,7 +150,13 @@ def run_main_loop():
     global _stdscr
     _stdscr = stdscr
     while _main_loop_running:
-      r, w, e = select.select([sys.stdin], [], [], 0.1)
+      try:
+        r, w, e = select.select([sys.stdin], [], [], 0.1)
+      except KeyboardInterrupt:
+        raise
+      except:
+        continue
+
       if not _main_loop_running:
         break
       if r:

@@ -77,9 +77,23 @@ the time")
       (term-mode)
       (term-char-mode)
       (switch-to-buffer quickopen-current-buffer)
+
+      ;; turn off stuff that screws up term mode
+      (when (fboundp 'show-ws-highlight-trailing-whitespace)
+        (when show-ws-highlight-trailing-whitespace-p
+          (toggle-show-trailing-whitespace-show-ws)
+          )
+        )
       )
     )
   )
+
+;; override linum-on to prevent
+(defun linum-on ()
+  "* When linum is running globally, disable line number in modes defined in `linum-disabled-modes-list'. Changed by linum-off. Also turns off numbering in starred modes like *scratch*"
+
+  (unless (string= "*quickopen*" (buffer-name))
+    (linum-mode 1)))
 
 (defun quickopen-get-results-from-current-buffer()
   (let (x y res)
@@ -149,8 +163,8 @@ the time")
                                     (quickopen-gui)))
       )
   (progn
-      (global-set-key (kbd "ESC O") (lambda ()
-                                    (interactive "")
-                                    (quickopen-curses)))
+    (global-set-key (kbd "C-q") (lambda ()
+                                  (interactive "")
+                                  (quickopen-curses)))
     )
   )

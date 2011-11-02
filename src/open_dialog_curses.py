@@ -60,7 +60,7 @@ class OpenDialogCurses(OpenDialogBase):
 
     # Uncomment to store keypresses to a logfile
     # This is for DEBUGGING purposes only.
-    self._keylog = open('/tmp/quickopen.keylog', 'w', False)
+    # self._keylog = open('/tmp/quickopen.keylog', 'w', False)
 
   def _update_border(self):
     self._stdscr.addstr(0, 0, 'QuickOpen: %s' % self._status)
@@ -99,7 +99,6 @@ class OpenDialogCurses(OpenDialogBase):
       if self._filter_text_point > 0:
         before = self._filter_text[0:self._filter_text_point]
         after = self._filter_text[self._filter_text_point:]
-        self._keylog.write("b=%s a=%s" % (before, after))
         self._filter_text = "%s%s" % (before, after[1:])
         self._update_filter_text()
     elif k == '^A':

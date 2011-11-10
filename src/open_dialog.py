@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import db_proxy
 import json
 import logging
 import message_loop
@@ -61,7 +62,7 @@ class OpenDialogBase(object):
     def on_ready():
       try:
         res = self._pending_search.result
-      except AsyncSearchError:
+      except db_proxy.AsyncSearchError:
         res = None
       self._pending_search = None
       if res:

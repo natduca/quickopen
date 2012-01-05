@@ -17,6 +17,7 @@ import logging
 import message_loop
 import re
 import os
+import sys
 import time
 
 from trace_event import *
@@ -107,10 +108,21 @@ class OpenDialogBase(object):
       res = self.get_selected_items()
     if self._options.ok and not canceled:
       print "OK"
-    if self._options.lisp_results:
-      print "(%s)\n" % (" ".join(['"%s"' % x for x in res]))
+
+    if self._options.results_file:
+      ofile = open(self._options.results_file, 'w')
     else:
-      print "\n".join(res)
+      ofile = sys.stdout
+
+    if self._options.lisp_results:
+      ofile.write("(%s)\n" % (" ".join(['"%s"' % x for x in res])))
+    else:
+      ofile.write("\n".join(res))
+    ofile.write("\n")
+
+    if self._options.results_file:
+      ofile.close()
+
     message_loop.quit_main_loop() # end of the line, no further output will happen
 
 def _pick_open_dialog():

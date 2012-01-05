@@ -1,3 +1,19 @@
+Bugs
+---------------------------------------------------------------------------
+- add /tmp
+- add /tmp
+   throws 500
+
+- add symlink to /tmp.
+- add /tmp
+   doesn't explode but should
+
+quickopen rmdir is sensitive to trailing slashes... e.g.
+  rmdir foo/
+  rmdir foo
+
+use curses mode in non-gui vim
+
 Queries
 ---------------------------------------------------------------------------
 CCLayerTreeHost --- is that lth? clth? cclth?

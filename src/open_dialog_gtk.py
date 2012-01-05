@@ -73,7 +73,7 @@ class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
     vbox.pack_start(table_vbox,True,True,1)
     table_vbox.pack_start(table_options_hbox,False,False,0)
     table_options_hbox.pack_start(status_label,False,False,10)
-    table_options_hbox.pack_end(refresh_button,False,False,0)
+    table_options_hbox.pack_end(reindex_button,False,False,0)
     table_vbox.pack_start(treeview_scroll_window,True,True,0)
     table_vbox.pack_start(truncated_bar,False,True,0)
     table_vbox.pack_start(filter_entry,False,True,0)

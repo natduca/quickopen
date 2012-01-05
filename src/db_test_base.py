@@ -176,7 +176,7 @@ class DBTestBase(object):
     hits = self.db.search('project1_module1.txt').hits
     self.assertTrue(ref_file not in hits)
 
-  def test_ignore_ctl(self):
+  def test_empty_search(self):
     self.db.add_dir(self.test_data_dir)
     self.db.sync()
     self.assertEquals([], self.db.search('').hits)
@@ -207,12 +207,6 @@ class DBTestBase(object):
 
     res = self.db.search('svn_should_not_show_up.txt')
     self.assertEquals(0, len(res.hits))
-
-  def test_sync(self):
-    self.db.add_dir(self.test_data_dir)
-    self.assertFalse(self.db.is_up_to_date)
-    self.db.sync()
-    self.assertTrue(self.db.has_index and self.db.is_up_to_date)
 
   def test_sync(self):
     self.db.add_dir(self.test_data_dir)

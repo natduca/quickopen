@@ -21,6 +21,13 @@ class QuickopenTestBase(object):
   def setUp(self):
     self.test_data = test_data.TestData()
 
+  def qo_and_split(self, *args):
+    r = self.qo(*args)
+    if r:
+      return [x for x in r.split("\n") if len(x)]
+    else:
+      return None
+
   @property
   def test_data_dir(self):
     return self.test_data.test_data_dir
@@ -64,6 +71,24 @@ class QuickopenTestBase(object):
     d = self.qo("dirs").split("\n")
     self.assertEquals([d2, ''], d)
 
+  def test_ignore(self):
+    x = self.qo("add",
+                self.test_data_dir)
+    self._wait_for_up_to_date()
+
+    orig = self.qo_and_split("ignores")
+
+    res = self.qo_and_split("rawsearch", 'svn_should_not_show_up.txt')
+    self.assertEquals(0, len(res))
+
+    orig = self.qo_and_split("ignores")
+    for i in orig:
+      self.qo("unignore", i)
+    self._wait_for_up_to_date()
+
+    res = self.qo_and_split("rawsearch", 'svn_should_not_show_up.txt')
+    self.assertEquals(1, len(res))
+
   def test_status(self):
     s = self.qo("status")
     self.assertTrue(s.startswith("up-to-date: "))
@@ -74,11 +99,16 @@ class QuickopenTestBase(object):
     print s
     self.assertTrue(s.startswith("quickopend not running."))
 
+  def _is_up_to_date(self):
+    s = self.qo("status")
+    if s.startswith("up-to-date: "):
+      return True
+    return False
+
   def _wait_for_up_to_date(self):
     utd = False
     for i in range(10):
-      s = self.qo("status")
-      if s.startswith("up-to-date: "):
+      if self._is_up_to_date:
         utd = True
         break
     self.assertTrue(utd)
@@ -87,7 +117,7 @@ class QuickopenTestBase(object):
     x = self.qo("add",
                 self.test_data_dir)
     self.assertEquals("", x)
-    
+
     self._wait_for_up_to_date()
     r = self.qo("rawsearch", "MySubSystem.c").split("\n")
     self.assertEquals([self.test_data.path_to("project1/MySubSystem.c"), ''], r)

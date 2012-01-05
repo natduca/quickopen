@@ -73,6 +73,45 @@ def CMDrmdir(parser):
     return 0
   return 255
 
+def CMDignore(parser):
+  """Ignores files matching the given regexp"""
+  (options, args) = parser.parse_args()
+  settings = load_settings(options)
+  db = open_db(options)
+  if len(args) == 0:
+    parser.error('Expected at least one directory')
+  for i in args:
+    db.ignore(i)
+  return 0
+
+def CMDignores(parser):
+  """Lists currently-ignored files"""
+  (options, args) = parser.parse_args()
+  settings = load_settings(options)
+  db = open_db(options)
+  if len(args):
+    parser.error('Unrecognized args: %s' % ' '.join(args))
+  print "\n".join(db.ignores)
+  return 0
+
+def CMDunignore(parser):
+  """Stops ignoring a given regexp"""
+  (options, args) = parser.parse_args()
+  settings = load_settings(options)
+  db = open_db(options)
+  ignores = db.ignores
+  ok = True
+  for i in args:
+    if i not in ignores:
+      ok = False
+      print "%s not found" % i
+    else:
+      db.unignore(i)
+      print "%s removed" % i
+  if ok:
+    return 0
+  return 255
+
 def CMDsearch(parser):
   """Search for a file"""
   parser.add_option('--ok', dest='ok', action='store_true', default=False, help='Output "OK" before results')

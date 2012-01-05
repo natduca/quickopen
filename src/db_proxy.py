@@ -28,6 +28,9 @@ class DBDirProxy(object):
     self.id = id
     self.path = path
 
+  def __repr__(self):
+    return "DBDirProxy(%s, %s)" % (self.id, self.path)
+
 class DBProxy(object):
   def __init__(self, host, port, start_if_needed = False, port_for_autostart=-1):
     if start_if_needed and port_for_autostart == -1:
@@ -71,7 +74,7 @@ class DBProxy(object):
     
 
   def _req(self, method, path, data = None):
-    if data:
+    if data != None:
       if type(data) == DynObject:
         data = data.as_json()
       else:

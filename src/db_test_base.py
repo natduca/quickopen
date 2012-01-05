@@ -65,7 +65,7 @@ class DBTestBase(object):
     self.db.sync()
     self.assertTrue(self.db.has_index and self.db.is_up_to_date)
     res = self.db.search('MySubSystem.c')
-    self.assertEquals(1, len(res.hits))    
+    self.assertEquals(1, len(res.hits))
     self.assertEquals(os.path.join(self.test_data_dir, 'project1/MySubSystem.c'), res.hits[0])
 
   def test_search_finds_new_file(self):

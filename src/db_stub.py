@@ -98,7 +98,6 @@ class DBStub(object):
     return {"status": "OK"}
 
   def search(self, m, verb, data):
-    q = re.compile(data)
     res = self.db.search(data)
     return res
 

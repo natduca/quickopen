@@ -64,7 +64,9 @@ class OpenDialogCurses(OpenDialogBase):
     # self._keylog = open('/tmp/quickopen.keylog', 'w', False)
 
   def _update_border(self):
-    self._stdscr.addstr(0, 0, 'QuickOpen: %s' % self._status)
+    status = 'QuickOpen: %s' % self._status
+    h,w = self._stdscr.getmaxyx()
+    self._stdscr.addstr(0, 0, status[:w])
 
   def _on_readable(self):
     kcode = self._stdscr.getch()
@@ -144,6 +146,8 @@ class OpenDialogCurses(OpenDialogBase):
         before = self._filter_text[0:self._filter_text_point]
         self._filter_text = before
         self._update_filter_text()
+    elif k == '^R':
+      self.on_reindex_clicked()
     else:
       if not (k.startswith('^') or k.startswith('KEY_') or k.startswith('M-')):
         before = self._filter_text[0:self._filter_text_point]

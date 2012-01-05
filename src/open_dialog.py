@@ -54,6 +54,9 @@ class OpenDialogBase(object):
         import traceback; traceback.print_exc()
         pass
 
+  def on_reindex_clicked(self):
+    self._db.begin_reindex()
+
   def on_tick(self,*args):
     def begin_search():
       self.set_status("DB Status: %s" % "searching")

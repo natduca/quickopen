@@ -162,6 +162,9 @@ class DB(object):
         self._set_dirty()
         break
 
+  def begin_reindex(self):
+    self._set_dirty()
+
   def _set_dirty(self):
     was_indexing = self._pending_indexer != None
     if self._pending_indexer:

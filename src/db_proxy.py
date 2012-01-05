@@ -154,6 +154,10 @@ class DBProxy(object):
   def status(self):
     return self._req('GET', '/status')
 
+  def begin_reindex(self):
+    return self._req('POST', '/begin_reindex')
+
+
 class AsyncSearchError(object): 
   pass
 

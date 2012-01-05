@@ -27,6 +27,7 @@ class DBStub(object):
     self.server = server
     self.hi_idle_hook_added = False
 
+    server.add_json_route('/begin_reindex', self.begin_reindex, ['POST'])
     server.add_json_route('/dirs/add', self.add_dir, ['POST'])
     server.add_json_route('/dirs', self.list_dirs, ['GET'])
     server.add_json_route('/dirs/([a-zA-Z0-9]+)', self.get_dir, ['GET'])
@@ -107,3 +108,7 @@ class DBStub(object):
 
   def status(self, m, verb, data):
     return self.db.status()
+
+  def begin_reindex(self, m, verb, data):
+    self.db.begin_reindex()
+    return {"status": "OK"}

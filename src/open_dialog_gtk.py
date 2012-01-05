@@ -51,8 +51,8 @@ class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
     self.connect('destroy', self.on_destroy)
 
     truncated_bar = InfoBarGtk()
-    refresh_button = gtk.Button("_Refresh")
-    refresh_button.connect('clicked', lambda *args: self.refresh())
+    reindex_button = gtk.Button("_Reindex")
+    reindex_button.connect('clicked', lambda *args: self.on_reindex_clicked())
 
     status_label = gtk.Label()
     self.status_label = status_label

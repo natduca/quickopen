@@ -136,6 +136,17 @@ def CMDstatus(parser):
   except IOError:
     print "quickopend not running."
 
+def CMDreindex(parser):
+  """Begins to reindex the quickopen database"""
+  (options, args) = parser.parse_args()
+  settings = load_settings(options)
+  db = open_db(options)
+  try:
+    db.begin_reindex()
+    print "Reindexing has begun."
+  except IOError:
+    print "quickopend not running."
+
 def CMDrawsearch(parser):
   """Prints the raw database's results for <query>"""
   parser.add_option('--show-rank', '-r', dest='show_rank', action='store_true', help='Show the ranking of results')

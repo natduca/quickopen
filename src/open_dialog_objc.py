@@ -17,14 +17,18 @@ import message_loop
 import os
 import sys
 
+import objc
 from AppKit import *
+from Foundation import *
 
 from open_dialog import OpenDialogBase
 
-class OpenDialogObjc(OpenDialogBase):
-  def __init__(self, settings, options, db):
-    OpenDialogBase.__init__(self, settings, options, db)
+class OpenDialogObjcRaw(NSObject, OpenDialogBase):
+  def initWithSettings(self, settings, options, db):
     message_loop.init_main_loop()
+    self.init()
+    OpenDialogBase.__init__(self, settings, options, db)
+
     size = NSMakeRect(0,0,800,400)
     self.window = NSWindow.alloc().initWithContentRect_styleMask_backing_defer_(
       size,
@@ -34,52 +38,54 @@ class OpenDialogObjc(OpenDialogBase):
     self.window.setTitle_("TraceViewer")
     self.window.contentView().setAutoresizesSubviews_(True)
 
-    
-  def on_ok(self, event):
-    self.on_done(False)
+    ok_bn = NSButton.new()
+    ok_bn.setTitle_("OK")
+    ok_bn.setFrame_(NSMakeRect(100,100,200,50))
+    ok_bn.setBezelStyle_(NSRoundedBezelStyle)
+    ok_bn.setTarget_(self)
+    ok_bn.setAction_(self.__class__.on_ok)
 
-  def on_cancel(self, event):
-    self.on_done(True)
+    cancel_bn = NSButton.new()
+    cancel_bn.setTitle_("CANCEL")
+    cancel_bn.setFrame_(NSMakeRect(100,100,200,50))
+    cancel_bn.setBezelStyle_(NSRoundedBezelStyle)
+    cancel_bn.setTarget_(self)
+    cancel_bn.setAction_(self.__class__.on_cancel)
+
+    
+
+    self.window.contentView().addSubview_(ok_bn)
+
+    self.window.makeKeyAndOrderFront_(self)
+    self.window.center()
+
+    return self
+
+  @objc.IBAction
+  def on_ok(self, a):
+    print "ok"
+    return
+
+  def destroy(self):
+    pass
 
   def set_status(self,status_text):
-    self.status_text.SetLabel(status_text)
+    pass
 
   def set_results_enabled(self,en):
-    self._results_list.Enable(en)
-    if not en:
-      self._results_list.ClearAll()
-    okbn = self.FindWindowById(wx.ID_OK)
-    okbn.Enable(en)
+    pass
 
   def update_results_list(self, files, ranks):
-    self._results_list.ClearAll()
-    self._results_list.InsertColumn(0, "Rank")
-    self._results_list.InsertColumn(1, "File")
-    self._results_list.InsertColumn(2, "Path")
-    for i in range(len(files)):
-      f = files[i]
-      r = ranks[i]
-      base = os.path.basename(f)
-      path = os.path.dirname(f)
-      i = self._results_list.InsertStringItem(sys.maxint, str(r))
-      self._results_list.SetStringItem(i, 1, base)
-      self._results_list.SetStringItem(i, 2, path)
-
-    if len(files):
-      self._results_list.SetItemState(0, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
-    c1w = 200
-    self._results_list.SetColumnWidth(0, 20)
-    self._results_list.SetColumnWidth(1, 200)
-    self._results_list.SetColumnWidth(2, self._results_list.GetSize()[0] - c1w)
-
-  def move_selection(self, direction):
-    raise Exception("Not implemented")
-
-  def get_selected_index(self, favor_topmost=True):
-    raise Exception("Not implemented")
-
-  def get_selected_indices(self):
-    raise Exception("Not implemented")
+    pass
 
   def get_selected_items(self):
     raise Exception("Not implemented")
+
+  def windowWillClose_(self, notification):
+    print "foo"
+    app.terminate_(self)
+
+# Method that instantiates OpenDialogObjc class using alloc().init()
+def OpenDialogObjc(*args):
+  o = OpenDialogObjcRaw.alloc().initWithSettings(*args)
+  return o

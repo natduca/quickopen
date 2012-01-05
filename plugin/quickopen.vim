@@ -15,17 +15,40 @@
 let s:QuickOpenFile=resolve(expand("<sfile>"))
 
 function! QuickOpenPrompt()
-  let quickopen_dir = strpart(s:QuickOpenFile, 0, strridx(s:QuickOpenFile,'/plugin'))
-  let quickopen_app = quickopen_dir . '/quickopen'
-  echo quickopen_app
-  return system(quickopen_app . " prelaunch search")
+  let quickopen_dir = strpart(s:QuickOpenFile, 0, strridx(s:QuickOpenFile,"/plugin"))
+  let quickopen_app = quickopen_dir . "/quickopen"
+  if has("gui_running")
+    let res = system(quickopen_app . " prelaunch search")
+    return split(res, "\n", 0)
+  else
+    let resultsfile = tempname()
+
+    exe "new __quickopen__"
+    setlocal buftype=nofile
+    setlocal bufhidden=hide
+    setlocal noswapfile
+    setlocal buflisted
+
+    exec("silent! !" . quickopen_app . " --curses --results-file=" . resultsfile)
+    exe "bdel"
+
+    exec(":redraw!")
+    let b = filereadable(resultsfile)
+    if b
+        let files = readfile(resultsfile)
+        let b = delete(resultsfile)
+    else
+        let files = []
+    endif
+    return files
+  endif
 endfunction
 
 function! QuickFind()
-  let file_to_open = QuickOpenPrompt()
-  if file_to_open != ''
-    exe ':find ' . file_to_open
-  endif
+  let files_to_open = QuickOpenPrompt()
+  for f in files_to_open
+    exec(":find " . f)
+  endfor
 endfunction
 
 " Ugh, someone with a clue about Vim, help me, what're good key bindings?

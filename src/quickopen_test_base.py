@@ -16,6 +16,7 @@ import temporary_daemon
 import unittest
 import subprocess
 import test_data
+import time
 
 class QuickopenTestBase(object):
   def setUp(self):
@@ -106,11 +107,13 @@ class QuickopenTestBase(object):
     return False
 
   def _wait_for_up_to_date(self):
+    # times out after 10ms
     utd = False
     for i in range(10):
-      if self._is_up_to_date:
+      if self._is_up_to_date():
         utd = True
         break
+      time.sleep(0.2)
     self.assertTrue(utd)
 
   def test_rawsearch(self):

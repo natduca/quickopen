@@ -15,8 +15,8 @@ Compared To?
 FuzzyFilter for Vim/FuzzyMatch for Emacs
   +:   Fast!!!!!!!!
   +:   Index maintained in-memory, but outside editor process
-  +/-: Same backend shared between emacs and vim
-  +/-: Uses external GUI for opening
+  +:   Reasonablly pretty GUI (even via ssh)
+  +:   Same backend shared between emacs and vim
   -:   Doens't help when switching buffers
 
 git ls-files

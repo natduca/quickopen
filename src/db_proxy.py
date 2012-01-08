@@ -19,7 +19,8 @@ import sys
 import time
 import json
 
-from dyn_object import DynObject
+from db import DBStatus
+from db_index import DBIndexSearchResult
 from event import Event
 from trace_event import *
 
@@ -75,10 +76,7 @@ class DBProxy(object):
 
   def _req(self, method, path, data = None):
     if data != None:
-      if type(data) == DynObject:
-        data = data.as_json()
-      else:
-        data = json.dumps(data)
+      data = json.dumps(data)
     try:
       self.conn.request(method, path, data)
     except httplib.CannotSendRequest:
@@ -107,7 +105,7 @@ class DBProxy(object):
 
     elif res.status != 200:
       raise Exception("On %s, got %s" % (path, res.status))
-    res = DynObject.loads(res.read().encode('utf8'))
+    res = json.loads(res.read().encode('utf8'))
     return res
 
   def _get_dir(self, id, path):
@@ -123,14 +121,14 @@ class DBProxy(object):
 
   def add_dir(self, d):
     ret = self._req('POST', '/dirs/add', {"path": d})
-    assert ret.status == 'OK'
-    return self._get_dir(ret.id, d)
+    assert ret["status"] == 'OK'
+    return self._get_dir(ret["id"], d)
 
   def delete_dir(self, d):
     if type(d) != DBDirProxy:
       raise Exception("Expected DBDirProxy")
     ret = self._req('DELETE', '/dirs/%s' % d.id)
-    assert ret.status == 'OK'
+    assert ret["status"] == 'OK'
 
   @property
   def ignores(self):
@@ -146,7 +144,8 @@ class DBProxy(object):
       raise "Pattern not found"
 
   def search(self, q):
-    return self._req('POST', '/search', q)
+    d = self._req('POST', '/search', q)
+    return DBIndexSearchResult.from_dict(d)
 
   def search_async(self, q):
     return AsyncSearch(self.host, self.port, q)
@@ -163,7 +162,8 @@ class DBProxy(object):
     ret = self._req('POST', '/sync')
 
   def status(self):
-    return self._req('GET', '/status')
+    d = self._req('GET', '/status')
+    return DBStatus.from_dict(d)
 
   def begin_reindex(self):
     return self._req('POST', '/begin_reindex')
@@ -195,6 +195,6 @@ class AsyncSearch(object):
          raise AsyncSearchError, 'got status %i' % res.status
        else:
          data = res.read()
-         res = DynObject.loads(data.encode('utf8'))
-         self._result = res
+         res = json.loads(data.encode('utf8'))
+         self._result = DBIndexSearchResult.from_dict(res)
      return self._result

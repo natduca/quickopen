@@ -18,8 +18,6 @@ import temporary_daemon
 import time
 import unittest
 
-from dyn_object import *
-
 class DaemonTest(unittest.TestCase):
   def setUp(self):
     self.daemon = temporary_daemon.TemporaryDaemon()
@@ -88,8 +86,8 @@ class DaemonTest(unittest.TestCase):
     self.conn.request('GET', '/test_dyn_obj')
     res = self.conn.getresponse()
     self.assertEquals(res.status, 200)
-    x = DynObject.loads(res.read())
-    self.assertEquals(x.status, 'OK')
+    x = json.loads(res.read())
+    self.assertEquals(x["status"], 'OK')
 
   def tearDown(self):
     if self.conn:
@@ -120,11 +118,11 @@ def add_test_handlers_to_daemon(daemon):
     return 'OK'
   daemon.add_json_route('/test_delete', handler_for_delete, ['DELETE'])
 
-  def handler_for_dynobj(m, verb, data):
-    x = DynObject()
-    x.status = 'OK'
+  def handler_for_obj(m, verb, data):
+    x = {}
+    x["status"] = 'OK'
     return x
-  daemon.add_json_route('/test_dyn_obj', handler_for_dynobj, ['GET'])
+  daemon.add_json_route('/test_dyn_obj', handler_for_obj, ['GET'])
 
 
   def handler_for_sleep(m, verb, data):

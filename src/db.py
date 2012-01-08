@@ -16,10 +16,9 @@ import logging
 import os
 
 import daemon
-from db_index import DBIndex
+from db_index import DBIndex, DBIndexSearchResult
 from db_indexer import DBIndexer
 from dir_cache import DirCache
-from dyn_object import DynObject
 from event import Event
 from trace_event import *
 
@@ -34,6 +33,25 @@ DEFAULT_IGNORES=[
 
 class DBException(daemon.SilentException):
   pass
+
+class DBStatus(object):
+  def __init__(self):
+    self.is_up_to_date = False
+    self.has_index = False
+    self.status = "Unknown"
+
+  def as_dict(self):
+    return {"is_up_to_date": self.is_up_to_date,
+            "has_index": self.has_index,
+            "status": self.status}
+
+  @staticmethod
+  def from_dict(d):
+    s = DBStatus()
+    s.is_up_to_date = d["is_up_to_date"]
+    s.has_index = d["has_index"]
+    s.status = d["status"]
+    return s
 
 class DBDir(object):
   def __init__(self, d):
@@ -193,9 +211,11 @@ class DB(object):
       else:
         status = "sync required"
 
-    return DynObject({"is_up_to_date": self.is_up_to_date,
-                      "has_index": self.has_index,
-                      "status": status})
+    res = DBStatus()
+    res.is_up_to_date = self.is_up_to_date
+    res.has_index = self.has_index
+    res.status = status
+    return res
 
   @trace
   def step_indexer(self):
@@ -220,12 +240,8 @@ class DB(object):
 
   ###########################################################################
   def _empty_result(self):
-    res = DynObject()
-    res.hits = []
-    res.ranks = []
-    res.truncated = False
-    return res
-    
+    return DBIndexSearchResult()
+
   @trace
   def search(self, query, max_hits = -1):
     if self._pending_indexer:

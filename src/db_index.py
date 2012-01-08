@@ -16,9 +16,28 @@ import os
 import multiprocessing
 import matcher
 
-from dyn_object import DynObject
+from local_pool import *
 
 global slave
+
+class DBIndexSearchResult(object):
+  def __init__(self):
+    self.hits = []
+    self.ranks = []
+    self.truncated = False
+
+  def as_dict(self):
+    return {"hits": self.hits,
+            "ranks": self.ranks,
+            "truncated": self.truncated}
+
+  @staticmethod
+  def from_dict(d):
+    r = DBIndexSearchResult()
+    r.hits = d["hits"]
+    r.ranks = d["ranks"]
+    r.truncated = d["truncated"]
+    return r
 
 def SlaveInit(files_by_basename):
   global slave
@@ -27,33 +46,6 @@ def SlaveInit(files_by_basename):
 def SlaveSearchBasenames(query, max_hits):
   assert slave
   return slave.search_basenames(query, max_hits)
-
-class LocalPool(object):
-  """
-  Class that looks like a multiprocessing.Pool but executes locally.
-  Used both to disable multiprocessing behavior without code changes AND
-  to process a chunk locally while waiting on a subprocess for its results.
-  """
-  def __init__(self, n):
-    assert n == 1
-
-  def apply(self, fn, args=()):
-    return fn(*args)
-
-  def apply_async(self, fn, args=()):
-    class Result(object):
-      def get(self):
-        return fn(*args)
-    return Result()
-
-  def terminate(self):
-    pass
-
-  def join(self):
-    pass
-
-  def close(self):
-    pass
 
 class DBIndex(object):
   def __init__(self, indexer, threaded = True):
@@ -170,9 +162,9 @@ class DBIndex(object):
     # sort by rank
     hits.sort(lambda x,y: -cmp(x[1],y[1]))
 
-    res = DynObject()
+    res = DBIndexSearchResult()
     res.hits = [c[0] for c in hits]
     res.ranks = [c[1] for c in hits]
     res.truncated = truncated
     return res
-    
+

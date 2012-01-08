@@ -16,7 +16,6 @@ import db
 import re
 import time
 
-from dyn_object import *
 from trace_event import *
 
 # TODO(nduca): is Stub the right word for this class? Mehh
@@ -62,7 +61,7 @@ class DBStub(object):
       self.hi_idle_hook_added = False
 
   def add_dir(self, m, verb, data):
-    d = self.db.add_dir(data.path)
+    d = self.db.add_dir(data["path"])
     return {"id": d.id,
             "status": 'OK'}
 
@@ -99,15 +98,14 @@ class DBStub(object):
     return {"status": "OK"}
 
   def search(self, m, verb, data):
-    res = self.db.search(data)
-    return res
+    return self.db.search(data).as_dict()
 
   def sync(self, m, verb, data):
     self.db.sync()
     return {"status": "OK"}
 
   def status(self, m, verb, data):
-    return self.db.status()
+    return self.db.status().as_dict()
 
   def begin_reindex(self, m, verb, data):
     self.db.begin_reindex()

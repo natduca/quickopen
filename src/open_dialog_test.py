@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import db_test_base
-import dyn_object
 import open_dialog
 import message_loop
 import settings
@@ -24,6 +23,12 @@ import ui_test_case
 # run_unit_tests is passed -m from the commandline.
 requires_manual_handling = True
 
+class FakeOptions(object):
+  def __init__(self):
+    self.ok = True
+    self.lisp_results = False
+    self.results_file = None
+
 class OpenDialogTest(ui_test_case.UITestCase):
   def setUp(self):
     self.db_test_base = db_test_base.DBTestBase()
@@ -33,8 +38,7 @@ class OpenDialogTest(ui_test_case.UITestCase):
     self.client_settings = settings.Settings(self.client_settings_file.name)
     self.db = self.daemon.db_proxy
     self.db.add_dir(self.db_test_base.test_data_dir)
-    self.options = dyn_object.DynObject()
-    self.options.ok = True
+    self.options = FakeOptions()
 
   def tearDown(self):
     self.client_settings_file.close()

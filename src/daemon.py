@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from dyn_object import *
 import json
 import logging
 import re
@@ -44,10 +43,7 @@ class _RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     self.server = server
 
   def send_json(self, obj, resp_code=200, resp_code_str='OK'):
-    if type(obj) == DynObject:
-      text = obj.as_json()
-    else:
-      text = json.dumps(obj)
+    text = json.dumps(obj)
     try:
       self.send_response(resp_code, resp_code_str)
       self.send_header('Cache-Control', 'no-cache')
@@ -75,7 +71,7 @@ class _RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
       text = self.rfile.read(cl).encode('utf8')
       try:
         if text != '':
-          obj = DynObject.loads(text)
+          obj = json.loads(text)
         else:
           obj = None
       except ValueError:

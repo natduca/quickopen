@@ -102,7 +102,11 @@ class _RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
               self.send_header('Content-Length', 0)
               self.end_headers()
             else:
-              self.send_json({"exception": repr(ex)}, 500, 'Exception in handler')
+              info = {"exception": repr(ex),
+                      "module": ex.__class__.__module__,
+                      "class": ex.__class__.__name__,
+                      "args": ex.args}
+              self.send_json(info, 500, 'Exception in handler')
           except IOError:
             return
       else:

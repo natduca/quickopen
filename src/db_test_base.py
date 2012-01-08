@@ -57,6 +57,13 @@ class DBTestBase(object):
     self.db.sync()
     self.assertTrue(self.db.has_index and self.db.is_up_to_date)
 
+  def test_add_dup_dir_raises(self):
+    d1 = os.path.join(self.test_data_dir, 'project1')
+    self.assertEquals([], self.db.dirs)
+
+    d1_ = self.db.add_dir(d1)
+    self.assertRaises(db.DBException, lambda: self.db.add_dir(d1))
+
   def test_add_nested_dir_doesnt_dup(self):
     self.db.add_dir(self.test_data_dir)
     sub_dir = os.path.join(self.test_data_dir, 'project1')

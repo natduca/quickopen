@@ -94,7 +94,18 @@ class DBProxy(object):
     else:
       self._start_if_needed = False # if a request succeds, dont trigger autostart
     res = self.conn.getresponse()
-    if res.status != 200:
+    if res.status == 500:
+      info = json.loads(res.read())
+      # try to recreate the server-side exception
+      try:
+        module = __import__(info["module"], {}, {}, True)
+        constructor = getattr(module, info["class"])
+        ex = constructor(*info["args"])
+      except:
+        raise Exception("Server side exception: %s" % info["exception"])
+      raise ex
+
+    elif res.status != 200:
       raise Exception("On %s, got %s" % (path, res.status))
     res = DynObject.loads(res.read().encode('utf8'))
     return res

@@ -15,6 +15,7 @@ import hashlib
 import logging
 import os
 
+import daemon
 from db_index import DBIndex
 from db_indexer import DBIndexer
 from dir_cache import DirCache
@@ -30,6 +31,9 @@ DEFAULT_IGNORES=[
   "*.pyo",
   "#*",
 ]
+
+class DBException(daemon.SilentException):
+  pass
 
 class DBDir(object):
   def __init__(self, d):
@@ -81,14 +85,14 @@ class DB(object):
     return list(self._dirs)
 
   def add_dir(self, d):
-    d = os.path.abspath(d)
+    real_d = os.path.realpath(d)
 
     cur = list(self.settings.dirs)
-    if d in cur:
-      return
+    if real_d in cur:
+      raise DBException("Directory %s exists already as %s" % (d, real_d))
 
     # commit change
-    cur.append(d)
+    cur.append(real_d)
     self.settings.dirs = cur  # triggers _on_settings_dirs_changed
     return self.dirs[-1]
 
@@ -97,7 +101,7 @@ class DB(object):
       raise Exception("Expected DBDir")
     cur = list(self.settings.dirs)
     if d.path not in cur:
-      raise Exception("not found")
+      raise DBException("not found")
     cur.remove(d.path)
     self.settings.dirs = cur # triggers _on_settings_dirs_changed
 

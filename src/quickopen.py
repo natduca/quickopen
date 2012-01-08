@@ -20,6 +20,8 @@ import prelaunch
 import re
 import sys
 
+from db import DBException
+
 sys.path.append(os.path.join(os.path.dirname(__file__), "../third_party/py_trace_event/"))
 try:
   from trace_event import *
@@ -39,8 +41,15 @@ def CMDadd(parser):
   db = open_db(options)
   if len(args) == 0:
     parser.error('Expected at least one directory')
+  ok = True
   for d in args:
-    db.add_dir(d)
+    try:
+      db.add_dir(d)
+    except DBException, ex:
+      ok = False
+      print ex.args[0]
+  if not ok:
+    return 255
   return 0
 
 def CMDdirs(parser):
@@ -63,12 +72,20 @@ def CMDrmdir(parser):
     dmap[d.path] = d
   ok = True
   for d in args:
-    if d not in dmap:
+    found = False
+    for k in dmap.keys():
+      try:
+        same = os.path.samefile(d, k)
+      except:
+        same = False
+      if same:
+        db.delete_dir(dmap[k])
+        print "%s removed" % dmap[k].path
+        found = True
+        break
+    if not found:
+      print "%s is not indexed." % d
       ok = False
-      print "%s not found" % d
-    else:
-      db.delete_dir(dmap[d])
-      print "%s removed" % d
   if ok:
     return 0
   return 255

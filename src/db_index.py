@@ -14,7 +14,7 @@
 import fixed_size_dict
 import os
 import multiprocessing
-import matcher
+import db_index_shard
 
 from local_pool import *
 
@@ -39,15 +39,19 @@ class DBIndexSearchResult(object):
     r.truncated = d["truncated"]
     return r
 
-def SlaveInit(files_by_basename):
+def ShardInit(files_by_basename):
   global slave
-  slave = matcher.Matcher(files_by_basename)
+  slave = db_index_shard.DBIndexShard(files_by_basename)
 
-def SlaveSearchBasenames(query, max_hits):
+def ShardSearchBasenames(query, max_hits):
   assert slave
   return slave.search_basenames(query, max_hits)
 
 class DBIndex(object):
+  """
+  The DBIndex takes a complete list of basenames in the database and manages the sharding
+  of those basenames into DBIndexShards hosted using the multiprocessing module.
+  """
   def __init__(self, indexer, threaded = True):
     self.query_cache = fixed_size_dict.FixedSizeDict(256)
     self.files = []
@@ -67,13 +71,13 @@ class DBIndex(object):
 
     chunks = self._make_chunks(list(indexer.files_by_basename.items()), N)
 
-    self.pools = [LocalPool(1)]
-    self.pools.extend([multiprocessing.Pool(1) for x in range(len(chunks)-1)])
+    self.shards = [LocalPool(1)]
+    self.shards.extend([multiprocessing.Pool(1) for x in range(len(chunks)-1)])
 
-    for i in range(len(self.pools)):
+    for i in range(len(self.shards)):
       chunk = chunks[i]
-      pool = self.pools[i]
-      pool.apply(SlaveInit, (chunk,))
+      shard = self.shards[i]
+      shard.apply(ShardInit, (chunk,))
 
   def _make_chunks(self, items, N):
     base = 0
@@ -94,10 +98,10 @@ class DBIndex(object):
 
   @property
   def status(self):
-    return "%i files indexed; %i-threaded searches" % (len(self.files), len(self.pools))
+    return "%i files indexed; %i-threaded searches" % (len(self.files), len(self.shards))
 
   def close(self):
-    for p in self.pools:
+    for p in self.shards:
       p.close()
       try:
         p.join()
@@ -125,13 +129,13 @@ class DBIndex(object):
 
     hits = []
     truncated = False
-    max_chunk_hits = max(1, max_hits / len(self.pools))
+    max_chunk_hits = max(1, max_hits / len(self.shards))
     if len(basepart):
       result_handles = []
       base_hits = dict()
-      for i in range(len(self.pools)):
-        pool = self.pools[i]
-        result_handles.append(pool.apply_async(SlaveSearchBasenames, (basepart, max_chunk_hits)))
+      for i in range(len(self.shards)):
+        shard = self.shards[i]
+        result_handles.append(shard.apply_async(ShardSearchBasenames, (basepart, max_chunk_hits)))
       for h in result_handles:
         (subhits, subtruncated) = h.get()
         truncated |= subtruncated

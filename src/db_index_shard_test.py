@@ -11,13 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import matcher
+import db_index_shard
 import unittest
 import re
 
-class MatcherTest(unittest.TestCase):
+class DBIndexShardTest(unittest.TestCase):
   def test_filters(self):
-    m = matcher.Matcher({})
+    m = db_index_shard.DBIndexShard({})
     camelcase = m.get_camelcase_wordstart_filter
     delimited = m.get_delimited_wordstart_filter
     substring = m.get_substring_filter
@@ -76,8 +76,8 @@ class MatcherTest(unittest.TestCase):
 
 
 
-  def test_wordstart_matcher(self):
-    m = matcher.Matcher({
+  def test_wordstart_db_index_shard(self):
+    m = db_index_shard.DBIndexShard({
         "render_widget_host.cpp": ["a/render_widget_host.cpp","b/render_widget_host.cpp"],
         "foo.cpp": ["foo.cpp"],
         "bar.cpp": ["bar.cpp"],

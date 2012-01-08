@@ -16,7 +16,7 @@ import re
 
 from ranker import Ranker
 
-class Matcher(object):
+class DBIndexShard(object):
   def __init__(self, files_by_basename):
 
     files_by_lower_basename = dict()

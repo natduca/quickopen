@@ -37,7 +37,6 @@ def init_main_loop():
     def hook(exc, value, tb):
       if is_main_loop_running() and _active_test:
         if isinstance(value,unittest.TestCase.failureException):
-          print "hook"
           _active_test_result.addFailure(_active_test, (exc, value, tb))
         else:
           if not str(value).startswith("_noprint"):

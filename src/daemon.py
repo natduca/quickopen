@@ -43,15 +43,15 @@ class _RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     BaseHTTPServer.BaseHTTPRequestHandler.__init__(self, request, client_address, server)
     self.server = server
 
-  def send_json(self, obj):
+  def send_json(self, obj, resp_code=200, resp_code_str='OK'):
     if type(obj) == DynObject:
       text = obj.as_json()
     else:
       text = json.dumps(obj)
     try:
-      self.send_response(200, 'OK')
+      self.send_response(resp_code, resp_code_str)
       self.send_header('Cache-Control', 'no-cache')
-      self.send_header('Content-Type', 'applicaiton/json')
+      self.send_header('Content-Type', 'application/json')
       self.send_header('Content-Length', len(text))
       self.end_headers()
       self.wfile.write(text)
@@ -99,10 +99,10 @@ class _RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
           try:
             if isinstance(ex,NotFoundException):
               self.send_response(404, 'NotFound')
+              self.send_header('Content-Length', 0)
+              self.end_headers()
             else:
-              self.send_response(500, 'Exception %s in handler' % ex)
-            self.send_header('Content-Length', 0)
-            self.end_headers()
+              self.send_json({"exception": repr(ex)}, 500, 'Exception in handler')
           except IOError:
             return
       else:

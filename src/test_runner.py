@@ -113,8 +113,11 @@ def main(parser):
       pdb.pm()
     sys.excepthook = hook
 
-    import browser
-    browser.debug_mode = True
+    try:
+      import browser
+      browser.debug_mode = True
+    except:
+      pass
 
   # make sure cwd is the base directory!
   os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))

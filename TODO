@@ -4,11 +4,6 @@ quickpoen throws exceptiosn instead of printing errors
 
 Queries
 ---------------------------------------------------------------------------
-CCLayerTreeHost --- is that lth? clth? cclth?
-
-if you type in emacs while the prompt is up, then it hits the current buffer
-  after you return. thats bad because there's a delay before the window comes up.
-
 fi for feature_info.cpp, but also matches FontInfo, Full Text Index, FastISel, FontLoweringInfo, reflect_float_frag_ivaryingconst_ref.frag
 
 wg3d and wgc3d for webgraphicscontext3d_in_process_impl
@@ -32,10 +27,10 @@ Features
 
 - Emacs C-N C-P move selection up and down
 
-- Have vim survive if quickopen throws exception
-
 - Better matching with partials:
 
 - Speed up empty-dir-query, e.g. foo/
 
 - Warning bar if search().truncated
+
+- Right click to ignore an object in open dialog

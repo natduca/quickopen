@@ -137,7 +137,7 @@ class OpenDialogWx(wx.Dialog, OpenDialogBase):
     if len(files):
       self._results_list.SetItemState(0, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
     c1w = 200
-    self._results_list.SetColumnWidth(0, 20)
+    self._results_list.SetColumnWidth(0, 40)
     self._results_list.SetColumnWidth(1, 200)
     self._results_list.SetColumnWidth(2, self._results_list.GetSize()[0] - c1w)
 

@@ -24,10 +24,10 @@ class Ranker(object):
 
     c = string[index]
     cprev = string[index - 1]
-    if cprev == '_' or cprev == '.':
+    if cprev == '_':
       return c != '_'
 
-    if c.isupper() and not cprev.isupper():
+    if c.isupper():
       return True
 
     return False
@@ -109,7 +109,7 @@ class Ranker(object):
 
 
   def rank(self, query, candidate, truncated = False):
-    basic_rank, num_word_hits = self._get_basic_rank(query, candidate)
+    basic_rank, num_word_hits = self._get_basic_rank(query, candidate)[:2]
 
     rank = basic_rank
 
@@ -135,7 +135,9 @@ class Ranker(object):
     return math.floor(rank*10) / 10;
 
   def _get_basic_rank(self, query, candidate):
-    memoized_results = {"": (0, 0)}
+#    print ""
+#    print "[%s] %30s BEGIN" % ("%20s" % query, candidate)
+    memoized_results = {}
     return self._get_basic_rank_core(memoized_results, query.lower(), 0, candidate, candidate.lower())
 
   def _get_basic_rank_core(self, memoized_results, query, candidate_index, candidate, lower_candidate):
@@ -148,16 +150,20 @@ class Ranker(object):
 
     The highest ranked option determines the basic rank.
     """
+    if len(query) == 0:
+      return (0, 0)
     if query in memoized_results:
-      return memoized_results[query]
+      if candidate_index in memoized_results[query]:
+        return memoized_results[query][candidate_index]
 
-#    input_candidate_index = candidate_index
-#    print "[%s] %30s" % ("%10s" % query, candidate[candidate_index:])
+    input_candidate_index = candidate_index
+#    print "[%s] %30s" % ("%20s" % query, candidate[input_candidate_index:])
 
     # Find the best possible rank for this, memoizing results to keep
     # this from running forever.
     best_rank = 0
-    for_best_frank__num_word_hits = 0
+    for_best_rank__num_word_hits = 0
+    best_debugstr = ""
     while True:
       i = lower_candidate[candidate_index:].find(query[0])
       if i == -1:
@@ -177,11 +183,16 @@ class Ranker(object):
       # update best_rank
       rank = letter_rank + best_remainder_rank
       if rank > best_rank:
+#        xxx = candidate[:i] + '*' + candidate[i+1:]
+#        best_debugstr = "%i %s" % (best_remainder_rank, xxx)
         best_rank = rank
-        for_best_frank__num_word_hits = remainder_num_word_hits + cur_num_word_hits
+        for_best_rank__num_word_hits = remainder_num_word_hits + cur_num_word_hits
       # advance to next candidate
       candidate_index = i + 1
 
-    memoized_results[query] = (best_rank, for_best_frank__num_word_hits)
-#    print "[%s] %30s -> %i" % ("%10s" % query, candidate[input_candidate_index:], best_rank)
-    return best_rank, for_best_frank__num_word_hits
+    if query not in memoized_results:
+      memoized_results[query] = {}
+    memoized_results[query][candidate_index] = (best_rank, for_best_rank__num_word_hits)
+#    if best_rank > 0:
+#      print "[%s] %30s -> %i via %s" % ("%20s" % query, candidate[input_candidate_index:], best_rank, best_debugstr)
+    return best_rank, for_best_rank__num_word_hits

@@ -132,4 +132,4 @@ class QuickopenTestBase(object):
     self._wait_for_up_to_date()
     
     r = self.qo("rawsearch", "--show-rank", "MySubSystem.c").split("\n")
-    self.assertEquals(["2," + self.test_data.path_to("project1/MySubSystem.c"), ''], r)
+    self.assertEquals(["14," + self.test_data.path_to("project1/MySubSystem.c"), ''], r)

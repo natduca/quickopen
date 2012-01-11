@@ -37,12 +37,13 @@ class RankerTest(unittest.TestCase):
     check("_bar", [True, True, False, False])
     check("foo_bar", [True, False, False, False, True, False, False])
 
-    check(".h", [True, True])
-    check("a.h", [True, False, True])
+    check(".h", [True, False])
+    check("a.h", [True, False, False])
     check("__b", [True, False, True])
     check("foo__bar", [True, False, False, False, False, True, False, False])
 
-    check("AAb", [True, False, False])
+    check("AAb", [True, True, False])
+    check("CCFra", [True, True, True, False, False])
 
   def test_get_word_starts(self):
     data = {
@@ -53,39 +54,47 @@ class RankerTest(unittest.TestCase):
       'abd_def' : [0, 4],
       'ab_cd_ef' : [0, 3, 6],
       'ab_' : [0],
-      'AA': [0],
-      'AAbA': [0,3],
+      'AA': [0, 1],
+      'AAbA': [0,1,3],
       'Abc': [0],
       'AbcDef': [0,3],
       'Abc_Def': [0,4],
       }
     for word, expected_starts in data.items():
       starts = self.ranker.get_starts(word)
-      self.assertEquals(expected_starts, starts)
+      self.assertEquals(expected_starts, starts, "for %s, expect %s" % (word, expected_starts))
+
+  def assertBasicRankAndWordHitCountIs(self, expected_rank, expected_word_count, query, candidate):
+    res = self.ranker._get_basic_rank(query, candidate)
+    self.assertEquals(expected_rank, res[0])
+    self.assertEquals(expected_word_count, res[1])
 
   def test_query_hits_on_word_starts(self):
-    self.assertEquals((8,4), self.ranker._get_basic_rank('rwhv', 'render_widget_host_view.cc')) # test +1 for hitting all words
-    self.assertEquals((6,3), self.ranker._get_basic_rank('rwh', 'render_widget_host_view.cc'))
-    self.assertEquals((5,2), self.ranker._get_basic_rank('wvi', 'render_widget_host_view_win.cc')) # eew
-    self.assertEquals((2,1), self.ranker._get_basic_rank('w', 'WebViewImpl.cc'))
-    self.assertEquals((2,1), self.ranker._get_basic_rank('v', 'WebViewImpl.cc'))
-    self.assertEquals((4,2), self.ranker._get_basic_rank('wv', 'WebViewImpl.cc'))
-    self.assertEquals((6,3), self.ranker._get_basic_rank('wvi', 'WebViewImpl.cc'))
-    self.assertEquals((5,2), self.ranker._get_basic_rank('evi', 'WebViewImpl.cc'))
-    self.assertEquals((4,2), self.ranker._get_basic_rank('wv', 'eWbViewImpl.cc'))
-    self.assertEquals((5,0), self.ranker._get_basic_rank('ebewp', 'WebViewImpl.cc'))
+    self.assertBasicRankAndWordHitCountIs(8, 4, 'rwhv', 'render_widget_host_view.cc') # test +1 for hitting all words
+    self.assertBasicRankAndWordHitCountIs(6, 3, 'rwh', 'render_widget_host_view.cc')
+    self.assertBasicRankAndWordHitCountIs(5, 2, 'wvi', 'render_widget_host_view_win.cc') # eew
+    self.assertBasicRankAndWordHitCountIs(2, 1, 'w', 'WebViewImpl.cc')
+    self.assertBasicRankAndWordHitCountIs(2, 1, 'v', 'WebViewImpl.cc')
+    self.assertBasicRankAndWordHitCountIs(4, 2, 'wv', 'WebViewImpl.cc')
+    self.assertBasicRankAndWordHitCountIs(6, 3, 'wvi', 'WebViewImpl.cc')
+    self.assertBasicRankAndWordHitCountIs(5, 2, 'evi', 'WebViewImpl.cc')
+    self.assertBasicRankAndWordHitCountIs(4, 2, 'wv', 'eWbViewImpl.cc')
+    self.assertBasicRankAndWordHitCountIs(5, 0, 'ebewp', 'WebViewImpl.cc')
 
 
   def test_basic_rank_pays_attention_to_case(self):
     # these test that we aren't losing catching case transpitions
-    self.assertEquals((3,1), self.ranker._get_basic_rank("rw", "rwf"))
-    self.assertEquals((4,2), self.ranker._get_basic_rank("rw", "rWf"))
+    self.assertBasicRankAndWordHitCountIs(3, 1, "rw", "rwf")
+    self.assertBasicRankAndWordHitCountIs(4, 2, "rw", "rWf")
 
   def test_basic_rank_works_at_all(self):
     # these are generic tests
-    self.assertEquals((8,4), self.ranker._get_basic_rank("rwhv", "render_widget_host_view.h"))
-    self.assertEquals((10,5), self.ranker._get_basic_rank("rwhvm", "render_widget_host_view_mac.h"))
-    self.assertEquals((10,5), self.ranker._get_basic_rank("rwhvm", "render_widget_host_view_mac.mm"))
+    self.assertBasicRankAndWordHitCountIs(8, 4, "rwhv", "render_widget_host_view.h")
+    self.assertBasicRankAndWordHitCountIs(10, 5, "rwhvm", "render_widget_host_view_mac.h")
+    self.assertBasicRankAndWordHitCountIs(10, 5, "rwhvm", "render_widget_host_view_mac.mm")
+
+    self.assertBasicRankAndWordHitCountIs(15, 4, 'ccframerate', 'CCFrameRateController.cpp')
+
 
   def test_basic_rank_query_case_doesnt_influence_rank(self):
     a = self.ranker._get_basic_rank("Rwhvm", "render_widget_host_view_mac.h")
@@ -94,27 +103,27 @@ class RankerTest(unittest.TestCase):
 
   def test_basic_rank_isnt_only_greedy(self):
     # this checks that we consider _mac and as a wordstart rather than macmm
-    self.assertEquals((10, 5), self.ranker._get_basic_rank("rwhvm", "render_widget_host_view_macmm"))
+    self.assertBasicRankAndWordHitCountIs(10, 5, "rwhvm", "render_widget_host_view_macmm")
 
   def test_basic_rank_on_corner_cases(self):
-    self.assertEquals((0, 0), self.ranker._get_basic_rank("", ""))
-    self.assertEquals((0, 0), self.ranker._get_basic_rank("", "x"))
-    self.assertEquals((0, 0), self.ranker._get_basic_rank("x", ""))
-    self.assertEquals((2, 1), self.ranker._get_basic_rank("x", "x"))
-    self.assertEquals((1, 0), self.ranker._get_basic_rank("x", "yx"))
-    self.assertEquals((0, 0), self.ranker._get_basic_rank("x", "abcd"))
+    self.assertBasicRankAndWordHitCountIs(0, 0, "", "")
+    self.assertBasicRankAndWordHitCountIs(0, 0, "", "x")
+    self.assertBasicRankAndWordHitCountIs(0, 0, "x", "")
+    self.assertBasicRankAndWordHitCountIs(2, 1, "x", "x")
+    self.assertBasicRankAndWordHitCountIs(1, 0, "x", "yx")
+    self.assertBasicRankAndWordHitCountIs(0, 0, "x", "abcd")
 
   def test_basic_rank_on_mixed_wordstarts_and_full_words(self):
-    self.assertEquals((11, 3), self.ranker._get_basic_rank("enderwhv", "render_widget_host_view.h"))
-    self.assertEquals((9, 2), self.ranker._get_basic_rank("idgethv", "render_widget_host_view.h"))
+    self.assertBasicRankAndWordHitCountIs(11, 3, "enderwhv", "render_widget_host_view.h")
+    self.assertBasicRankAndWordHitCountIs(9, 2, "idgethv", "render_widget_host_view.h")
 
-    self.assertEquals((8, 4), self.ranker._get_basic_rank("rwhv", "render_widget_host_view_mac.h"))
-    self.assertEquals((12, 5), self.ranker._get_basic_rank("rwhvmac", "render_widget_host_view_mac.h"))
+    self.assertBasicRankAndWordHitCountIs(8, 4, "rwhv", "render_widget_host_view_mac.h")
+    self.assertBasicRankAndWordHitCountIs(12, 5, "rwhvmac", "render_widget_host_view_mac.h")
 
-    self.assertEquals((10, 5), self.ranker._get_basic_rank("rwhvm", "render_widget_host_view_mac.h"))
+    self.assertBasicRankAndWordHitCountIs(10, 5, "rwhvm", "render_widget_host_view_mac.h")
 
   def test_basic_rank_overconditioned_query(self):
-    self.assertEquals((2, 1), self.ranker._get_basic_rank('test_thread_tab.py', 'tw'))
+    self.assertBasicRankAndWordHitCountIs(2, 1, 'test_thread_tab.py', 'tw')
 
   def test_basic_rank_on_suffixes_of_same_base(self):
     # render_widget.cpp should be ranked higher than render_widget.h
@@ -162,6 +171,33 @@ class RankerTest(unittest.TestCase):
       changeInRank = ranks[i] - ranks[i-1]
       self.assertTrue(changeInRank <= 0)
   
+  def test_rank_order_puts_tests_second(self):
+    q = "ccframerate"
+    a1 = self.ranker.rank(q, 'CCFrameRateController.cpp')
+    a2 = self.ranker.rank(q, 'CCFrameRateController.h')
+    b = self.ranker.rank(q, "CCFrameRateControllerTest.cpp")
+    # FAILS because ccframera(te) ties to (Te)st
+    #    self.assertTrue(a1 > b);
+    #    self.assertTrue(a2 > b);
+
+  def test_rank_order_for_hierarchy_puts_prefixed_second(self):
+    q = "ccframerate"
+    a = self.ranker.rank(q, 'CCFrameRateController.cpp')
+    b1 = self.ranker.rank(q, 'webcore_platform.CCFrameRateController.o.d')
+    b2 = self.ranker.rank(q, 'webkit_unit_tests.CCFrameRateControllerTest.o.d')
+    self.assertTrue(a > b1);
+    # FAILS because ccframera(te) ties to (Te)st
+    # self.assertTrue(a > b2);
+
+  def test_rank_order_puts_tests_second_2(self):
+    q = "ccdelaybassedti"
+    a1 = self.ranker.rank(q, 'CCDelayBasedTimeSource.cpp')
+    a2 = self.ranker.rank(q, 'CCDelayBasedTimeSource.h')
+    b = self.ranker.rank(q, 'CCDelayBasedTimeSourceTest.cpp')
+    self.assertTrue(a1 > b);
+    self.assertTrue(a2 > b);
+
+
   def test_refinement_improves_rank(self):
     a = self.ranker.rank('render_', 'render_widget.cc')
     b = self.ranker.rank('render_widget', 'render_widget.cc')

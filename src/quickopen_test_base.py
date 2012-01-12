@@ -35,7 +35,7 @@ class QuickopenTestBase(object):
 
   def tearDown(self):
     self.test_data.close()
-    
+
   def test_1_dir(self):
     x = self.qo("add",
                 self.test_data_dir)
@@ -130,6 +130,6 @@ class QuickopenTestBase(object):
                 self.test_data_dir)
     self.assertEquals("", x)
     self._wait_for_up_to_date()
-    
+
     r = self.qo("rawsearch", "--show-rank", "MySubSystem.c").split("\n")
     self.assertEquals(["14," + self.test_data.path_to("project1/MySubSystem.c"), ''], r)

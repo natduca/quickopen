@@ -274,6 +274,11 @@ def GenUsage(parser, command):
     parser.description = re.sub('[\r\n ]{2,}', ' ', obj.__doc__)
   parser.set_usage('usage: %%prog %s [options] %s' % (command, more))
 
+def getdoc(x):
+  if getattr(x, '__doc__'):
+    return x.__doc__
+  return '<Missing docstring>'
+
 def main_usage():
   return "Usage: quickopen [global options] <command> [command arguments]"
 
@@ -295,11 +300,6 @@ def main(parser):
 
   non_switch_args = [i for i in sys.argv[1:] if not i.startswith('-')]
   if non_switch_args:
-    def getdoc(x):
-      if getattr(x, '__doc__'):
-        return x.__doc__
-      return '<Missing docstring>'
-
     command = Command(non_switch_args[0])
     if command:
       if non_switch_args[0] == 'help':

@@ -36,6 +36,7 @@ class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
     treeview = gtk.TreeView(model)
     treeview.get_selection().set_mode(gtk.SELECTION_MULTIPLE)
     treeview.get_selection().connect('changed', self._on_treeview_selection_changed)
+    self.connect('response', self.response)
 
     text_cell_renderer = gtk.CellRendererText()
 
@@ -91,7 +92,7 @@ class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
 
     self.show_all()
 
-  def response(self, arg):
+  def response(self, arg, *rest):
     canceled = arg == gtk.RESPONSE_CANCEL
     self.on_done(canceled)
 

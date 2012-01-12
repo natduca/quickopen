@@ -188,7 +188,7 @@ def CMDrawsearch(parser):
   return 255
 
 def CMDprelaunch(parser):
-  """Prestarts a quickopen instance pending network control"""
+  """Performs a quickopen command in a prelaunched instance. Reduces delay in seeing the initial search dialog."""
   args = sys.argv[1:]
   if "--wait" in args:
     parser.add_option("--wait", action="store_true", dest="wait")

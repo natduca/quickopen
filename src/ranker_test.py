@@ -175,10 +175,18 @@ class RankerTest(unittest.TestCase):
     q = "ccframerate"
     a1 = self.ranker.rank(q, 'CCFrameRateController.cpp')
     a2 = self.ranker.rank(q, 'CCFrameRateController.h')
-    b = self.ranker.rank(q, "CCFrameRateControllerTest.cpp")
+    b = self.ranker.rank(q, 'CCFrameRateControllerTest.cpp')
     # FAILS because ccframera(te) ties to (Te)st
     #    self.assertTrue(a1 > b);
     #    self.assertTrue(a2 > b);
+
+    q = "chrome_switches"
+    a1 = self.ranker.rank(q, 'chrome_switches.cc')
+    a2 = self.ranker.rank(q, 'chrome_switches.h')
+    b = self.ranker.rank(q, 'chrome_switches_uitest.cc')
+    self.assertTrue(a1 > b);
+    self.assertTrue(a2 > b);
+
 
   def test_rank_order_for_hierarchy_puts_prefixed_second(self):
     q = "ccframerate"

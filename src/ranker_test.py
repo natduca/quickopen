@@ -72,19 +72,18 @@ class RankerTest(unittest.TestCase):
   def test_query_hits_on_word_starts(self):
     self.assertBasicRankAndWordHitCountIs(8, 4, 'rwhv', 'render_widget_host_view.cc') # test +1 for hitting all words
     self.assertBasicRankAndWordHitCountIs(6, 3, 'rwh', 'render_widget_host_view.cc')
-    self.assertBasicRankAndWordHitCountIs(5, 2, 'wvi', 'render_widget_host_view_win.cc') # eew
+    self.assertBasicRankAndWordHitCountIs(5.5, 2, 'wvi', 'render_widget_host_view_win.cc') # eew
     self.assertBasicRankAndWordHitCountIs(2, 1, 'w', 'WebViewImpl.cc')
     self.assertBasicRankAndWordHitCountIs(2, 1, 'v', 'WebViewImpl.cc')
     self.assertBasicRankAndWordHitCountIs(4, 2, 'wv', 'WebViewImpl.cc')
-    self.assertBasicRankAndWordHitCountIs(6, 3, 'wvi', 'WebViewImpl.cc')
     self.assertBasicRankAndWordHitCountIs(5, 2, 'evi', 'WebViewImpl.cc')
     self.assertBasicRankAndWordHitCountIs(4, 2, 'wv', 'eWbViewImpl.cc')
-    self.assertBasicRankAndWordHitCountIs(5, 0, 'ebewp', 'WebViewImpl.cc')
+    self.assertBasicRankAndWordHitCountIs(6, 0, 'ebewp', 'WebViewImpl.cc')
 
 
   def test_basic_rank_pays_attention_to_case(self):
     # these test that we aren't losing catching case transpitions
-    self.assertBasicRankAndWordHitCountIs(3, 1, "rw", "rwf")
+    self.assertBasicRankAndWordHitCountIs(4.5, 1, "rw", "rwf")
     self.assertBasicRankAndWordHitCountIs(4, 2, "rw", "rWf")
 
   def test_basic_rank_works_at_all(self):
@@ -93,7 +92,7 @@ class RankerTest(unittest.TestCase):
     self.assertBasicRankAndWordHitCountIs(10, 5, "rwhvm", "render_widget_host_view_mac.h")
     self.assertBasicRankAndWordHitCountIs(10, 5, "rwhvm", "render_widget_host_view_mac.mm")
 
-    self.assertBasicRankAndWordHitCountIs(15, 4, 'ccframerate', 'CCFrameRateController.cpp')
+    self.assertBasicRankAndWordHitCountIs(29, 4, 'ccframerate', 'CCFrameRateController.cpp')
 
 
   def test_basic_rank_query_case_doesnt_influence_rank(self):
@@ -114,11 +113,11 @@ class RankerTest(unittest.TestCase):
     self.assertBasicRankAndWordHitCountIs(0, 0, "x", "abcd")
 
   def test_basic_rank_on_mixed_wordstarts_and_full_words(self):
-    self.assertBasicRankAndWordHitCountIs(11, 3, "enderwhv", "render_widget_host_view.h")
-    self.assertBasicRankAndWordHitCountIs(9, 2, "idgethv", "render_widget_host_view.h")
+    self.assertBasicRankAndWordHitCountIs(17, 3, "enderwhv", "render_widget_host_view.h")
+    self.assertBasicRankAndWordHitCountIs(15, 2, "idgethv", "render_widget_host_view.h")
 
     self.assertBasicRankAndWordHitCountIs(8, 4, "rwhv", "render_widget_host_view_mac.h")
-    self.assertBasicRankAndWordHitCountIs(12, 5, "rwhvmac", "render_widget_host_view_mac.h")
+    self.assertBasicRankAndWordHitCountIs(14, 5, "rwhvmac", "render_widget_host_view_mac.h")
 
     self.assertBasicRankAndWordHitCountIs(10, 5, "rwhvm", "render_widget_host_view_mac.h")
 
@@ -170,15 +169,22 @@ class RankerTest(unittest.TestCase):
     for i in range(1, len(ranks)):
       changeInRank = ranks[i] - ranks[i-1]
       self.assertTrue(changeInRank <= 0)
-  
+
+  def test_rank_order_prefers_capitals(self):
+    # Ensure we still prefer capitals for simple queries The heuristics that
+    # deal with order_puts_tests_second tends to break this.
+    self.assertBasicRankAndWordHitCountIs(6, 3, 'wvi', 'WebViewImpl.cc')
+
   def test_rank_order_puts_tests_second(self):
     q = "ccframerate"
     a1 = self.ranker.rank(q, 'CCFrameRateController.cpp')
     a2 = self.ranker.rank(q, 'CCFrameRateController.h')
     b = self.ranker.rank(q, 'CCFrameRateControllerTest.cpp')
-    # FAILS because ccframera(te) ties to (Te)st
-    #    self.assertTrue(a1 > b);
-    #    self.assertTrue(a2 > b);
+
+    # This is a hard test to pass because ccframera(te) ties to (Te)st
+    # if you weight non-word matches equally.
+    self.assertTrue(a1 > b);
+    self.assertTrue(a2 > b);
 
     q = "chrome_switches"
     a1 = self.ranker.rank(q, 'chrome_switches.cc')
@@ -186,7 +192,6 @@ class RankerTest(unittest.TestCase):
     b = self.ranker.rank(q, 'chrome_switches_uitest.cc')
     self.assertTrue(a1 > b);
     self.assertTrue(a2 > b);
-
 
   def test_rank_order_for_hierarchy_puts_prefixed_second(self):
     q = "ccframerate"
@@ -210,4 +215,3 @@ class RankerTest(unittest.TestCase):
     a = self.ranker.rank('render_', 'render_widget.cc')
     b = self.ranker.rank('render_widget', 'render_widget.cc')
     self.assertTrue(b > a)
-

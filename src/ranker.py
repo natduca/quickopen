@@ -138,9 +138,9 @@ class Ranker(object):
 #    print ""
 #    print "[%s] %30s BEGIN" % ("%20s" % query, candidate)
     memoized_results = {}
-    return self._get_basic_rank_core(memoized_results, query.lower(), 0, candidate, candidate.lower())
+    return self._get_basic_rank_core(memoized_results, 0, query.lower(), 0, candidate, candidate.lower())
 
-  def _get_basic_rank_core(self, memoized_results, query, candidate_index, candidate, lower_candidate):
+  def _get_basic_rank_core(self, memoized_results, enclosing_run_length, query, candidate_index, candidate, lower_candidate):
     """
     This function tries to find the best match of the given query to the candidate. For
     a given query xyz, it considers all possible order-preserving assignments of the leters .*x.*y.*z.* into candidate.
@@ -168,25 +168,44 @@ class Ranker(object):
       i = lower_candidate[candidate_index:].find(query[0])
       if i == -1:
         break
+      if i == 0:
+        cur_run_addition = 1
+        hit_first_char = True
+      else:
+        cur_run_addition = -enclosing_run_length # reset the enclosing_run_length
+        hit_first_char = False
+
       i = i + candidate_index
 
       if self._is_wordstart(candidate, i):
         letter_rank = 2
         cur_num_word_hits = 1
+      elif hit_first_char:
+        # The goal of this is to rank 'ij' in 'xxxijxxx' higher than 'xxxxixxxxJxxxx'
+        # Enclosing run length....
+        if enclosing_run_length == 0:
+          letter_rank = 1.5
+        elif enclosing_run_length == 1:
+          letter_rank = 2.5
+        else:
+          letter_rank = 3
+        cur_num_word_hits = 0
       else:
         letter_rank = 1
         cur_num_word_hits = 0
 
       # consider all sub-interpretations...
-      best_remainder_rank, remainder_num_word_hits = self._get_basic_rank_core(memoized_results, query[1:], i + 1, candidate, lower_candidate)
+      best_remainder_rank, remainder_num_word_hits = self._get_basic_rank_core(memoized_results, enclosing_run_length + cur_run_addition, query[1:], i + 1, candidate, lower_candidate)
 
-      # update best_rank
+      # Update best_rank. Use word hit count to break tie so 'wvi' prefers
+      # (W)eb(V)iew(I)mpl instead of (W)eb(Vi)ewImpl
       rank = letter_rank + best_remainder_rank
-      if rank > best_rank:
+      num_word_hits = remainder_num_word_hits + cur_num_word_hits
+      if rank > best_rank or rank == best_rank and num_word_hits > for_best_rank__num_word_hits:
 #        xxx = candidate[:i] + '*' + candidate[i+1:]
 #        best_debugstr = "%i %s" % (best_remainder_rank, xxx)
         best_rank = rank
-        for_best_rank__num_word_hits = remainder_num_word_hits + cur_num_word_hits
+        for_best_rank__num_word_hits = num_word_hits
       # advance to next candidate
       candidate_index = i + 1
 

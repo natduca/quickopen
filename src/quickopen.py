@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
+import message_loop
 import optparse
 import os
 import platform
@@ -131,6 +132,10 @@ def CMDunignore(parser):
 
 def CMDsearch(parser):
   """Search for a file"""
+  if prelaunch.is_prelaunched_process() and message_loop.is_curses:
+    print "Prelaunching not available for curses UI."
+    return 255
+
   parser.add_option('--ok', dest='ok', action='store_true', default=False, help='Output "OK" before results')
   parser.add_option('--lisp-results', dest='lisp_results', action='store_true', default=False, help='Output results as a lisp-formatted list')
   parser.add_option('--results-file', dest='results_file', action='store', help='Output results to the provided file instead of stdout')

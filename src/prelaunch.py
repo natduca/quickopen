@@ -29,6 +29,8 @@ import httplib
 import time
 import StringIO
 
+_is_prelaunched_process = False
+
 def is_prelaunch(args):
   if len(args) >= 2 and args[1] == "prelaunch":
     if len(args) >= 3:
@@ -37,7 +39,13 @@ def is_prelaunch(args):
       return True
   return False
 
+def is_prelaunched_process():
+  return _is_prelaunched_process
+
 def wait_for_command(control_port):
+  global _is_prelaunched_process
+  _is_prelaunched_process = True
+
   s = socket.socket()
   try:
     bound = False

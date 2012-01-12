@@ -295,11 +295,16 @@ def main(parser):
 
   non_switch_args = [i for i in sys.argv[1:] if not i.startswith('-')]
   if non_switch_args:
+    def getdoc(x):
+      if getattr(x, '__doc__'):
+        return x.__doc__
+      return '<Missing docstring>'
+
     command = Command(non_switch_args[0])
     if command:
       if non_switch_args[0] == 'help':
         CMDhelp.usage_more = ('\n\nCommands are:\n' + '\n'.join([
-              '  %-10s %s' % (fn[3:], Command(fn[3:]).__doc__.split('\n')[0].strip())
+              '  %-10s %s' % (fn[3:], getdoc(Command(fn[3:])).split('\n')[0].strip())
               for fn in dir(sys.modules[__name__]) if fn.startswith('CMD')]))
 
       # "fix" the usage and the description now that we know the subcommand.
@@ -314,7 +319,7 @@ def main(parser):
       print "Unrecognized command: %s\n" % non_switch_args[0]
   else: # default command
     CMDsearch.usage_more = ('\n\nCommands are:\n' + '\n'.join([
-          '  %-10s %s' % (fn[3:], Command(fn[3:]).__doc__.split('\n')[0].strip())
+          '  %-10s %s' % (fn[3:], getdoc(Command(fn[3:])).split('\n')[0].strip())
           for fn in dir(sys.modules[__name__]) if fn.startswith('CMD')]))
     GenUsage(parser, 'search')
     return CMDsearch(parser)

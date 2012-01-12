@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 import sys
 
 # Two big TODOs for this system:
@@ -25,6 +26,14 @@ def detect_toolkit():
   if '--curses' in sys.argv:
     return (False, False, False, True)
 
+  # check whether we even have X
+  if os.getenv('DISPLAY'):
+    can_have_gui = True
+  elif sys.platform == 'darwin':
+    can_have_gui = True
+  else:
+    can_have_gui = False
+
   # try using PyObjC on mac
   if sys.platform == 'darwin':
     if '--objc' in sys.argv:
@@ -33,23 +42,26 @@ def detect_toolkit():
         return (False, False, True, False)
       except ImportError:
         pass
+
   # try using gtk
-  try:
-    import pygtk
-    pygtk.require('2.0')
-    return (True, False, False, False)
-  except ImportError:
-    pass
+  if can_have_gui:
+    try:
+      import pygtk
+      pygtk.require('2.0')
+      return (True, False, False, False)
+    except ImportError:
+      pass
 
   # if that didn't work, try using wx
-  try:
-    import wx
-    return (False, True, False, False)
-  except ImportError:
-    pass
+  if can_have_gui:
+    try:
+      import wx
+      return (False, True, False, False)
+    except ImportError:
+      pass
 
   # use curses as a last resort
-  if '--curses' in sys.argv:
+  if '--curses' in sys.argv or not can_have_gui:
     return (False, False, False, True)
 
   return (False, False, False, False)

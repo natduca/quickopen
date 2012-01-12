@@ -71,11 +71,15 @@ class PrelaunchDaemon(object):
     assert os.path.exists(quickopen_script)
 
     control_port = self._get_another_control_port()
+    env = {}
+    if display != 'cocoa' and display != 'terminal':
+      env["DISPLAY"] = display
     proc = subprocess.Popen([quickopen_script,
                              "prelaunch",
                              "--wait",
                              "--control-port",
-                             str(control_port)])
+                             str(control_port)],
+                             env=env)
     self._quickopen[display] = PrelaunchedProcess(proc, control_port)
 
   def get_existing_quickopen(self, m, verb, data):

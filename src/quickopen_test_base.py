@@ -98,7 +98,6 @@ class QuickopenTestBase(object):
   def test_status_nodaemon(self):
     self.turn_off_daemon()
     s = self.qo("status")
-    print s
     self.assertTrue(s.startswith("quickopend not running."))
 
   def _is_up_to_date(self):

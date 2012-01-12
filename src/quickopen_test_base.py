@@ -17,6 +17,7 @@ import unittest
 import subprocess
 import test_data
 import time
+import re
 
 class QuickopenTestBase(object):
   def setUp(self):
@@ -132,4 +133,7 @@ class QuickopenTestBase(object):
     self._wait_for_up_to_date()
 
     r = self.qo("rawsearch", "--show-rank", "MySubSystem.c").split("\n")
-    self.assertEquals(["14," + self.test_data.path_to("project1/MySubSystem.c"), ''], r)
+    expected_first_result = "\d+,%s" % re.escape(self.test_data.path_to("project1/MySubSystem.c"))
+    self.assertEquals(2, len(r))
+    self.assertTrue(re.match(expected_first_result, r[0]))
+    self.assertEquals("", r[1])

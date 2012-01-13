@@ -49,6 +49,13 @@ function! s:QuickOpenPrompt()
   endif
 endfunction
 
+function! s:QuickOpenSingle(cmd, query)
+  let res = system(s:QuickOpenApp . " search --skip-ui-if-exact " . a:query)
+  if res != ""
+    exec(a:cmd . " " . res)
+  endif
+endfunction
+
 function! QuickFind()
   let files_to_open = s:QuickOpenPrompt()
   for f in files_to_open
@@ -60,3 +67,6 @@ endfunction
 noremap <silent> <C-O> <Esc>:call QuickFind()<CR>
 
 noremap <silent> <D-O> <Esc>:call QuickFind()<CR>
+
+nnoremap <silent> gf :call <sid>QuickOpenSingle(':find', expand('<cfile>'))<cr>
+nnoremap <silent> <c-w>gf :call <sid>QuickOpenSingle(':sp', expand('<cfile>'))<cr>

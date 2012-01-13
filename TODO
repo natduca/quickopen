@@ -1,36 +1,24 @@
 Bugs
 ---------------------------------------------------------------------------
-quickpoen throws exceptiosn instead of printing errors
-
-Queries
----------------------------------------------------------------------------
-fi for feature_info.cpp, but also matches FontInfo, Full Text Index, FastISel, FontLoweringInfo, reflect_float_frag_ivaryingconst_ref.frag
-
-wg3d and wgc3d for webgraphicscontext3d_in_process_impl
-e3dcr for Extensions3DChromium
-
-rendererglcontext -> renderer_gl_context
-
-   rwhwin -> render_widget_host_view_win
-   rwfsp -> render_widget_fullscreen_pepper
+query is pending on ok, we dont wait for query to complete
 
 Features
 ---------------------------------------------------------------------------
-- If query is pending on ok, wait for query to complete
+- predictably order extensions (perhaps based on current file)
+- open file specified by an include
 
-- Make indexer be multithreaded [move pool from index upward?]
+- improve directory filters
+- speed up empty-dir-query, e.g. foo/
 
-- Fix word detection for WG3D (reports wgd now)
-- Fix word detection for "BlahBlah-blah"
+- prefer recently hit directories
+
+- Make indexer be multithreaded [move pool from index upward?]; use git
+  ls-files to help indexing?
 
 - Remove extensions from db_index, add extensions after basic basename search
 
 - Emacs C-N C-P move selection up and down
 
-- Better matching with partials:
-
-- Speed up empty-dir-query, e.g. foo/
-
-- Warning bar if search().truncated
+- Warning bar if search() truncated
 
 - Right click to ignore an object in open dialog

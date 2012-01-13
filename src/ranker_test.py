@@ -42,6 +42,11 @@ class RankerTest(unittest.TestCase):
     check("__b", [True, False, True])
     check("foo__bar", [True, False, False, False, False, True, False, False])
 
+    check("Foo3D", [True, False, False, True, True])
+    check("Foo33", [True, False, False, True, False])
+
+    check("x3d", [True, True,  False]) # I could be convinced that 'd' is a wordstart.
+
     check("AAb", [True, True, False])
     check("CCFra", [True, True, True, False, False])
 

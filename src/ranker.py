@@ -30,6 +30,9 @@ class Ranker(object):
     if c.isupper():
       return True
 
+    if c.isdigit() and not cprev.isdigit():
+      return True
+
     return False
 
   def get_num_words(self, word):

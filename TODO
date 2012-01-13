@@ -1,9 +1,13 @@
 Bugs
 ---------------------------------------------------------------------------
 query is pending on ok, we dont wait for query to complete
+make the gtk.Window a member var of OpenDialogGtk rather than a parent class
 
 Features
 ---------------------------------------------------------------------------
+
+- make gtk open dialog listen to shoudlpositioncursorforedit
+
 - predictably order extensions (perhaps based on current file)
 - open file specified by an include
 

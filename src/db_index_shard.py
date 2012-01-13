@@ -54,33 +54,34 @@ class DBIndexShard(object):
   def search_basenames(self, query, max_hits):
     lower_query = query.lower()
 
-    hits = dict()
+    lower_hits = set()
 
     # word starts first
-    self.add_all_wordstarts_matching( hits, query, max_hits )
+    self.add_all_wordstarts_matching( lower_hits, query, max_hits )
 
     # add in substring matches
-    self.add_all_matching( hits, query, self.get_substring_filter(lower_query), max_hits )
+    self.add_all_matching( lower_hits, query, self.get_substring_filter(lower_query), max_hits )
 
     # add in superfuzzy matches ONLY if we have no high-quality hit
     has_hq = False
-    for hit,rank in hits.iteritems():
+    ranker = Ranker()
+    for lower_hit in lower_hits:
+      rank = ranker.rank(query, lower_hit)
       if rank > 2:
         has_hq = True
         break
     if not has_hq:
-      self.add_all_matching( hits, query, self.get_superfuzzy_filter(lower_query), max_hits )
+      self.add_all_matching( lower_hits, query, self.get_superfuzzy_filter(lower_query), max_hits )
 
-    return hits, len(hits) == max_hits
+    return lower_hits, len(lower_hits) == max_hits
 
-  def add_all_wordstarts_matching( self, hits, query, max_hits ):
+  def add_all_wordstarts_matching( self, lower_hits, query, max_hits ):
     lower_query = query.lower()
     if lower_query in self.basenames_by_wordstarts:
       ranker = Ranker()
       for basename in self.basenames_by_wordstarts[lower_query]:
-        rank = ranker.rank(query, basename)
-        hits[basename] = rank
-        if len(hits) >= max_hits:
+        lower_hits.add(basename)
+        if len(lower_hits) >= max_hits:
           return
 
 
@@ -121,9 +122,9 @@ class DBIndexShard(object):
     flt = "\n.*%s.*\n" % '.*'.join(tmp)
     return (flt, False)
 
-  def add_all_matching(self, hits, query, flt_tuple, max_hits):
+  def add_all_matching(self, lower_hits, query, flt_tuple, max_hits):
     """
-    hits is the dictionary to put results in
+    lower_hits is the dictionary to put results in
     query is the query string originally entered by user, used by ranking
     flt_tuple is [filter_regex, case_sensitive_bool]
     max_hits is largest hits should grow before matching terminates.
@@ -132,7 +133,6 @@ class DBIndexShard(object):
 
     regex = re.compile(flt)
     base = 0
-    ranker = Ranker()
     if not case_sensitive:
       index = self.lower_basenames_unsplit
     else:
@@ -143,15 +143,11 @@ class DBIndexShard(object):
         hit = m.group(0)[1:-1]
         if hit.find('\n') != -1:
           raise Exception("Somethign is messed up with flt=[%s] query=[%s] hit=[%s]" % (flt,query,hit))
-        rank = ranker.rank(query, hit)
         if case_sensitive:
           hit = hit.lower()
-        if hit in hits:
-          hits[hit] = max(hits[hit],rank)
-        else:
-          hits[hit] = rank
+        lower_hits.add(hit)
         base = m.end() - 1
-        if len(hits) >= max_hits:
+        if len(lower_hits) >= max_hits:
           truncated = True
           break
       else:

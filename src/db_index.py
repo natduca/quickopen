@@ -11,10 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import fixed_size_dict
-import os
-import multiprocessing
 import db_index_shard
+import fixed_size_dict
+import multiprocessing
+import os
+from ranker import Ranker
 
 from local_pool import *
 
@@ -130,23 +131,26 @@ class DBIndex(object):
     hits = []
     truncated = False
     max_chunk_hits = max(1, max_hits / len(self.shards))
+    ranker = Ranker()
     if len(basepart):
-      result_handles = []
-      base_hits = dict()
+      shard_result_handles = []
+      # Run the search in parallel across the shards.
       for i in range(len(self.shards)):
         shard = self.shards[i]
-        result_handles.append(shard.apply_async(ShardSearchBasenames, (basepart, max_chunk_hits)))
-      for h in result_handles:
-        (subhits, subtruncated) = h.get()
-        truncated |= subtruncated
-        for hit,rank in subhits.items():
-          if hit in base_hits:
-            base_hits[hit] = max(base_hits[hit],rank)
-          else:
-            base_hits[hit] = rank
-      for hit,rank in base_hits.items():
+        shard_result_handles.append(shard.apply_async(ShardSearchBasenames, (basepart, max_chunk_hits)))
+
+      # union the results
+      base_hits = set()
+      for shard_result_handle in shard_result_handles:
+        (shard_hits, shard_hits_truncated) = shard_result_handle.get()
+        truncated |= shard_hits_truncated
+        for hit in shard_hits:
+          base_hits.add(hit)
+      for hit in base_hits:
         files = self.files_by_lower_basename[hit]
         for f in files:
+          basename = os.path.basename(f)
+          rank = ranker.rank(query, basename)
           hits.append((f,rank))
     else:
       if len(dirpart):

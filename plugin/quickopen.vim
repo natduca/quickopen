@@ -12,6 +12,11 @@
 " See the License for the specific language governing permissions and
 " limitations under the License.
 
+if exists("loaded_quickopen")
+  finish
+endif
+let loaded_quickopen = 1
+
 let s:QuickOpenFile=resolve(expand("<sfile>"))
 
 function! QuickOpenPrompt()

@@ -139,11 +139,18 @@ def CMDsearch(parser):
   parser.add_option('--ok', dest='ok', action='store_true', default=False, help='Output "OK" before results')
   parser.add_option('--lisp-results', dest='lisp_results', action='store_true', default=False, help='Output results as a lisp-formatted list')
   parser.add_option('--results-file', dest='results_file', action='store', help='Output results to the provided file instead of stdout')
+  parser.add_option('--skip-ui-if-exact-match', dest='skip_if_exact', action='store_true', default=False, help="Don't show UI if there's an exact match")
   (options, args) = parser.parse_args()
   settings = load_settings(options)
   if not trace_is_enabled() and settings.trace:
     trace_enable("%s.trace" % sys.argv[0])
   db = open_db(options)
+
+  if options.skip_if_exact:
+    match = db.search_exact(args[0])
+    if match:
+      print match
+      return 0
 
   import src.open_dialog as open_dialog
   if len(args):

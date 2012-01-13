@@ -13,6 +13,7 @@
 # limitations under the License.
 import async_http_connection
 import httplib
+import os
 import socket
 import subprocess
 import sys
@@ -146,6 +147,21 @@ class DBProxy(object):
   def search(self, q):
     d = self._req('POST', '/search', q)
     return DBIndexSearchResult.from_dict(d)
+
+  def search_exact(self, q):
+    res = self.search(q)
+
+    pattern = os.sep + q
+    found = None
+
+    for h in res.hits:
+      if h == q or h[len(h) - len(pattern):len(h)] == pattern:
+        if found:
+          return None
+        found = h;
+    if not found:
+      return None
+    return h
 
   def search_async(self, q):
     return AsyncSearch(self.host, self.port, q)

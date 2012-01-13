@@ -12,13 +12,18 @@
 " See the License for the specific language governing permissions and
 " limitations under the License.
 
-let s:QuickOpenFile=resolve(expand("<sfile>"))
+if exists("loaded_quickopen")
+  finish
+endif
+let loaded_quickopen = 1
 
-function! QuickOpenPrompt()
-  let quickopen_dir = strpart(s:QuickOpenFile, 0, strridx(s:QuickOpenFile,"/plugin"))
-  let quickopen_app = quickopen_dir . "/quickopen"
+let s:QuickOpenFile = resolve(expand("<sfile>"))
+let s:QuickOpenDir = strpart(s:QuickOpenFile, 0, strridx(s:QuickOpenFile,"/plugin"))
+let s:QuickOpenApp = s:QuickOpenDir . "/quickopen"
+
+function! s:QuickOpenPrompt()
   if has("gui_running")
-    let res = system(quickopen_app . " prelaunch search")
+    let res = system(s:QuickOpenApp. " prelaunch search")
     return split(res, "\n", 0)
   else
     let resultsfile = tempname()
@@ -29,7 +34,7 @@ function! QuickOpenPrompt()
     setlocal noswapfile
     setlocal buflisted
 
-    exec("silent! !" . quickopen_app . " --curses --results-file=" . resultsfile)
+    exec("silent! !" . s:QuickOpenApp . " --curses --results-file=" . resultsfile a:query)
     exe "bdel"
 
     exec(":redraw!")
@@ -44,8 +49,15 @@ function! QuickOpenPrompt()
   endif
 endfunction
 
+function! s:QuickOpenSingle(cmd, query)
+  let res = system(s:QuickOpenApp . " search --skip-ui-if-exact " . a:query)
+  if res != ""
+    exec(a:cmd . " " . res)
+  endif
+endfunction
+
 function! QuickFind()
-  let files_to_open = QuickOpenPrompt()
+  let files_to_open = s:QuickOpenPrompt()
   for f in files_to_open
     exec(":find " . f)
   endfor
@@ -55,3 +67,6 @@ endfunction
 noremap <silent> <C-O> <Esc>:call QuickFind()<CR>
 
 noremap <silent> <D-O> <Esc>:call QuickFind()<CR>
+
+nnoremap <silent> gf :call <sid>QuickOpenSingle(':find', expand('<cfile>'))<cr>
+nnoremap <silent> <c-w>gf :call <sid>QuickOpenSingle(':sp', expand('<cfile>'))<cr>

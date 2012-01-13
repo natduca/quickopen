@@ -136,3 +136,12 @@ class QuickopenTestBase(object):
     self.assertEquals(2, len(r))
     self.assertTrue(re.match(expected_first_result, r[0]))
     self.assertEquals("", r[1])
+
+  def test_skip_ui_if_exact(self):
+    x = self.qo("add", self.test_data_dir)
+    self.assertEquals("", x)
+    self._wait_for_up_to_date()
+
+    r = self.qo_and_split("search", "--skip-ui-if-exact-match", "MyClass.c")
+    self.assertEquals(1, len(r))
+    self.assertEquals(r[0], self.test_data.path_to("project1/MyClass.c"))

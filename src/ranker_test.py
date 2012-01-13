@@ -215,6 +215,10 @@ class RankerTest(unittest.TestCase):
     self.assertTrue(a1 > b);
     self.assertTrue(a2 > b);
 
+    q = "LayerTexture"
+    a = self.ranker.rank(q, 'LayerTexture.cpp')
+    b = self.ranker.rank(q, 'LayerTextureSubImage.cpp')
+    self.assertTrue(a > b)
 
   def test_refinement_improves_rank(self):
     a = self.ranker.rank('render_', 'render_widget.cc')

@@ -150,7 +150,7 @@ class DBIndex(object):
         files = self.files_by_lower_basename[hit]
         for f in files:
           basename = os.path.basename(f)
-          rank = ranker.rank(query, basename)
+          rank = ranker.rank(base_query_part, basename)
           hits.append((f,rank))
     else:
       if len(dirpart):

@@ -33,8 +33,8 @@ def spad(s, w):
     return t
 
 class OpenDialogCurses(OpenDialogBase):
-  def __init__(self, settings, options, db):
-    OpenDialogBase.__init__(self, settings, options, db)
+  def __init__(self, settings, options, db, initial_filter):
+    OpenDialogBase.__init__(self, settings, options, db, initial_filter)
     message_loop_curses.on_terminal_readable.add_listener(self._on_readable)
     self._stdscr = message_loop_curses.get_stdscr()
 

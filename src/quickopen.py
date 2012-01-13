@@ -146,7 +146,11 @@ def CMDsearch(parser):
   db = open_db(options)
 
   import src.open_dialog as open_dialog
-  open_dialog.run(settings, options, db) # will not return on osx.
+  if len(args):
+    initial_filter = " ".join(args)
+  else:
+    initial_filter = None
+  open_dialog.run(settings, options, db, initial_filter) # will not return on osx.
 
 def CMDstatus(parser):
   """Checks the status of the quick open database"""

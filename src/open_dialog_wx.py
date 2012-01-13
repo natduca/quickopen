@@ -28,9 +28,9 @@ class TestListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin):
         listmix.ListCtrlAutoWidthMixin.__init__(self)
 
 class OpenDialogWx(wx.Dialog, OpenDialogBase):
-  def __init__(self, settings, options, db):
+  def __init__(self, settings, options, db, initial_filter):
     wx.Dialog.__init__(self, None, wx.ID_ANY, "Quick open...", style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER, size=(1000,400))
-    OpenDialogBase.__init__(self, settings, options, db)
+    OpenDialogBase.__init__(self, settings, options, db, initial_filter)
 
     if wx.Platform == "__WXMAC__":
       wx.SystemOptions.SetOptionInt("mac.listctrl.always_use_generic", False)

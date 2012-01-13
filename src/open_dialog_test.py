@@ -46,4 +46,4 @@ class OpenDialogTest(ui_test_case.UITestCase):
     self.db_test_base.tearDown()
 
   def test_open_dialog(self):
-    x = open_dialog.OpenDialog(self.client_settings, self.options, self.db)
+    x = open_dialog.OpenDialog(self.client_settings, self.options, self.db, "")

@@ -24,10 +24,10 @@ from Foundation import *
 from open_dialog import OpenDialogBase
 
 class OpenDialogObjcRaw(NSObject, OpenDialogBase):
-  def initWithSettings(self, settings, options, db):
+  def initWithSettings(self, settings, options, db, initial_filter):
     message_loop.init_main_loop()
     self.init()
-    OpenDialogBase.__init__(self, settings, options, db)
+    OpenDialogBase.__init__(self, settings, options, db, initial_filter)
 
     size = NSMakeRect(0,0,800,400)
     self.window = NSWindow.alloc().initWithContentRect_styleMask_backing_defer_(

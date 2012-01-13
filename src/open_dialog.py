@@ -23,9 +23,13 @@ import time
 from trace_event import *
 
 class OpenDialogBase(object):
-  def __init__(self, settings, options, db):
+  def __init__(self, settings, options, db, initial_filter = None):
     settings.register("filter_text", str, "")
     settings.register("query_log", str, "") 
+    if initial_filter:
+      settings.filter_text = initial_filter
+    else:
+      had_position = False
     self._filter_text = settings.filter_text
     self._settings = settings
     self._db = db
@@ -141,8 +145,8 @@ def _pick_open_dialog():
     raise Exception("Unrecognized message loop type.")
 OpenDialog = _pick_open_dialog()
 
-def run(settings, options, db):
+def run(settings, options, db, initial_filter):
   def go():
-    OpenDialog(settings, options, db)
+    OpenDialog(settings, options, db, initial_filter)
   message_loop.post_task(go)
   message_loop.run_main_loop()

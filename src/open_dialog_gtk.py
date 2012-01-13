@@ -22,9 +22,9 @@ from info_bar_gtk import *
 from open_dialog import OpenDialogBase
 
 class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
-  def __init__(self, settings, options, db):
+  def __init__(self, settings, options, db, initial_filter):
     gtk.Dialog.__init__(self)
-    OpenDialogBase.__init__(self, settings, options, db)
+    OpenDialogBase.__init__(self, settings, options, db, initial_filter)
 
     self.set_title("Quick open...")
     self.set_size_request(1000,400)

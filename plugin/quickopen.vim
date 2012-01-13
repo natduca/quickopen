@@ -17,13 +17,13 @@ if exists("loaded_quickopen")
 endif
 let loaded_quickopen = 1
 
-let s:QuickOpenFile=resolve(expand("<sfile>"))
+let s:QuickOpenFile = resolve(expand("<sfile>"))
+let s:QuickOpenDir = strpart(s:QuickOpenFile, 0, strridx(s:QuickOpenFile,"/plugin"))
+let s:QuickOpenApp = s:QuickOpenDir . "/quickopen"
 
-function! QuickOpenPrompt()
-  let quickopen_dir = strpart(s:QuickOpenFile, 0, strridx(s:QuickOpenFile,"/plugin"))
-  let quickopen_app = quickopen_dir . "/quickopen"
+function! s:QuickOpenPrompt()
   if has("gui_running")
-    let res = system(quickopen_app . " prelaunch search")
+    let res = system(s:QuickOpenApp. " prelaunch search")
     return split(res, "\n", 0)
   else
     let resultsfile = tempname()
@@ -34,7 +34,7 @@ function! QuickOpenPrompt()
     setlocal noswapfile
     setlocal buflisted
 
-    exec("silent! !" . quickopen_app . " --curses --results-file=" . resultsfile)
+    exec("silent! !" . s:QuickOpenApp . " --curses --results-file=" . resultsfile a:query)
     exe "bdel"
 
     exec(":redraw!")
@@ -50,7 +50,7 @@ function! QuickOpenPrompt()
 endfunction
 
 function! QuickFind()
-  let files_to_open = QuickOpenPrompt()
+  let files_to_open = s:QuickOpenPrompt()
   for f in files_to_open
     exec(":find " . f)
   endfor

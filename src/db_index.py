@@ -163,7 +163,8 @@ class DBIndex(object):
       lower_dirpart = dirpart.lower()
       for hit in hits:
         dirname = os.path.dirname(hit[0])
-        if dirname.endswith(lower_dirpart):
+        lower_dirname = dirname.lower()
+        if lower_dirname.endswith(lower_dirpart):
           reshits.append(hit)
       hits = reshits
 

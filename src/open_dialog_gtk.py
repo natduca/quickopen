@@ -60,6 +60,7 @@ class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
 
     filter_entry = gtk.Entry()
     filter_entry.set_text(self._filter_text)
+
     filter_entry.connect('key_press_event', self._on_filter_entry_keypress)
     filter_entry.connect('changed', self._on_filter_text_changed)
 
@@ -89,6 +90,11 @@ class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
     self._truncated_bar = truncated_bar
 
     filter_entry.grab_focus()
+    if self.should_position_cursor_for_replace:
+      filter_entry.set_position(0)
+      filter_entry.select_region(0, len(self._filter_text))
+    else:
+      filter_entry.set_position(len(self._filter_text))
 
     self.show_all()
 

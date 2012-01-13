@@ -55,7 +55,10 @@ class OpenDialogCurses(OpenDialogBase):
     self._result_ranks = []
 
     # The location of the "cursor" in the filter text "readline" area
-    self._filter_text_point = len(self._filter_text)
+    if self.should_position_cursor_for_replace:
+      self._filter_text_point = 0
+    else:
+      self._filter_text_point = len(self._filter_text)
 
     curses.init_pair(1, 1, curses.COLOR_BLACK)
 

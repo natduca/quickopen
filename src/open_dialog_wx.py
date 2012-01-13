@@ -55,6 +55,12 @@ class OpenDialogWx(wx.Dialog, OpenDialogBase):
 
     filter_box = wx.BoxSizer(wx.HORIZONTAL)
     self._filter_ctrl = wx.TextCtrl(self, -1, self._filter_text)
+    if self.should_position_cursor_for_replace:
+      self._filter_ctrl.SetInsertionPoint(0)
+      self._filter_ctrl.SetSelection(-1, -1)
+    else:
+      self._filter_ctrl.SetInsertionPointEnd()
+
     self.Bind(wx.EVT_CHAR_HOOK, self.on_evt_key_down)
     self.Bind(wx.EVT_TEXT, self.on_evt_text, self._filter_ctrl)
     self.Bind(wx.EVT_TEXT_ENTER, self.on_evt_text_enter, self._filter_ctrl)

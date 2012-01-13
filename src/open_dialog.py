@@ -37,6 +37,11 @@ class OpenDialogBase(object):
     self._last_search_query = None
     self._pending_search = None
     self._options = options
+    if initial_filter:
+      self.should_position_cursor_for_replace = False
+    else:
+      self.should_position_cursor_for_replace = True
+
     message_loop.post_delayed_task(self.on_tick, 0.1)
     
   def set_can_process_queries(self, can_process):

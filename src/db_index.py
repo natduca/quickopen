@@ -123,21 +123,21 @@ class DBIndex(object):
     slashIdx = query.rfind('/')
     if slashIdx != -1:
       dirpart = query[:slashIdx]
-      basepart = query[slashIdx+1:]
+      basename_query = query[slashIdx+1:]
     else:
       dirpart = None
-      basepart = query
+      basename_query = query
 
     hits = []
     truncated = False
     max_chunk_hits = max(1, max_hits / len(self.shards))
     ranker = Ranker()
-    if len(basepart):
+    if len(basename_query):
       shard_result_handles = []
       # Run the search in parallel across the shards.
       for i in range(len(self.shards)):
         shard = self.shards[i]
-        shard_result_handles.append(shard.apply_async(ShardSearchBasenames, (basepart, max_chunk_hits)))
+        shard_result_handles.append(shard.apply_async(ShardSearchBasenames, (basename_query, max_chunk_hits)))
 
       # union the results
       base_hits = set()
@@ -150,7 +150,7 @@ class DBIndex(object):
         files = self.files_by_lower_basename[hit]
         for f in files:
           basename = os.path.basename(f)
-          rank = ranker.rank(base_query_part, basename)
+          rank = ranker.rank(basename_query, basename)
           hits.append((f,rank))
     else:
       if len(dirpart):

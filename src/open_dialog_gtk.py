@@ -93,11 +93,11 @@ class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
     self.show_all()
 
   def response(self, arg, *rest):
-    canceled = arg == gtk.RESPONSE_CANCEL
+    canceled = len(rest) > 0 and rest[0] != gtk.RESPONSE_OK
     self.on_done(canceled)
 
   def on_destroy(self, *args):
-    self.response(gtk.RESPONSE_CANCEL)
+    self.response(None, gtk.RESPONSE_CANCEL)
 
   def _on_filter_entry_keypress(self,entry,event):
     keyname = gtk.gdk.keyval_name(event.keyval)

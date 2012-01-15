@@ -29,15 +29,9 @@ import httplib
 import time
 import StringIO
 
-_is_prelaunched_process = False
+from trace_event import *
 
-def is_prelaunch(args):
-  if len(args) >= 2 and args[1] == "prelaunch":
-    if len(args) >= 3:
-      return args[2] != "--wait"
-    else:
-      return True
-  return False
+_is_prelaunched_process = False
 
 def is_prelaunched_process():
   return _is_prelaunched_process

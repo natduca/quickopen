@@ -14,6 +14,7 @@
 import logging
 import optparse
 import os
+import prelaunch_client
 import sys
 
 def run():
@@ -48,14 +49,6 @@ def run():
 
 def handle_options(options, args):
   """Called by bootstrapper to process global commandline options."""
-  import message_loop
-  if not message_loop.has_toolkit:
-    suports = ['PyGtk', 'WxPython', 'Curses']
-    if '--objc' in sys.argv:
-      suports.append('PyObjC')
-    print """No supported GUI toolkit found. Trace_event_viewer supports %s.""" % ", ".join(supports)
-    return -1
-
   if options.verbose >= 2:
     logging.basicConfig(level=logging.DEBUG)
   elif options.verbose:
@@ -68,6 +61,12 @@ def main(main_name):
   use as your main app."""
   if sys.platform == 'darwin':
     if ('--curses' in sys.argv):
+      sys.argv.insert(1, '--main-name')
+      sys.argv.insert(2, main_name)
+      sys.exit(run())
+
+    # prelaunch should bypass full bootstrap
+    if prelaunch_client.is_prelaunch_client(sys.argv):
       sys.argv.insert(1, '--main-name')
       sys.argv.insert(2, main_name)
       sys.exit(run())

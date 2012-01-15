@@ -141,6 +141,7 @@ def CMDsearch(parser):
   parser.add_option('--results-file', dest='results_file', action='store', help='Output results to the provided file instead of stdout')
   parser.add_option('--skip-ui-if-exact-match', dest='skip_if_exact', action='store_true', default=False, help="Don't show UI if there's an exact match")
   (options, args) = parser.parse_args()
+  message_loop.ensure_has_message_loop()
   settings = load_settings(options)
   if not trace_is_enabled() and settings.trace:
     trace_enable("%s.trace" % sys.argv[0])

@@ -117,3 +117,12 @@ def set_unittests_running(running):
 
 def set_active_test(test, result):
   platform_message_loop.set_active_test(test, result)
+
+
+def ensure_has_message_loop(self):
+  if not has_toolkit:
+    supports = ['PyGtk', 'WxPython', 'Curses']
+    if '--objc' in sys.argv:
+      supports.append('PyObjC')
+    print """No supported GUI toolkit found. Trace_event_viewer supports %s.""" % ", ".join(supports)
+    sys.exit(255)

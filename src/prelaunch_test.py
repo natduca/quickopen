@@ -23,13 +23,6 @@ class PrelaunchTest(unittest.TestCase, QuickopenTestBase):
     QuickopenTestBase.setUp(self)
     self.daemon = temporary_daemon.TemporaryDaemon()
 
-  def test_is_prelaunch(self):
-    self.assertEquals(False, prelaunch.is_prelaunch([""]))
-    self.assertEquals(False, prelaunch.is_prelaunch(["", "search", "--wait"]))
-    self.assertEquals(False, prelaunch.is_prelaunch(["", "prelaunch", "--wait"]))
-    self.assertEquals(True, prelaunch.is_prelaunch(["", "prelaunch"]))
-    self.assertEquals(True, prelaunch.is_prelaunch(["", "prelaunch", "search"]))
-
   def qo(self, cmd, *args):
     full_args = [cmd]
     full_args.extend(args)

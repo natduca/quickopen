@@ -26,3 +26,5 @@ Features
 - Warning bar if search() truncated
 
 - Right click to ignore an object in open dialog
+
+- Look at prelaunch trace, see if there is room for improvement.

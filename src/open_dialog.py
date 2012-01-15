@@ -22,6 +22,8 @@ import time
 
 from trace_event import *
 
+TICK_RATE = 0.025
+
 class OpenDialogBase(object):
   @tracedmethod
   def __init__(self, settings, options, db, initial_filter = None):
@@ -43,7 +45,7 @@ class OpenDialogBase(object):
     else:
       self.should_position_cursor_for_replace = True
 
-    message_loop.post_delayed_task(self.on_tick, 0.1)
+    message_loop.post_delayed_task(self.on_tick, TICK_RATE)
     
   def set_can_process_queries(self, can_process):
     could_process = self._can_process_queries
@@ -117,7 +119,7 @@ class OpenDialogBase(object):
         check_status()
 
     # renew the tick
-    message_loop.post_delayed_task(self.on_tick, 0.1)
+    message_loop.post_delayed_task(self.on_tick, TICK_RATE)
 
   @trace
   def on_done(self, canceled):

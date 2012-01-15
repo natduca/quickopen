@@ -18,6 +18,8 @@ import socket
 import sys
 import json
 
+from trace_event import *
+
 class AsyncError(Exception):
   pass
 
@@ -36,6 +38,7 @@ class AsyncHTTPConnection(object):
     self.conn = httplib.HTTPConnection(host, port)
     self.state = IDLE
 
+  @trace
   def connect(self):
     if not self.conn.sock:
       try:
@@ -44,6 +47,7 @@ class AsyncHTTPConnection(object):
         print 'died during connect'
         raise AsyncError()
 
+  @trace
   def begin_request(self, method, url, data = None):
     if self.state != IDLE:
       raise RequestPending()
@@ -63,6 +67,7 @@ class AsyncHTTPConnection(object):
       print 'died during begin_request'
       raise AsyncError()
 
+  @trace
   def is_response_ready(self, timeout = 0):
     if self.state == IDLE:
       raise RequestNotPending()
@@ -79,6 +84,7 @@ class AsyncHTTPConnection(object):
       return False
 
 
+  @trace
   def get_response(self):
     if self.state == REQUEST_PENDING:
       raise RequestPending()

@@ -23,6 +23,7 @@ import time
 from trace_event import *
 
 class OpenDialogBase(object):
+  @tracedmethod
   def __init__(self, settings, options, db, initial_filter = None):
     settings.register("filter_text", str, "")
     settings.register("query_log", str, "") 
@@ -50,7 +51,7 @@ class OpenDialogBase(object):
 
     self.set_results_enabled(can_process)
 
-  @trace
+  @tracedmethod
   def set_filter_text(self, text):
     self._filter_text = text
     if self._settings.query_log != "":
@@ -66,24 +67,30 @@ class OpenDialogBase(object):
   def on_reindex_clicked(self):
     self._db.begin_reindex()
 
+  @tracedmethod
   def on_tick(self,*args):
+    @trace
     def begin_search():
       self.set_status("DB Status: %s" % "searching")
       self._last_search_query = self._filter_text
       self._pending_search = self._db.search_async(self._last_search_query)
 
+    @trace
     def on_ready():
       try:
         res = self._pending_search.result
       except db_proxy.AsyncSearchError:
         res = None
       self._pending_search = None
+      trace_begin("update_results_list")
       if res:
         self.update_results_list(res.hits,res.ranks)
       else:
         self.update_results_list([],[])
+      trace_end("update_results_list")
       self._pending_search = None
 
+    @trace
     def check_status():
       try:
         stat = self._db.status()
@@ -112,6 +119,7 @@ class OpenDialogBase(object):
     # renew the tick
     message_loop.post_delayed_task(self.on_tick, 0.1)
 
+  @trace
   def on_done(self, canceled):
     self._settings.filter_text = self._filter_text.encode('utf8')
     if canceled:

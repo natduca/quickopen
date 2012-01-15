@@ -189,7 +189,7 @@ def main(argv):
   parser.add_option('--port', dest='port', action='store', help='Port to run on')
   parser.add_option('--settings', dest='settings', action='store', default='~/.quickopend', help='Settings file to use')
   parser.add_option('--test', dest='test', action='store_true', default=False, help='Adds test hooks')
-  parser.add_option('--trace', dest='trace', action='store_true', default=False, help='Records performance tracing information to %s.trace' % sys.argv[0])
+  parser.add_option('--trace', dest='trace', action='store_true', default=False, help='Records performance tracing information to quickopen.trace')
   parser.add_option(
       '-v', '--verbose', action='count', default=0,
       help='Increase verbosity level (repeat as needed)')
@@ -203,7 +203,7 @@ def main(argv):
     else:
       logging.basicConfig(level=logging.WARNING)
     if options.trace:
-      trace_enable("%s.trace" % sys.argv[0])
+      trace_enable("./%s.trace" % "quickopen")
     return options, args
   parser.parse_args = Parse
 

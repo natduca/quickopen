@@ -42,6 +42,7 @@ def wait_for_command(control_port):
 
   s = socket.socket()
   try:
+    trace_begin("bind_to_control_port")
     bound = False
     for i in range(10):
       try:
@@ -51,14 +52,19 @@ def wait_for_command(control_port):
         time.sleep(0.1)
     if not bound:
       raise Exception("could not bind!")
+    trace_end("bind_to_control_port")
 
     s.listen(1)
+    trace_begin("socket.accept")
     c, a = s.accept()
+    trace_end("socket.accept")
     f = c.makefile()
 
     # The commandline comes in as a repr'd array
     # Yes this is not very secure. Donations welcome.
+    trace_begin("read_command")
     args = eval(f.readline(), {}, {})
+    trace_end("read_command")
 
     # We want to send the commandline args to quickopen's regular
     # main now, and redirect the stdout output over to the prelauncher.
@@ -83,6 +89,8 @@ def wait_for_command(control_port):
       sys.argv = old_argv
       sys.stdout = old_stdout
 
+    trace_end("exec_command")
+
     # Finally, give the results back to the prelauncher so that
     # it can do its work. Pass the string via repr so we can use
     # a single readline command to do the heavy lifting for us. :)
@@ -94,6 +102,7 @@ def wait_for_command(control_port):
     s.close()
     sys.exit(0)
 
+@trace
 def run_command_in_existing(daemon_host, daemon_port, args):
   # Prelaunched processes are DISPLAY-specific
   if sys.platform == 'darwin':
@@ -109,6 +118,7 @@ def run_command_in_existing(daemon_host, daemon_port, args):
 
   # Get the pid of an existing quickopen process via
   # quickopend. This routes through prelaunchd.py
+  trace_begin("get_existing_quickopen")
   conn = httplib.HTTPConnection(daemon_host, daemon_port, True)
   try:
     conn.request('GET', '/existing_quickopen/%s' % display)
@@ -119,9 +129,11 @@ def run_command_in_existing(daemon_host, daemon_port, args):
   res = conn.getresponse()
   assert res.status == 200
   port = int(res.read())
+  trace_end("get_existing_quickopen")
 
   # Get a connection to the prelaunched process.
   # We may have to try a few times --- it may be coming up still.
+  trace_begin("connect_to_prelaunched_qo")
   connected = False
   s = None
   for i in range(20): # 5 seconds
@@ -131,6 +143,7 @@ def run_command_in_existing(daemon_host, daemon_port, args):
       break
     except:
       time.sleep(0.25)
+  trace_end("connect_to_prelaunched_qo")
   if not s:
     raise Exception("Could not connect to the provided process.")
   try:
@@ -148,7 +161,9 @@ def run_command_in_existing(daemon_host, daemon_port, args):
 
     # Wait for the result of the quickopening. It comes over as a repr'd string
     # so eval it to get the real multi-line string.
+    trace_begin("read_result")
     l = eval(f.readline(), {}, {})
+    trace_end("read_result")
     return l
   finally:
     s.close()

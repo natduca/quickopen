@@ -16,6 +16,7 @@ import fixed_size_dict
 import multiprocessing
 import os
 from ranker import Ranker
+from trace_event import *
 
 from local_pool import *
 
@@ -109,6 +110,7 @@ class DBIndex(object):
       except:
         p.terminate()
 
+  @tracedmethod
   def search(self, query, max_hits = 100):
     assert len(query) > 0
     if query in self.query_cache:
@@ -135,23 +137,30 @@ class DBIndex(object):
     if len(basename_query):
       shard_result_handles = []
       # Run the search in parallel across the shards.
+      trace_begin("issue_search")
       for i in range(len(self.shards)):
         shard = self.shards[i]
         shard_result_handles.append(shard.apply_async(ShardSearchBasenames, (basename_query, max_chunk_hits)))
+      trace_end("issue_search")
 
       # union the results
+      trace_begin("gather_results")
       base_hits = set()
       for shard_result_handle in shard_result_handles:
         (shard_hits, shard_hits_truncated) = shard_result_handle.get()
         truncated |= shard_hits_truncated
         for hit in shard_hits:
           base_hits.add(hit)
+      trace_end("gather_results")
+
+      trace_begin("rank_results")
       for hit in base_hits:
         files = self.files_by_lower_basename[hit]
         for f in files:
           basename = os.path.basename(f)
           rank = ranker.rank_query(basename_query, basename)
           hits.append((f,rank))
+      trace_end("rank_results")
     else:
       if len(dirpart):
         hits.extend([(f, 1) for f in self.files])

@@ -20,6 +20,8 @@ import os
 import subprocess
 import logging
 
+from trace_event import *
+
 def _is_port_bindable(host, port):
   import socket
   s = socket.socket()
@@ -65,6 +67,7 @@ class PrelaunchDaemon(object):
       return self._next_control_port
     raise Exception("Could not find open control port")
 
+  @tracedmethod
   def _launch_new_quickopen(self, display):
     assert display not in self._quickopen
     quickopen_script = os.path.join(os.path.dirname(__file__), "../quickopen")

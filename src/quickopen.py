@@ -130,6 +130,7 @@ def CMDunignore(parser):
     return 0
   return 255
 
+@trace
 def CMDsearch(parser):
   """Search for a file"""
   if prelaunch.is_prelaunched_process() and message_loop.is_curses:
@@ -257,6 +258,7 @@ def load_settings(options):
     options.port = int(options.port)
   return settings
 
+@trace
 def open_db(options):
   return src.db_proxy.DBProxy(options.host, options.port, start_if_needed=False, port_for_autostart=options.port)
 
@@ -306,12 +308,12 @@ def main(parser):
   parser.add_option('--host', dest='host', action='store', help='Hostname of quickopend server')
   parser.add_option('--port', dest='port', action='store', help='Port for quickopend')
   parser.add_option('--settings', dest='settings', action='store', default='~/.quickopen', help='Settings file to use, ~/.quickopen by default')
-  parser.add_option('--trace', dest='trace', action='store_true', default=False, help='Records performance tracing information to %s.trace' % sys.argv[0])
+  parser.add_option('--trace', dest='trace', action='store_true', default=False, help='Records performance tracing information to quickopen.trace')
   old_parser_args = parser.parse_args
   def parse():
     options, args = old_parser_args()
     if options.trace:
-      trace_enable("./%s.trace" % sys.argv[0])
+      trace_enable("./%s.trace" % "quickopen")
     return options, args
   parser.parse_args = parse
 

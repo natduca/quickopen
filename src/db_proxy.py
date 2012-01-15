@@ -144,10 +144,12 @@ class DBProxy(object):
     except:
       raise "Pattern not found"
 
+  @tracedmethod
   def search(self, q):
     d = self._req('POST', '/search', q)
     return DBIndexSearchResult.from_dict(d)
 
+  @tracedmethod
   def search_exact(self, q):
     res = self.search(q)
 
@@ -174,9 +176,11 @@ class DBProxy(object):
   def has_index(self):
     return self.status().has_index
 
+  @tracedmethod
   def sync(self):
     ret = self._req('POST', '/sync')
 
+  @tracedmethod
   def status(self):
     d = self._req('GET', '/status')
     return DBStatus.from_dict(d)

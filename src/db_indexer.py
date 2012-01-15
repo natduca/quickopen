@@ -50,7 +50,7 @@ class DBIndexer(object):
     start = time.time()
     n = 0
     try:
-      while time.time() - start < 0.15:
+      while time.time() - start < 0.25:
         i = 0
         while i < 10:
           self.step_one()

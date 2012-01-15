@@ -43,10 +43,10 @@ class DBStub(object):
     self.server.add_delayed_task(self._index_a_bit_more, 0.05)
 
   def _index_a_bit_more(self):
-    self.db.step_indexer()
-
     if not self.db.is_up_to_date:
-      self.server.add_delayed_task(self._index_a_bit_more, 0.05)
+      # enqueue the task before, so we dont get a stall.
+      self.server.add_delayed_task(self._index_a_bit_more, 0.25)
+      self.db.step_indexer()
 
   def add_dir(self, m, verb, data):
     d = self.db.add_dir(data["path"])

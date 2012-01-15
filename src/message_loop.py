@@ -119,7 +119,7 @@ def set_active_test(test, result):
   platform_message_loop.set_active_test(test, result)
 
 
-def ensure_has_message_loop(self):
+def ensure_has_message_loop():
   if not has_toolkit:
     supports = ['PyGtk', 'WxPython', 'Curses']
     if '--objc' in sys.argv:

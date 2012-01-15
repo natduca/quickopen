@@ -48,6 +48,7 @@ def wait_for_command(control_port):
       try:
         s.bind(("", control_port))
         bound = True
+        break
       except socket.error:
         time.sleep(0.1)
     if not bound:

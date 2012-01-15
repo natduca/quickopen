@@ -61,7 +61,7 @@ class OpenDialogWx(wx.Dialog, OpenDialogBase):
     else:
       self._filter_ctrl.SetInsertionPointEnd()
 
-    self.Bind(wx.EVT_CHAR_HOOK, self.on_evt_key_down)
+    self.Bind(wx.EVT_CHAR_HOOK, self.on_evt_char_hook)
     self.Bind(wx.EVT_TEXT, self.on_evt_text, self._filter_ctrl)
     self.Bind(wx.EVT_TEXT_ENTER, self.on_evt_text_enter, self._filter_ctrl)
     filter_box.Add(self._filter_ctrl, 1, wx.EXPAND)
@@ -107,17 +107,29 @@ class OpenDialogWx(wx.Dialog, OpenDialogBase):
     okbn = self.FindWindowById(wx.ID_OK)
     okbn.Enable(en)
 
-  def on_evt_key_down(self,event):
+  def on_evt_char_hook(self,event):
     code = event.GetKeyCode()
     ctrl = event.ControlDown()
-    if self.FindFocus() != self._results_list:
-      if code == wx.WXK_UP:
-        self.move_selection(-1)
-        return
-      elif code == wx.WXK_DOWN:
-        self.move_selection(1)
-        return
-    event.Skip()
+    if self.FindFocus() == self._results_list:
+      event.Skip()
+      return
+
+    mac = wx.Platform == "__WXMAC__"
+    if code == wx.WXK_UP:
+      self.move_selection(-1)
+    elif code == wx.WXK_DOWN:
+      self.move_selection(1)
+    elif mac and ctrl and code == 14: # ctrl-n on mac
+      self.move_selection(1)
+    elif mac and ctrl and code == 16: # ctrl-p on mac
+      self.move_selection(-1)
+    elif mac and ctrl and code == 366: # ctrl-k on mac
+      p = self._filter_ctrl.GetInsertionPoint()
+      t = self._filter_ctrl.GetValue()[:p]
+      self._filter_ctrl.SetValue(t)
+      self._filter_ctrl.SetInsertionPointEnd()
+    else:
+      event.Skip()
 
   def on_evt_text(self,event):
     self.set_filter_text(self._filter_ctrl.GetValue())
@@ -144,7 +156,7 @@ class OpenDialogWx(wx.Dialog, OpenDialogBase):
       self._results_list.SetItemState(0, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
     c1w = 200
     self._results_list.SetColumnWidth(0, 40)
-    self._results_list.SetColumnWidth(1, 200)
+    self._results_list.SetColumnWidth(1, c1w)
     self._results_list.SetColumnWidth(2, self._results_list.GetSize()[0] - c1w)
 
   def move_selection(self, direction):

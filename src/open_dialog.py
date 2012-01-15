@@ -112,7 +112,8 @@ class OpenDialogBase(object):
     # re-check the self._pending_search since we might have cleared it
     if not self._pending_search:
       # kick off a query
-      if self._filter_text != self._last_search_query and self._can_process_queries:
+      need_to_begin_search = self._filter_text != self._last_search_query
+      if need_to_begin_search and self._can_process_queries:
         begin_search()
       else:
         # poll status

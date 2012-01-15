@@ -223,35 +223,35 @@ class RankerTest(unittest.TestCase):
   def test_rank_sort_and_adjustment_puts_suffixes_into_predictable_order(self):
     # render_widget.cpp should be get re-ranked higher than render_widget.h
     adj = self.ranker.sort_and_adjust_ranks_given_complete_hit_list([
-        (10,"render_widget.h"),
-        (10,"render_widget.cpp"),
+        ("render_widget.h", 10),
+        ("render_widget.cpp", 10),
         ])
-    self.assertEquals([(10,"render_widget.cpp"),
-                       (10,"render_widget.h")], adj)
+    self.assertEquals([("render_widget.cpp", 10),
+                       ("render_widget.h", 10)], adj)
 
     # render_widget.cpp should stay ranked higher than render_widget.h
     adj = self.ranker.sort_and_adjust_ranks_given_complete_hit_list([
-        (10,"render_widget.cpp"),
-        (10,"render_widget.h"),
+        ("render_widget.cpp", 10),
+        ("render_widget.h", 10),
         ])
-    self.assertEquals([(10,"render_widget.cpp"),
-                       (10,"render_widget.h")], adj)
+    self.assertEquals([("render_widget.cpp", 10),
+                       ("render_widget.h", 10)], adj)
 
     # but if the ranks mismatch, dont reorder
     adj = self.ranker.sort_and_adjust_ranks_given_complete_hit_list([
-        (10,"render_widget.cpp"),
-        (12,"render_widget.h"),
+        ("render_widget.cpp", 10),
+        ("render_widget.h", 12),
         ])
-    self.assertEquals([(12,"render_widget.h"),
-                       (10,"render_widget.cpp")], adj)
+    self.assertEquals([("render_widget.h", 12),
+                       ("render_widget.cpp", 10)], adj)
 
   def test_rank_sort_and_adjustment_puts_directories_into_predictable_order(self):
     # and if d if the ranks mismatch, dont reorder
     adj = self.ranker.sort_and_adjust_ranks_given_complete_hit_list([
-        (10,"b/render_widget.cpp"),
-        (10,"a/render_widget.cpp"),
+        ("b/render_widget.cpp", 10),
+        ("a/render_widget.cpp", 10),
         ])
-    self.assertEquals([(10,"a/render_widget.cpp"),
-                       (10,"b/render_widget.cpp")], adj)
+    self.assertEquals([("a/render_widget.cpp", 10),
+                       ("b/render_widget.cpp", 10)], adj)
 
 

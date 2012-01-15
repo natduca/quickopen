@@ -18,6 +18,8 @@
 # clients.
 import os
 import subprocess
+import sys
+import time
 import logging
 
 from trace_event import *
@@ -53,10 +55,11 @@ class PrelaunchDaemon(object):
   def __init__(self, server):
     server.add_json_route('/existing_quickopen/(.+)', self.get_existing_quickopen, ['GET'])
     server.exit.add_listener(self._on_exit)
-    server.lo_idle.add_listener(self._join_in_use_processes)
+    server.lo_idle.add_listener(self._tick)
     self._quickopen = {}
     self._in_use_processes = []
     self._next_control_port = 27412
+    self._should_prelaunch_queue = []
 
   def _get_another_control_port(self):
     self._next_control_port += 1
@@ -77,18 +80,24 @@ class PrelaunchDaemon(object):
     env = {}
     if display != 'cocoa' and display != 'terminal':
       env["DISPLAY"] = display
-    proc = subprocess.Popen([quickopen_script,
-                             "prelaunch",
-                             "--wait",
-                             "--control-port",
-                             str(control_port)],
+    launch_args = [quickopen_script,
+                   "prelaunch",
+                   "--wait",
+                   "--control-port",
+                   str(control_port)]
+    if "--trace" in sys.argv:
+      launch_args.append("--trace")
+    proc = subprocess.Popen(launch_args,
                              env=env)
     self._quickopen[display] = PrelaunchedProcess(proc, control_port)
 
+  @tracedmethod
   def get_existing_quickopen(self, m, verb, data):
     display = m.group(1)
     if display not in self._quickopen:
+      trace_begin("prelaunch_wasnt_available")
       self._launch_new_quickopen(display)
+      trace_end("prelaunch_wasnt_available")
     try:
       proc = self._quickopen[display]
       del self._quickopen[display]
@@ -96,13 +105,31 @@ class PrelaunchDaemon(object):
       self._in_use_processes.append(proc)
       return proc.port
     finally:
-      # todo, move this to another place... ideally, when the previous prelaunch quits
-      self._launch_new_quickopen(display)
-      pass
+      # dont prelaunch right away, delay for a while
+      self._should_prelaunch_queue.append((time.time() + 0.5, display))
+
 
   def _on_exit(self):
     self.stop()
 
+  @tracedmethod
+  def _tick(self):
+    self._join_in_use_processes()
+    self._process_should_prelaunch_queue()
+
+  @tracedmethod
+  def _process_should_prelaunch_queue(self):
+    still_pending = []
+    now = time.time()
+    for v in self._should_prelaunch_queue:
+      deadline, display = v
+      if now >= deadline:
+        self._launch_new_quickopen(display)
+      else:
+        still_pending.append(v)
+    self._should_prelaunch_queue = still_pending
+
+  @tracedmethod
   def _join_in_use_processes(self):
     procs = list(self._in_use_processes)
     del self._in_use_processes[:]

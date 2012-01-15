@@ -23,6 +23,7 @@ import BaseHTTPServer
 import time
 
 from event import Event
+from trace_event import *
 
 """
 Exception that you can throw in a handler that will trigger a 404 response.
@@ -201,8 +202,11 @@ class Daemon(BaseHTTPServer.HTTPServer):
           next_deadline = now + 0.2
           break
 
-      delay = next_deadline - now
+      now = time.time()
+      delay = max(0.0,next_deadline - now)
+      trace_begin("select_delay_%s" % delay)
       r, w, e = select.select([self], [], [], delay)
+      trace_end("select_delay_%s" % delay)
       if r:
         self.handle_request()
 

@@ -20,7 +20,8 @@ from trace_event import *
 
 from local_pool import *
 
-global slave
+slave = None
+slave_searchcount = 0
 
 class DBIndexSearchResult(object):
   def __init__(self):
@@ -47,7 +48,12 @@ def ShardInit(files_by_basename):
 
 def ShardSearchBasenames(query, max_hits):
   assert slave
-  return slave.search_basenames(query, max_hits)
+  global slave_searchcount
+  ret = slave.search_basenames(query, max_hits)
+  slave_searchcount += 1
+  if trace_is_enabled() and slave_searchcount % 10 == 0:
+    trace_flush()
+  return ret
 
 class DBIndex(object):
   """

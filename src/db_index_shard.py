@@ -15,6 +15,7 @@ import fnmatch
 import re
 
 from ranker import Ranker
+from trace_event import *
 
 class DBIndexShard(object):
   def __init__(self, files_by_basename):
@@ -51,16 +52,21 @@ class DBIndexShard(object):
       items.sort(lambda x,y: cmp(x[1],y[1]))
       self.basenames_by_wordstarts[ws] = [i[0] for i in items]
 
+  @trace
   def search_basenames(self, query, max_hits):
     lower_query = query.lower()
 
     lower_hits = set()
 
     # word starts first
+    trace_begin("wordstarts")
     self.add_all_wordstarts_matching( lower_hits, query, max_hits )
+    trace_end("wordstarts")
 
     # add in substring matches
+    trace_begin("substrings")
     self.add_all_matching( lower_hits, query, self.get_substring_filter(lower_query), max_hits )
+    trace_end("substrings")
 
     # add in superfuzzy matches ONLY if we have no high-quality hit
     has_hq = False
@@ -71,7 +77,9 @@ class DBIndexShard(object):
         has_hq = True
         break
     if not has_hq:
+      trace_begin("superfuzzy")
       self.add_all_matching( lower_hits, query, self.get_superfuzzy_filter(lower_query), max_hits )
+      trace_end("superfuzzy")
 
     return lower_hits, len(lower_hits) == max_hits
 

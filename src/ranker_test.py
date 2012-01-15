@@ -245,7 +245,6 @@ class RankerTest(unittest.TestCase):
     self.assertEquals([(12,"render_widget.h"),
                        (10,"render_widget.cpp")], adj)
 
-
   def test_rank_sort_and_adjustment_puts_directories_into_predictable_order(self):
     # and if d if the ranks mismatch, dont reorder
     adj = self.ranker.sort_and_adjust_ranks_given_complete_hit_list([

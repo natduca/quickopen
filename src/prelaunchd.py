@@ -53,13 +53,12 @@ class PrelaunchedProcess(object):
 
 class PrelaunchDaemon(object):
   def __init__(self, server):
-    server.add_json_route('/existing_quickopen/(.+)', self.get_existing_quickopen, ['GET'])
-    server.exit.add_listener(self._on_exit)
-    server.lo_idle.add_listener(self._tick)
+    self._server = server
     self._quickopen = {}
     self._in_use_processes = []
     self._next_control_port = 27412
-    self._should_prelaunch_queue = []
+    self._server.add_json_route('/existing_quickopen/(.+)', self.get_existing_quickopen, ['GET'])
+    self._server.exit.add_listener(self._on_exit)
 
   def _get_another_control_port(self):
     self._next_control_port += 1
@@ -103,31 +102,16 @@ class PrelaunchDaemon(object):
       del self._quickopen[display]
 
       self._in_use_processes.append(proc)
+      # make sure a gc task is pening
+      if len(self._in_use_processes) == 1:
+        self._server.add_delayed_task(self._join_in_use_processes, 1)
       return proc.port
     finally:
-      # dont prelaunch right away, delay for a while
-      self._should_prelaunch_queue.append((time.time() + 0.5, display))
-
+      # Dont prelaunch right away, delay for a while.
+      self._server.add_delayed_task(self._launch_new_quickopen, 0.5, display)
 
   def _on_exit(self):
     self.stop()
-
-  @tracedmethod
-  def _tick(self):
-    self._join_in_use_processes()
-    self._process_should_prelaunch_queue()
-
-  @tracedmethod
-  def _process_should_prelaunch_queue(self):
-    still_pending = []
-    now = time.time()
-    for v in self._should_prelaunch_queue:
-      deadline, display = v
-      if now >= deadline:
-        self._launch_new_quickopen(display)
-      else:
-        still_pending.append(v)
-    self._should_prelaunch_queue = still_pending
 
   @tracedmethod
   def _join_in_use_processes(self):
@@ -138,6 +122,8 @@ class PrelaunchDaemon(object):
         self._in_use_processes.append(p)
       else:
         logging.debug("prelaunched pid=%i is gone" % p.pid)
+    if len(self._in_use_processes):
+      self._server.add_delayed_task(self._join_in_use_processes, 1)
 
   def stop(self):
     logging.debug("closing prelaunched quickopen")

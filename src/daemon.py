@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import heapq
 import json
 import logging
 import re
@@ -19,6 +20,7 @@ import sys
 import traceback
 import urlparse
 import BaseHTTPServer
+import time
 
 from event import Event
 
@@ -130,14 +132,22 @@ class Route(object):
     self.output = output
     self.handler = handler
 
+class _Timeout(object):
+  def __init__(self, cb, deadline, args):
+    self.cb = cb
+    self.deadline = deadline
+    self.args = args
+
+  def __cmp__(self, that):
+    return cmp(self.deadline, that.deadline)
+
 class Daemon(BaseHTTPServer.HTTPServer):
   def __init__(self, test_mode, *args):
     BaseHTTPServer.HTTPServer.__init__(self, *args)
     self.port_ = args[0][1]
     self.routes = []
     self.test_mode = test_mode
-    self.hi_idle = Event() # event that is fired every 0.05sec as long as no transactions are pending
-    self.lo_idle = Event() # event that is fired once a second
+    self._pending_timeout_heap = []
     self.exit = Event()
 
     self.add_json_route('/exit', self.on_exit, ['POST', 'GET'])
@@ -169,23 +179,33 @@ class Daemon(BaseHTTPServer.HTTPServer):
       return (r, False, m)
     return (None, None, None)
 
+  def add_delayed_task(self, cb, delay, *args):
+    deadline = time.time() + delay
+    to = _Timeout(cb, deadline, args)
+    heapq.heappush(self._pending_timeout_heap, to)
+
   def serve_forever(self):
     self.is_running_ = True
     while self.is_running_:
-      if self.hi_idle.has_listeners:
-        delay = 0.05
-        fire_lo_idle_listeners = False
-      else:
-        delay = 1
-        fire_lo_idle_listeners = True
+      now = time.time()
+      while True:
+        if len(self._pending_timeout_heap):
+          deadline = self._pending_timeout_heap[0].deadline
+          if now > deadline:
+            item = heapq.heappop(self._pending_timeout_heap)
+            item.cb(*item.args)
+          else:
+            next_deadline = deadline
+            break
+        else:
+          next_deadline = now + 0.2
+          break
 
+      delay = next_deadline - now
       r, w, e = select.select([self], [], [], delay)
       if r:
         self.handle_request()
-      else:
-        self.hi_idle.fire()
-      if fire_lo_idle_listeners:
-        self.lo_idle.fire()
+
 
   def shutdown(self):
     self.is_running_ = False

@@ -56,6 +56,10 @@ def is_port_listening(host, port):
   s.close()
   return True
 
+def flush_trace_event(daemon):
+  trace_flush()
+  daemon.add_delayed_task(flush_trace_event, 5, daemon)
+
 def CMDrun(parser, args):
   """Runs the quickopen daemon"""
   (options, args) = parser.parse_args(args)
@@ -66,8 +70,11 @@ def CMDrun(parser, args):
   prelaunchdaemon = None
   try:
     daemon = src.daemon.create(settings.host, settings.port, options.test)
+    if trace_is_enabled():
+      daemon.add_delayed_task(flush_trace_event, 5, daemon)
     db_stub = src.db_stub.DBStub(settings, daemon)
     prelaunchd = src.prelaunchd.PrelaunchDaemon(daemon)
+
     daemon.run()
   finally:
     if prelaunchdaemon:

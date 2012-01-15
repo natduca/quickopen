@@ -24,7 +24,6 @@ class DBStub(object):
     self.db = db.DB(settings)
     self.db.needs_indexing.add_listener(self.on_db_needs_indexing)
     self.server = server
-    self.hi_idle_hook_added = False
 
     server.add_json_route('/begin_reindex', self.begin_reindex, ['POST'])
     server.add_json_route('/dirs/add', self.add_dir, ['POST'])
@@ -39,26 +38,15 @@ class DBStub(object):
     server.add_json_route('/search', self.search, ['POST'])
     if not self.db.is_up_to_date:
       self.on_db_needs_indexing()
-    self.server.lo_idle.add_listener(self.on_daemon_lo_idle)
-    self._last_flush_time = 0
 
   def on_db_needs_indexing(self):
-    if self.hi_idle_hook_added:
-      return
-    self.server.hi_idle.add_listener(self.on_daemon_hi_idle)
+    self.server.add_delayed_task(self._index_a_bit_more, 0.05)
 
-  def on_daemon_lo_idle(self):
-    # self.db.check_up_to_date_a_bit_more()
-    if time.time() - self._last_flush_time > 5:
-      trace_flush()
-      self._last_flush_time = time.time()
-
-  def on_daemon_hi_idle(self):
+  def _index_a_bit_more(self):
     self.db.step_indexer()
 
-    if self.db.is_up_to_date:
-      self.server.hi_idle.remove_listener(self.on_daemon_hi_idle)
-      self.hi_idle_hook_added = False
+    if not self.db.is_up_to_date:
+      self.server.add_delayed_task(self._index_a_bit_more, 0.05)
 
   def add_dir(self, m, verb, data):
     d = self.db.add_dir(data["path"])

@@ -66,7 +66,7 @@ class DBIndexShard(object):
     has_hq = False
     ranker = Ranker()
     for lower_hit in lower_hits:
-      rank = ranker.rank(query, lower_hit)
+      rank = ranker.rank_query(query, lower_hit)
       if rank > 2:
         has_hq = True
         break

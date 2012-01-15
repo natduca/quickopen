@@ -150,7 +150,7 @@ class DBIndex(object):
         files = self.files_by_lower_basename[hit]
         for f in files:
           basename = os.path.basename(f)
-          rank = ranker.rank(basename_query, basename)
+          rank = ranker.rank_query(basename_query, basename)
           hits.append((f,rank))
     else:
       if len(dirpart):
@@ -168,12 +168,11 @@ class DBIndex(object):
           reshits.append(hit)
       hits = reshits
 
-    # sort by rank
-    hits.sort(lambda x,y: -cmp(x[1],y[1]))
-
+    # do one final ranking on the total rank
+    adjusted_hits = ranker.sort_and_adjust_ranks_given_complete_hit_list(hits)
     res = DBIndexSearchResult()
-    res.hits = [c[0] for c in hits]
-    res.ranks = [c[1] for c in hits]
+    res.hits = [c[0] for c in adjusted_hits]
+    res.ranks = [c[1] for c in adjusted_hits]
     res.truncated = truncated
     return res
 

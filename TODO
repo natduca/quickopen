@@ -10,7 +10,6 @@ use memoizing results across rank calls
 Features
 ---------------------------------------------------------------------------
 
-- predictably order extensions (perhaps based on current file)
 - open file specified by an include
 
 - improve directory filters
@@ -28,3 +27,7 @@ Features
 - Right click to ignore an object in open dialog
 
 - Look at prelaunch trace, see if there is room for improvement.
+
+
+- Elide the middles of long filename matches so that you can
+  see the unique part of the filename when dupes are present

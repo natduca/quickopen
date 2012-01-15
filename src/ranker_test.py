@@ -100,7 +100,7 @@ class RankerTest(unittest.TestCase):
     self.assertBasicRankAndWordHitCountIs(29, 4, 'ccframerate', 'CCFrameRateController.cpp')
 
 
-  def test_basic_rank_query_case_doesnt_influence_rank(self):
+  def test_basic_rank_query_case_doesnt_influence_rank_query(self):
     a = self.ranker._get_basic_rank("Rwhvm", "render_widget_host_view_mac.h")
     b = self.ranker._get_basic_rank("rwhvm", "Render_widget_host_view_mac.h")
     self.assertEquals(a, b)
@@ -129,27 +129,22 @@ class RankerTest(unittest.TestCase):
   def test_basic_rank_overconditioned_query(self):
     self.assertBasicRankAndWordHitCountIs(2, 1, 'test_thread_tab.py', 'tw')
 
-  def test_basic_rank_on_suffixes_of_same_base(self):
-    # render_widget.cpp should be ranked higher than render_widget.h
-    # unless the query explicitly matches the .h or .cpp
-    pass
-
   def test_rank_corner_cases(self):
     # empty
-    self.assertEquals(0, self.ranker.rank('foo', ''))
-    self.assertEquals(0, self.ranker.rank('', 'foo'))
+    self.assertEquals(0, self.ranker.rank_query('foo', ''))
+    self.assertEquals(0, self.ranker.rank_query('', 'foo'))
 
     # undersized
-    self.assertEquals(0, self.ranker.rank('foo', 'm'))
-    self.assertEquals(0, self.ranker.rank('f', 'oom'))
+    self.assertEquals(0, self.ranker.rank_query('foo', 'm'))
+    self.assertEquals(0, self.ranker.rank_query('f', 'oom'))
 
     # overconditioned
-    self.assertEquals(2, self.ranker.rank('test_thread_tab.py', 'tw'))
+    self.assertEquals(2, self.ranker.rank_query('test_thread_tab.py', 'tw'))
 
   def test_rank_subclasses_lower_ranked_than_base(self):
     # this tests that hitting all words counts higher than hitting some of the words
-    base_rank = self.ranker.rank("rwhvm", "render_widget_host_view.h")
-    subclass_rank = self.ranker.rank("rwhvm", "render_widget_host_view_subclass.h")
+    base_rank = self.ranker.rank_query("rwhvm", "render_widget_host_view.h")
+    subclass_rank = self.ranker.rank_query("rwhvm", "render_widget_host_view_subclass.h")
     self.assertTrue(base_rank > subclass_rank)
 
   def test_rank_order_for_hierarchy_puts_bases_first(self):
@@ -168,7 +163,7 @@ class RankerTest(unittest.TestCase):
     Makes suer that the first element in the array has highest rank
     and subsequent items have decreasing or equal rank.
     """
-    ranks = [self.ranker.rank(query, n) for n in names]
+    ranks = [self.ranker.rank_query(query, n) for n in names]
     nw = [self.ranker.get_num_words(n) for n in names]
     basic_ranks = [self.ranker._get_basic_rank(query, n) for n in names]
     for i in range(1, len(ranks)):
@@ -182,9 +177,9 @@ class RankerTest(unittest.TestCase):
 
   def test_rank_order_puts_tests_second(self):
     q = "ccframerate"
-    a1 = self.ranker.rank(q, 'CCFrameRateController.cpp')
-    a2 = self.ranker.rank(q, 'CCFrameRateController.h')
-    b = self.ranker.rank(q, 'CCFrameRateControllerTest.cpp')
+    a1 = self.ranker.rank_query(q, 'CCFrameRateController.cpp')
+    a2 = self.ranker.rank_query(q, 'CCFrameRateController.h')
+    b = self.ranker.rank_query(q, 'CCFrameRateControllerTest.cpp')
 
     # This is a hard test to pass because ccframera(te) ties to (Te)st
     # if you weight non-word matches equally.
@@ -192,35 +187,72 @@ class RankerTest(unittest.TestCase):
     self.assertTrue(a2 > b);
 
     q = "chrome_switches"
-    a1 = self.ranker.rank(q, 'chrome_switches.cc')
-    a2 = self.ranker.rank(q, 'chrome_switches.h')
-    b = self.ranker.rank(q, 'chrome_switches_uitest.cc')
+    a1 = self.ranker.rank_query(q, 'chrome_switches.cc')
+    a2 = self.ranker.rank_query(q, 'chrome_switches.h')
+    b = self.ranker.rank_query(q, 'chrome_switches_uitest.cc')
     self.assertTrue(a1 > b);
     self.assertTrue(a2 > b);
 
   def test_rank_order_for_hierarchy_puts_prefixed_second(self):
     q = "ccframerate"
-    a = self.ranker.rank(q, 'CCFrameRateController.cpp')
-    b1 = self.ranker.rank(q, 'webcore_platform.CCFrameRateController.o.d')
-    b2 = self.ranker.rank(q, 'webkit_unit_tests.CCFrameRateControllerTest.o.d')
+    a = self.ranker.rank_query(q, 'CCFrameRateController.cpp')
+    b1 = self.ranker.rank_query(q, 'webcore_platform.CCFrameRateController.o.d')
+    b2 = self.ranker.rank_query(q, 'webkit_unit_tests.CCFrameRateControllerTest.o.d')
     self.assertTrue(a > b1);
     # FAILS because ccframera(te) ties to (Te)st
     # self.assertTrue(a > b2);
 
   def test_rank_order_puts_tests_second_2(self):
     q = "ccdelaybassedti"
-    a1 = self.ranker.rank(q, 'CCDelayBasedTimeSource.cpp')
-    a2 = self.ranker.rank(q, 'CCDelayBasedTimeSource.h')
-    b = self.ranker.rank(q, 'CCDelayBasedTimeSourceTest.cpp')
+    a1 = self.ranker.rank_query(q, 'CCDelayBasedTimeSource.cpp')
+    a2 = self.ranker.rank_query(q, 'CCDelayBasedTimeSource.h')
+    b = self.ranker.rank_query(q, 'CCDelayBasedTimeSourceTest.cpp')
     self.assertTrue(a1 > b);
     self.assertTrue(a2 > b);
 
     q = "LayerTexture"
-    a = self.ranker.rank(q, 'LayerTexture.cpp')
-    b = self.ranker.rank(q, 'LayerTextureSubImage.cpp')
+    a = self.ranker.rank_query(q, 'LayerTexture.cpp')
+    b = self.ranker.rank_query(q, 'LayerTextureSubImage.cpp')
     self.assertTrue(a > b)
 
-  def test_refinement_improves_rank(self):
-    a = self.ranker.rank('render_', 'render_widget.cc')
-    b = self.ranker.rank('render_widget', 'render_widget.cc')
+  def test_refinement_improves_rank_query(self):
+    a = self.ranker.rank_query('render_', 'render_widget.cc')
+    b = self.ranker.rank_query('render_widget', 'render_widget.cc')
     self.assertTrue(b > a)
+
+  def test_rank_sort_and_adjustment_puts_suffixes_into_predictable_order(self):
+    # render_widget.cpp should be get re-ranked higher than render_widget.h
+    adj = self.ranker.sort_and_adjust_ranks_given_complete_hit_list([
+        (10,"render_widget.h"),
+        (10,"render_widget.cpp"),
+        ])
+    self.assertEquals([(10,"render_widget.cpp"),
+                       (10,"render_widget.h")], adj)
+
+    # render_widget.cpp should stay ranked higher than render_widget.h
+    adj = self.ranker.sort_and_adjust_ranks_given_complete_hit_list([
+        (10,"render_widget.cpp"),
+        (10,"render_widget.h"),
+        ])
+    self.assertEquals([(10,"render_widget.cpp"),
+                       (10,"render_widget.h")], adj)
+
+    # but if the ranks mismatch, dont reorder
+    adj = self.ranker.sort_and_adjust_ranks_given_complete_hit_list([
+        (10,"render_widget.cpp"),
+        (12,"render_widget.h"),
+        ])
+    self.assertEquals([(12,"render_widget.h"),
+                       (10,"render_widget.cpp")], adj)
+
+
+  def test_rank_sort_and_adjustment_puts_directories_into_predictable_order(self):
+    # and if d if the ranks mismatch, dont reorder
+    adj = self.ranker.sort_and_adjust_ranks_given_complete_hit_list([
+        (10,"b/render_widget.cpp"),
+        (10,"a/render_widget.cpp"),
+        ])
+    self.assertEquals([(10,"a/render_widget.cpp"),
+                       (10,"b/render_widget.cpp")], adj)
+
+

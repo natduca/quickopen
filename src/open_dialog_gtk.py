@@ -36,6 +36,7 @@ class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
     treeview = gtk.TreeView(model)
     treeview.get_selection().set_mode(gtk.SELECTION_MULTIPLE)
     treeview.get_selection().connect('changed', self._on_treeview_selection_changed)
+
     self.connect('response', self.response)
 
     text_cell_renderer = gtk.CellRendererText()
@@ -88,6 +89,7 @@ class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
     self._treeview = treeview
     self._model = model
     self._truncated_bar = truncated_bar
+    self._filter_entry = filter_entry
 
     filter_entry.grab_focus()
     if self.should_position_cursor_for_replace:
@@ -105,25 +107,53 @@ class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
   def on_destroy(self, *args):
     self.response(None, gtk.RESPONSE_CANCEL)
 
+  def redirect_to_treeview(self, event):
+    print event
+    prev = self.get_focus()
+    self._treeview.grab_focus()
+    ret = self._treeview.emit('key_press_event', event)
+    if prev:
+      prev.grab_focus()
+    return True
+
   def _on_filter_entry_keypress(self,entry,event):
     keyname = gtk.gdk.keyval_name(event.keyval)
 
-    def redirect():
-      prev = self.get_focus()
-      self._treeview.grab_focus()
-      ret = self._treeview.emit('key_press_event', event)
-      if prev:
-        prev.grab_focus()
-      return True
-
     if keyname in ("Up", "Down", "Page_Up", "Page_Down", "Left", "Right"):
-      return redirect()
+      return self.redirect_to_treeview(event)
     elif keyname == "space" and event.state & gtk.gdk.CONTROL_MASK:
-      return redirect()
-    elif keyname == "a" and event.state & gtk.gdk.CONTROL_MASK:
-      return redirect()
+      return self.redirect_to_treeview(event)
+    elif keyname == 'n' and event.state & gtk.gdk.CONTROL_MASK:
+      self.move_selection(1)
+      return True
+    elif keyname == 'p' and event.state & gtk.gdk.CONTROL_MASK:
+      self.move_selection(-1)
+      return True
+    elif keyname == 'a' and event.state & gtk.gdk.CONTROL_MASK:
+      i = self._filter_entry.set_position(0)
+      return True
+    elif keyname == 'e' and event.state & gtk.gdk.CONTROL_MASK:
+      self._filter_entry.set_position(len(self._filter_entry.get_text()))
+      return True
+    elif keyname == 'f' and event.state & gtk.gdk.CONTROL_MASK:
+      i = self._filter_entry.get_position()
+      i = min(i + 1, len(self._filter_entry.get_text()))
+      self._filter_entry.set_position(i)
+      return True
+    elif keyname == 'b' and event.state & gtk.gdk.CONTROL_MASK:
+      i = self._filter_entry.get_position()
+      if i >= 1:
+        self._filter_entry.set_position(i - 1)
+      return True
+    elif keyname == 'k' and event.state & gtk.gdk.CONTROL_MASK:
+      i = self._filter_entry.get_position()
+      t = self._filter_entry.get_text()[:i]
+      self._filter_entry.set_text(t)
+      self._filter_entry.set_position(len(t))
+      return True
     elif keyname == 'Return':
       self.response(gtk.RESPONSE_OK)
+      return True
 
   def _on_filter_text_changed(self,entry):
     text = entry.get_text()
@@ -170,6 +200,36 @@ class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
 
   def _on_treeview_selection_changed(self, selection):
     self.set_response_sensitive(gtk.RESPONSE_OK,selection.count_selected_rows() != 0)
+
+  def move_selection(self, direction):
+    sel = self.get_selected_indices()
+    if len(sel) == 0:
+      if self._model.iter_n_children(None) == 0:
+        return
+      self.set_selected_indices([0])
+      return
+
+    if direction > 0:
+      i = max(sel)
+    else:
+      i = min(sel)
+    i = i + direction
+    if i < 0:
+      return
+    if i >= self._model.iter_n_children(None):
+      return
+    self.set_selected_indices([i])
+
+  def get_selected_indices(self):
+    model,rows = self._treeview.get_selection().get_selected_rows()
+    return [x[0] for x in rows]
+
+  def set_selected_indices(self, indices):
+    sel = self._treeview.get_selection()
+    for i in self.get_selected_indices():
+      sel.unselect_path((i,))
+    for i in indices:
+      sel.select_path((i,))
 
   def get_selected_items(self):
     model,rows = self._treeview.get_selection().get_selected_rows()

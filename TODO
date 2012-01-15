@@ -10,8 +10,6 @@ use memoizing results across rank calls
 Features
 ---------------------------------------------------------------------------
 
-- make gtk open dialog listen to shoudlpositioncursorforedit
-
 - predictably order extensions (perhaps based on current file)
 - open file specified by an include
 
@@ -24,8 +22,6 @@ Features
   ls-files to help indexing?
 
 - Remove extensions from db_index, add extensions after basic basename search
-
-- Emacs C-N C-P move selection up and down
 
 - Warning bar if search() truncated
 

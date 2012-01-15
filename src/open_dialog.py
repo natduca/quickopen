@@ -22,7 +22,8 @@ import time
 
 from trace_event import *
 
-TICK_RATE = 0.025
+TICK_RATE_WHEN_UP_TO_DATE = 0.025
+TICK_RATE_WHEN_NOT_UP_TO_DATE = 0.2
 
 class OpenDialogBase(object):
   @tracedmethod
@@ -37,6 +38,7 @@ class OpenDialogBase(object):
     self._settings = settings
     self._db = db
     self._can_process_queries = False
+    self._db_is_up_to_date = True
     self._last_search_query = None
     self._pending_search = None
     self._options = options
@@ -45,7 +47,7 @@ class OpenDialogBase(object):
     else:
       self.should_position_cursor_for_replace = True
 
-    message_loop.post_delayed_task(self.on_tick, TICK_RATE)
+    message_loop.post_delayed_task(self.on_tick, TICK_RATE_WHEN_UP_TO_DATE)
     
   def set_can_process_queries(self, can_process):
     could_process = self._can_process_queries
@@ -98,9 +100,11 @@ class OpenDialogBase(object):
         stat = self._db.status()
         status = stat.status
         enabled = stat.has_index
+        self._db_is_up_to_date = stat.is_up_to_date
       except Exception, ex:
         status = "quickopend not running"
         enabled = False
+        self._db_is_up_to_date = False
       self.set_status("DB Status: %s" % status)
       self.set_can_process_queries(enabled)
 
@@ -120,7 +124,10 @@ class OpenDialogBase(object):
         check_status()
 
     # renew the tick
-    message_loop.post_delayed_task(self.on_tick, TICK_RATE)
+    if self._db_is_up_to_date:
+      message_loop.post_delayed_task(self.on_tick, TICK_RATE_WHEN_UP_TO_DATE)
+    else:
+      message_loop.post_delayed_task(self.on_tick, TICK_RATE_WHEN_NOT_UP_TO_DATE)
 
   @trace
   def on_done(self, canceled):

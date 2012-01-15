@@ -62,7 +62,7 @@ class TemporaryDaemon(object):
         conn = httplib.HTTPConnection('localhost', TEST_PORT, True)
         conn.request('GET', '/ping')
       except:
-        time.sleep(0.05)
+        time.sleep(0.1)
         continue
 
       res = conn.getresponse()

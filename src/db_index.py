@@ -77,6 +77,7 @@ class DBIndex(object):
     else:
       N = 1
 
+    self._ranker = Ranker()
     chunks = self._make_chunks(list(indexer.files_by_basename.items()), N)
 
     self.shards = [LocalPool(1)]
@@ -139,7 +140,6 @@ class DBIndex(object):
     hits = []
     truncated = False
     max_chunk_hits = max(1, max_hits / len(self.shards))
-    ranker = Ranker()
     if len(basename_query):
       shard_result_handles = []
       # Run the search in parallel across the shards.
@@ -164,7 +164,7 @@ class DBIndex(object):
         files = self.files_by_lower_basename[hit]
         for f in files:
           basename = os.path.basename(f)
-          rank = ranker.rank_query(basename_query, basename)
+          rank = self._ranker.rank_query(basename_query, basename)
           hits.append((f,rank))
       trace_end("rank_results")
     else:
@@ -184,7 +184,7 @@ class DBIndex(object):
       hits = reshits
 
     # do one final ranking on the total rank
-    adjusted_hits = ranker.sort_and_adjust_ranks_given_complete_hit_list(hits)
+    adjusted_hits = self._ranker.sort_and_adjust_ranks_given_complete_hit_list(hits)
     res = DBIndexSearchResult()
     res.hits = [c[0] for c in adjusted_hits]
     res.ranks = [c[1] for c in adjusted_hits]

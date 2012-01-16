@@ -32,10 +32,10 @@ class DBIndexShard(object):
     self.lower_basenames_unsplit = ("\n" + "\n".join(files_by_lower_basename.keys()) + "\n").encode('utf8')
     assert type(self.lower_basenames_unsplit) == str
 
-    ranker = Ranker()
+    self._ranker = Ranker()
     wordstarts = {}
     for basename,files_with_basename in files_by_basename.items():
-      start_letters = ranker.get_start_letters(basename)
+      start_letters = self._ranker.get_start_letters(basename)
       if len(start_letters) <= 1:
         continue
       lower_basename = basename.lower()
@@ -70,9 +70,8 @@ class DBIndexShard(object):
 
     # add in superfuzzy matches ONLY if we have no high-quality hit
     has_hq = False
-    ranker = Ranker()
     for lower_hit in lower_hits:
-      rank = ranker.rank_query(query, lower_hit)
+      rank = self._ranker.rank_query(query, lower_hit)
       if rank > 2:
         has_hq = True
         break
@@ -86,7 +85,6 @@ class DBIndexShard(object):
   def add_all_wordstarts_matching( self, lower_hits, query, max_hits ):
     lower_query = query.lower()
     if lower_query in self.basenames_by_wordstarts:
-      ranker = Ranker()
       for basename in self.basenames_by_wordstarts[lower_query]:
         lower_hits.add(basename)
         if len(lower_hits) >= max_hits:

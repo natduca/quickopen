@@ -17,6 +17,9 @@ import os
 import math
 
 class Ranker(object):
+  def __init__(self):
+    self._memoized_basic_ranks = {}
+
   def _is_wordstart(self, string, index):
     if index == 0:
       return True
@@ -140,8 +143,7 @@ class Ranker(object):
   def _get_basic_rank(self, query, candidate):
 #    print ""
 #    print "[%s] %30s BEGIN" % ("%20s" % query, candidate)
-    memoized_results = {}
-    return self._get_basic_rank_core(memoized_results, 0, query.lower(), 0, candidate, candidate.lower())
+    return self._get_basic_rank_core(self._memoized_basic_ranks, 0, query.lower(), 0, candidate, candidate.lower())
 
   def _get_basic_rank_core(self, memoized_results, enclosing_run_length, query, candidate_index, candidate, lower_candidate):
     """
@@ -155,9 +157,10 @@ class Ranker(object):
     """
     if len(query) == 0:
       return (0, 0)
+    subcandidate = candidate[candidate_index:]
     if query in memoized_results:
-      if candidate_index in memoized_results[query]:
-        return memoized_results[query][candidate_index]
+      if subcandidate in memoized_results[query]:
+        return memoized_results[query][subcandidate]
 
     input_candidate_index = candidate_index
 #    print "[%s] %30s" % ("%20s" % query, candidate[input_candidate_index:])
@@ -214,7 +217,7 @@ class Ranker(object):
 
     if query not in memoized_results:
       memoized_results[query] = {}
-    memoized_results[query][candidate_index] = (best_rank, for_best_rank__num_word_hits)
+    memoized_results[query][subcandidate] = (best_rank, for_best_rank__num_word_hits)
 #    if best_rank > 0:
 #      print "[%s] %30s -> %i via %s" % ("%20s" % query, candidate[input_candidate_index:], best_rank, best_debugstr)
     return best_rank, for_best_rank__num_word_hits

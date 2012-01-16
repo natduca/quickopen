@@ -103,7 +103,7 @@ def wait_for_command(control_port):
     s.close()
     sys.exit(0)
 
-@trace
+@traced
 def run_command_in_existing(daemon_host, daemon_port, args):
   # Prelaunched processes are DISPLAY-specific
   if sys.platform == 'darwin':

@@ -130,7 +130,7 @@ def CMDunignore(parser):
     return 0
   return 255
 
-@trace
+@traced
 def CMDsearch(parser):
   """Search for a file"""
   if prelaunch.is_prelaunched_process() and message_loop.is_curses:
@@ -258,7 +258,7 @@ def load_settings(options):
     options.port = int(options.port)
   return settings
 
-@trace
+@traced
 def open_db(options):
   return src.db_proxy.DBProxy(options.host, options.port, start_if_needed=False, port_for_autostart=options.port)
 

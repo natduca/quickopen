@@ -73,13 +73,13 @@ class OpenDialogBase(object):
 
   @tracedmethod
   def on_tick(self,*args):
-    @trace
+    @traced
     def begin_search():
       self.set_status("DB Status: %s" % "searching")
       self._last_search_query = self._filter_text
       self._pending_search = self._db.search_async(self._last_search_query)
 
-    @trace
+    @traced
     def on_ready():
       try:
         res = self._pending_search.result
@@ -94,7 +94,7 @@ class OpenDialogBase(object):
       trace_end("update_results_list")
       self._pending_search = None
 
-    @trace
+    @traced
     def check_status():
       try:
         stat = self._db.status()
@@ -129,7 +129,7 @@ class OpenDialogBase(object):
     else:
       message_loop.post_delayed_task(self.on_tick, TICK_RATE_WHEN_NOT_UP_TO_DATE)
 
-  @trace
+  @traced
   def on_done(self, canceled):
     self._settings.filter_text = self._filter_text.encode('utf8')
     if canceled:

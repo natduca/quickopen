@@ -52,7 +52,7 @@ class DBIndexShard(object):
       items.sort(lambda x,y: cmp(x[1],y[1]))
       self.basenames_by_wordstarts[ws] = [i[0] for i in items]
 
-  @trace
+  @traced
   def search_basenames(self, query, max_hits):
     lower_query = query.lower()
 

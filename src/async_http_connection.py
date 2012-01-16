@@ -38,7 +38,7 @@ class AsyncHTTPConnection(object):
     self.conn = httplib.HTTPConnection(host, port)
     self.state = IDLE
 
-  @trace
+  @traced
   def connect(self):
     if not self.conn.sock:
       try:
@@ -47,7 +47,7 @@ class AsyncHTTPConnection(object):
         print 'died during connect'
         raise AsyncError()
 
-  @trace
+  @traced
   def begin_request(self, method, url, data = None):
     if self.state != IDLE:
       raise RequestPending()
@@ -67,7 +67,7 @@ class AsyncHTTPConnection(object):
       print 'died during begin_request'
       raise AsyncError()
 
-  @trace
+  @traced
   def is_response_ready(self, timeout = 0):
     if self.state == IDLE:
       raise RequestNotPending()
@@ -84,7 +84,7 @@ class AsyncHTTPConnection(object):
       return False
 
 
-  @trace
+  @traced
   def get_response(self):
     if self.state == REQUEST_PENDING:
       raise RequestPending()

@@ -1,12 +1,21 @@
 Bugs
 ---------------------------------------------------------------------------
 
-make the gtk.Window a member var of OpenDialogGtk rather than a parent class
+exact-match base/bind.h --> 
+/Users/nduca/Local/chrome/src/chrome/test/base/browser_with_test_window_test.h
+
+Make emacs ff-find-*-file mode doesnt work in non-GUI environment
+[curses UI being async is the core issue]
+
+"filter_text" : "Øfd" --> wont work in most places
+
+Fix gtk dialog warning on close by making the gtk.Window a member var of
+OpenDialogGtk rather than a parent class.
+
+curses UI doesn't know when the terminal resized.
 
 Features
 ---------------------------------------------------------------------------
-
-- open file specified by an include
 
 - improve directory filters
 - speed up empty-dir-query, e.g. foo/
@@ -16,14 +25,13 @@ Features
 - Make indexer be multithreaded [move pool from index upward?]; use git
   ls-files to help indexing?
 
-- Remove extensions from db_index, add extensions after basic basename search
-
 - Warning bar if search() truncated
 
 - Right click to ignore an object in open dialog
 
-- Look at prelaunch trace, see if there is room for improvement.
-
-
 - Elide the middles of long filename matches so that you can
   see the unique part of the filename when dupes are present
+
+- Reduce memory footprint
+
+- emacs ffap-alist support

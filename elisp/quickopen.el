@@ -16,26 +16,62 @@
 
 (provide 'quickopen)
 
-(defvar quickopen-prefer-curses nil
-  "Set this to t in order to have quickopen prefer curses UI all
-the time")
+;; This provides a find-file implementation that will call out to
+;; quickopen for actual selection.
+;;
+;;    (quickopen-find-file)
+;;
+;; The default keybinding is to C-q
+;;
+;; In a GUI-based emacs, the regular quickopen GUI is used.
+;;
+;; In a terminal emacs, the quickopen curses UI is used.
+;;
+;; Note that in curses mode, (quickopen-find-file) is asynchronous.
+;; Patches welcome to rework it to use a minibuffer.
 
-(defun quickopen-gui()
-  (interactive "")
-  (let (res)
-    (setq res (with-temp-buffer
-                (call-process (format "%s/%s" quickopen-dir-base "quickopen") nil t nil "prelaunch" "search" "--ok" "--lisp-results")
-                (discard-input) ;; needed because call-process can take a WHILE
-                (quickopen-get-results-from-current-buffer)
-                )
-          )
-    (mapcar (lambda (file)
-              (find-file file)
-              )
-            res)
+(defcustom quickopen-override-ff-find t
+  "If non-nil, uses quickopen to service ff-find-other commands."
+  :type 'boolean
+  :group 'quickopen)
+
+(defcustom quickopen-prefer-curses nil
+  "If non-nil, quickopen will prefer the curses UI all the time"
+  :type 'boolean
+  :group 'quickopen)
+
+
+(defun quickopen-has-gui ()
+  (when (fboundp 'window-system)
+    (when window-system
+      1)))
+
+;; Default keybindings... these may smell bad. Patches welcome!
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(if (quickopen-has-gui)
+    (progn
+      (global-set-key (kbd "C-q") (lambda ()
+                                    (interactive "")
+                                    (quickopen-find-file)))
+      (global-set-key (kbd "M-O") (lambda ()
+                                    (interactive "")
+                                    (quickopen-find-file)))
+      (global-set-key (kbd "A-O") (lambda ()
+                                    (interactive "")
+                                    (quickopen-find-file)))
+      (global-set-key (kbd "s-O") (lambda ()
+                                    (interactive "")
+                                    (quickopen-find-file)))
+      )
+  (progn
+    (global-set-key (kbd "C-q") (lambda ()
+                                  (interactive "")
+                                  (quickopen-find-file)))
     )
   )
 
+;; Helper functions
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun quickopen-strrchr(x y)
   (with-temp-buffer
     (insert x)
@@ -47,18 +83,42 @@ the time")
     (substring true-load-file-name
                0
                (quickopen-strrchr true-load-file-name "/elisp"))))
-
 (message (format "QuickOpen loaded at %s" quickopen-dir-base))
 
-(defun quickopen-has-gui ()
-  (when (fboundp 'window-system)
-    (when window-system
-      1)))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun quickopen-find-file-using-gui(&optional query skip-ui-if-exact-match other-window)
+  (interactive "")
+  (let (res)
+    (setq res (with-temp-buffer
+                (let ((args (list (format "%s/%s" quickopen-dir-base "quickopen") nil t nil "prelaunch" "search" "--ok" "--lisp-results")))
+                  (when skip-ui-if-exact-match
+                    (setq args (append args '("--skip-ui-if-exact-match")))
+                    )
+                  (when query
+                    (setq args (append args (list query)))
+                    )
+                  (apply 'call-process  args)
+                  )
+                (discard-input) ;; needed because call-process can take a WHILE
+                (quickopen-get-results-from-current-buffer)
+                )
+          )
+    (mapcar (lambda (file)
+              (if (not other-window)
+                  (find-file file)
+                (find-file-other-window file)
+                )
+              )
+            res)
+    )
+  )
 
 (defvar quickopen-current-buffer nil)
+(defvar quickopen-current-buffer-open-result-in-other-window nil)
 (defvar quickopen-old-window-configuration nil)
 
-(defun quickopen-curses ()
+(defun quickopen-find-file-using-curses (&optional query skip-ui-if-exact-match other-window)
   (if quickopen-current-buffer
       (progn
         (message "Already open, cannot continue.")
@@ -72,7 +132,18 @@ the time")
           (delete-region (point-min) (point-max))
           )
         )
-      (setq quickopen-current-buffer (make-term "quickopen" program nil "--curses" "--ok" "--lisp-results"))
+      (setq quickopen-current-buffer 
+            (let ((args (list "quickopen" program nil "--curses" "--ok" "--lisp-results")))
+              (when skip-ui-if-exact-match
+                (setq args (append args '("--skip-ui-if-exact-match")))
+                )
+              (when query
+                (setq args (append args (list query)))
+                )
+              (apply 'make-term  args)
+              )
+            )
+      (setq quickopen-current-buffer-open-result-in-other-window other-window)
       (set-buffer quickopen-current-buffer)
       (term-mode)
       (term-char-mode)
@@ -88,7 +159,7 @@ the time")
     )
   )
 
-;; override linum-on to prevent
+;; override linum-on in quickopen buffer since it breaks term mode
 (when (fboundp 'linum-on)
   (defadvice linum-on (after quickopen-after-linum-on)
     (when (string= "*quickopen*" (buffer-name))
@@ -115,7 +186,7 @@ the time")
     )
   )
 
-(defun quickopen-curses-exited (process-name msg)
+(defun quickopen-find-file-using-curses-exited (process-name msg)
   (let ((res (quickopen-get-results-from-current-buffer)))
     ;; Kill old buffer later --- we're inside the proc-death function so killing it 
     ;; now will make term-mode cry.
@@ -126,7 +197,7 @@ the time")
                    )
                  quickopen-current-buffer
                  )
-    ;; Clear the buffer flag immediately so that quickopen-curses understands
+    ;; Clear the buffer flag immediately so that quickopen-find-file-using-curses understands
     ;; that it can create a new buffer.
     (setq quickopen-current-buffer nil)
 
@@ -137,7 +208,10 @@ the time")
     ;; open stuff up
     (when res
       (mapcar (lambda (file)
-                (find-file file)
+                (if (not quickopen-current-buffer-open-result-in-other-window)
+                    (find-file file)
+                  (find-file-other-window file)
+                  )
                 )
               res
               )
@@ -147,27 +221,47 @@ the time")
 
 (defadvice term-handle-exit (after quickopen-term-handle-exit (process-name msg))
   (when (eq (current-buffer) quickopen-current-buffer)
-    (quickopen-curses-exited process-name msg)
+    (quickopen-find-file-using-curses-exited process-name msg)
     )
   )
 (ad-activate 'term-handle-exit)
 
-
-(if (quickopen-has-gui)
-    (progn
-      (global-set-key (kbd "M-O") (lambda ()
-                                    (interactive "")
-                                    (quickopen-gui)))
-      (global-set-key (kbd "A-O") (lambda ()
-                                    (interactive "")
-                                    (quickopen-gui)))
-      (global-set-key (kbd "s-O") (lambda ()
-                                    (interactive "")
-                                    (quickopen-gui)))
-      )
-  (progn
-    (global-set-key (kbd "C-q") (lambda ()
-                                  (interactive "")
-                                  (quickopen-curses)))
+;; Actual quickopen find function
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun quickopen-find-file (&optional query skip-ui-if-exact-match other-window)
+  "Opens a file using quickopen. Note, this is currently asynchronous in terminal mode."
+  (if (and (quickopen-has-gui) (not quickopen-prefer-curses))
+      (quickopen-find-file-using-gui query skip-ui-if-exact-match other-window)
+    (quickopen-find-file-using-curses query skip-ui-if-exact-match other-window)
     )
   )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Can only hook ff-find in GUI mode because curses mode quickopen is
+;; asynchronous.
+(when (and quickopen-override-ff-find (quickopen-has-gui))
+  (defadvice ff-get-file (around quickopen-ff-get-file (search-dirs filename-template &optional suffix-list other-window))
+    (message "quickopen hooked")
+    (setq ad-return-value 
+          (let ((filename (ff-get-file-name search-dirs filename-template suffix-list)))
+            (cond
+             ((not filename)
+              (message "quickopen fallback")
+              (quickopen-find-file filename-template t other-window)
+              t)
+             
+             ((bufferp (get-file-buffer filename))
+              (ff-switch-to-buffer (get-file-buffer filename) other-window)
+              filename)
+             
+             ((file-exists-p filename)
+              (ff-find-file filename other-window nil)
+              filename)
+             )
+            )
+          )
+    )
+    (ad-activate 'ff-get-file)
+  )
+
+

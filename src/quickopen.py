@@ -148,18 +148,37 @@ def CMDsearch(parser):
     trace_enable("%s.trace" % sys.argv[0])
   db = open_db(options)
 
+  def print_results(res, canceled):
+    if options.ok and not canceled:
+      print "OK"
+
+    if options.results_file:
+      ofile = open(options.results_file, 'w')
+    else:
+      ofile = sys.stdout
+
+    if options.lisp_results:
+      ofile.write("(%s)\n" % (" ".join(['"%s"' % x for x in res])))
+    else:
+      ofile.write("\n".join(res))
+    ofile.write("\n")
+
+    if options.results_file:
+      ofile.close()
+
   if options.skip_if_exact:
     match = db.search_exact(args[0])
     if match:
-      print match
+      print_results([match], False)
       return 0
 
-  import src.open_dialog as open_dialog
   if len(args):
     initial_filter = " ".join(args)
   else:
     initial_filter = None
-  open_dialog.run(settings, options, db, initial_filter) # will not return on osx.
+
+  import src.open_dialog as open_dialog
+  open_dialog.run(settings, options, db, initial_filter, print_results) # will not return on osx.
 
 def CMDstatus(parser):
   """Checks the status of the quick open database"""

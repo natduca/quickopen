@@ -42,6 +42,7 @@ class OpenDialogBase(object):
     self._last_search_query = None
     self._pending_search = None
     self._options = options
+    self._print_results_cb = None
     if initial_filter:
       self.should_position_cursor_for_replace = False
     else:
@@ -49,6 +50,17 @@ class OpenDialogBase(object):
 
     message_loop.post_delayed_task(self.on_tick, TICK_RATE_WHEN_UP_TO_DATE)
     
+  @property
+  def print_results_cb(self):
+    """When results from the dialog are available, this callback is called.
+    The callback is of the form (results, canceled)
+    """
+    return self._print_results_cb
+
+  @print_results_cb.setter
+  def print_results_cb(self, cb):
+    self._print_results_cb = cb
+
   def set_can_process_queries(self, can_process):
     could_process = self._can_process_queries
     self._can_process_queries = can_process
@@ -165,23 +177,8 @@ class OpenDialogBase(object):
       if len(res) == 0:
         return
 
-    if self._options.ok and not canceled:
-      print "OK"
-
-    if self._options.results_file:
-      ofile = open(self._options.results_file, 'w')
-    else:
-      ofile = sys.stdout
-
-    if self._options.lisp_results:
-      ofile.write("(%s)\n" % (" ".join(['"%s"' % x for x in res])))
-    else:
-      ofile.write("\n".join(res))
-    ofile.write("\n")
-
-    if self._options.results_file:
-      ofile.close()
-
+    if self._print_results_cb:
+      self._print_results_cb(res, canceled)
     message_loop.quit_main_loop() # end of the line, no further output will happen
 
 def _pick_open_dialog():
@@ -197,8 +194,11 @@ def _pick_open_dialog():
     raise Exception("Unrecognized message loop type.")
 OpenDialog = _pick_open_dialog()
 
-def run(settings, options, db, initial_filter):
+def run(settings, options, db, initial_filter, print_results_cb = None):
   def go():
-    OpenDialog(settings, options, db, initial_filter)
+    dlg = OpenDialog(settings, options, db, initial_filter)
+    if print_results_cb:
+      dlg.print_results_cb = print_results_cb
+
   message_loop.post_task(go)
   message_loop.run_main_loop()

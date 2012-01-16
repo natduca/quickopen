@@ -129,13 +129,42 @@ class OpenDialogBase(object):
     else:
       message_loop.post_delayed_task(self.on_tick, TICK_RATE_WHEN_NOT_UP_TO_DATE)
 
+  # When someone knows exactly what they want, they are often familiar with what
+  # to type, and so have typed it exactly and completely, possibly before the
+  # GUI even was fully up. At that point, there may be a search pending, and that
+  # search may not include all the characters that they typed .E.g:
+  #   input: ab
+  #                we start a query
+  #   input: cd <enter>
+  #                on_done called
+  #
+  # Their intent is us opening the first hit for abcd. To achieve this,
+  # we need to wait until the current query is done. This will begin a new query
+  # we for 'cd' which we will then wait for as well.
+  @traced
+  def _wait_for_pending_search_complete(self, wait_again=True):
+    if not self._pending_search:
+      return
+    start_wait = time.time()
+    while not self._pending_search.ready and time.time() < start_wait + 1:
+      time.sleep(0.05)
+    self.on_tick()
+    if wait_again and self._pending_search:
+      return self._wait_for_pending_search_complete(False)
+
   @traced
   def on_done(self, canceled):
     self._settings.filter_text = self._filter_text.encode('utf8')
     if canceled:
       res = []
     else:
+      self._wait_for_pending_search_complete()
       res = self.get_selected_items()
+
+      # If nothing was matched on the final search, leave the UI up.
+      if len(res) == 0:
+        return
+
     if self._options.ok and not canceled:
       print "OK"
 

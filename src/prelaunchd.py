@@ -71,7 +71,9 @@ class PrelaunchDaemon(object):
 
   @tracedmethod
   def _launch_new_quickopen(self, display):
-    assert display not in self._quickopen
+    if display in self._quickopen:
+      return
+
     quickopen_script = os.path.join(os.path.dirname(__file__), "../quickopen")
     assert os.path.exists(quickopen_script)
 

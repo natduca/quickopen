@@ -14,18 +14,13 @@
 import os
 
 class SearchResult(object):
-  def __init__(self, filenames=None, ranks=None, items=None, truncated=False):
-    if filenames and ranks:
-      self.filenames = filenames
-      self.ranks = ranks
-    elif items:
-      self.filenames = [x[0] for x in items]
-      self.ranks = [x[1] for x in items]
-    elif not filenames and not ranks:
+  def __init__(self, hits=None, truncated=False):
+    if hits:
+      self.filenames = [x[0] for x in hits]
+      self.ranks = [x[1] for x in hits]
+    else:
       self.filenames = []
       self.ranks = []
-    else:
-      raise Exception("Unexpected")
     self.truncated = truncated
 
   def as_dict(self):
@@ -68,7 +63,7 @@ class SearchResult(object):
     res = SearchResult()
     res.truncated = self.truncated
 
-    for hit,rank in self.items():
+    for hit,rank in self.hits():
       if self._is_exact_match(query, hit):
         res.filenames.append(hit)
         res.ranks.append(rank)
@@ -77,7 +72,7 @@ class SearchResult(object):
   def is_empty(self):
     return len(self.filenames) == 0
 
-  def items(self):
+  def hits(self):
     for i in range(len(self.filenames)):
       yield (self.filenames[i], self.ranks[i])
 
@@ -96,7 +91,10 @@ class SearchResult(object):
         return j
       return cmp(x[0], y[0])
 
-    items = list(self.items())
-    items.sort(hit_cmp)
-    self.filenames = [x[0] for x in items]
-    self.ranks = [x[1] for x in items]
+    hits = list(self.hits())
+    hits.sort(hit_cmp)
+    self.filenames = [x[0] for x in hits]
+    self.ranks = [x[1] for x in hits]
+
+  def get_copy_with_max_hits(self, max_hits):
+    return SearchResult(hits=list(self.hits())[:max_hits], truncated=self.truncated)

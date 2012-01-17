@@ -57,7 +57,7 @@ class SearchResultTest(unittest.TestCase):
     self.assertEquals([], exact_res.filenames)
 
   def test_rank_sort_and_adjustment_puts_suffixes_into_predictable_order(self):
-    res = SearchResult(items=[("render_widget.h", 10),
+    res = SearchResult(hits=[("render_widget.h", 10),
                               ("render_widget.cpp", 10)])
     # render_widget.cpp should be get re-ranked higher than render_widget.h
     res.apply_global_rank_adjustment()
@@ -65,7 +65,7 @@ class SearchResultTest(unittest.TestCase):
                        "render_widget.h",], res.filenames)
 
     # render_widget.cpp should stay ranked higher than render_widget.h
-    res = SearchResult(items=[("render_widget.cpp", 10),
+    res = SearchResult(hits=[("render_widget.cpp", 10),
                               ("render_widget.h", 10)])
 
     res.apply_global_rank_adjustment()
@@ -73,14 +73,14 @@ class SearchResultTest(unittest.TestCase):
                        "render_widget.h"], res.filenames)
 
     # but if the ranks mismatch, dont reorder
-    res = SearchResult(items=[("render_widget.cpp", 10),
+    res = SearchResult(hits=[("render_widget.cpp", 10),
                               ("render_widget.h", 12)])
     res.apply_global_rank_adjustment()
     self.assertEquals(["render_widget.h",
                        "render_widget.cpp"], res.filenames)
 
   def test_rank_sort_and_adjustment_puts_directories_into_predictable_order(self):
-    res = SearchResult(items=[("b/render_widget.cpp", 10),
+    res = SearchResult(hits=[("b/render_widget.cpp", 10),
                               ("a/render_widget.cpp", 10)])
 
     # and if d if the ranks mismatch, dont reorder

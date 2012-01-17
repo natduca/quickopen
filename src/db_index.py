@@ -171,9 +171,7 @@ class DBIndex(object):
       hits = reshits
 
     # do one final ranking on the total rank
-    res = SearchResult(items=hits, truncated=truncated)
+    res = SearchResult(hits=hits, truncated=truncated)
     res.apply_global_rank_adjustment()
-
-    trimmed_res = SearchResult(items=list(res.items())[:max_hits], truncated=res.truncated)
-    return trimmed_res
+    return res.get_copy_with_max_hits(max_hits)
 

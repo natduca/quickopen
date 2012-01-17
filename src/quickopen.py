@@ -238,7 +238,7 @@ def CMDrawsearch(parser):
 
   res = db.search(args[0],**search_args)
   if options.show_rank:
-    combined = res.items()
+    combined = res.hits()
     print "\n".join(["%i,%s" % (c[1],c[0]) for c in combined])
   else:
     print "\n".join([x for x in res.filenames])

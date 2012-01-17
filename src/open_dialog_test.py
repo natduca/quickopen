@@ -13,6 +13,7 @@
 # limitations under the License.
 import db_test_base
 import open_dialog
+import os
 import message_loop
 import settings
 import tempfile

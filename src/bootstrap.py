@@ -24,7 +24,21 @@ def run():
   main_name = sys.argv[2]
   del sys.argv[1:3] # remove the --main-name argument
 
-  sys.path.append(os.path.join(os.path.dirname(__file__), "../third_party/py_trace_event/"))
+  tracedir = os.path.join(os.path.dirname(__file__), "../third_party/py_trace_event/")
+
+  # A recent change to py_trace_event leaves an old trace_event dir with .pyc files
+  # hanging around. This prevents importing the new trace_event. Clobber it if it is found.
+  tracedir_old_style_traceevent = os.path.join(tracedir, "trace_event")
+  if os.path.exists(tracedir) and os.path.exists(tracedir_old_style_traceevent) and os.path.isdir(tracedir_old_style_traceevent):
+    for root, dirs, files in os.walk(tracedir_old_style_traceevent, False, None, False):
+      for f in files:
+        os.unlink(os.path.join(root, f))
+      for d in dirs:
+        os.rmdir(os.path.join(root, d))
+    os.rmdir(tracedir_old_style_traceevent)
+
+  # Import trace event as usual.
+  sys.path.append(tracedir)
   try:
     __import__("trace_event")
   except:

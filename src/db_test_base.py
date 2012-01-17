@@ -239,3 +239,33 @@ class DBTestBase(object):
     self.db.unignore("foo")
     self.assertRaises(Exception, lambda: self.db.unignore("foo"))
     self.assertFalse(self.db.is_up_to_date)
+
+  def test_search_max_hits(self):
+    self.db.add_dir(self.test_data_dir)
+    self.db.sync()
+    res = self.db.search("a")
+    self.assertTrue(len(res.hits) > 2)
+    resLimited = self.db.search("a", max_hits=2)
+    self.assertEquals(2, len(resLimited.hits))
+
+  def test_exact_search(self):
+    x = self.db.add_dir(self.test_data_dir)
+    self.db.sync()
+
+    r = self.db.search("nonexistent", exact_match = True)
+    self.assertEquals(r.hits, [])
+
+    r = self.db.search("MyClass.c", exact_match = True)
+    self.assertEquals(r.hits, [self.test_data.path_to("project1/MyClass.c")])
+
+    exact_readme1 = self.test_data.path_to("something/README")
+    exact_readme2 = self.test_data.path_to("svnproj/README")
+    r = self.db.search("README", exact_match = True)
+    self.assertEquals(r.hits, [exact_readme1, exact_readme2])
+
+    r = self.db.search(exact_readme1, exact_match = True)
+    self.assertEquals(r.hits, [exact_readme1])
+
+    r = self.db.search(exact_readme2, exact_match = True)
+    self.assertEquals(r.hits, [exact_readme2])
+

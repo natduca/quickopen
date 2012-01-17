@@ -167,9 +167,9 @@ def CMDsearch(parser):
       ofile.close()
 
   if options.skip_if_exact:
-    match = db.search_exact(args[0])
-    if match:
-      print_results([match], False)
+    res = db.search(args[0], exact_match=True)
+    if len(res.hits) == 1:
+      print_results(res.hits, False)
       return 0
 
   if len(args):

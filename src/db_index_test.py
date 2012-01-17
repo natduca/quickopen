@@ -68,6 +68,49 @@ class DBIndexTestBase(object):
   def test_dir_and_name_query(self):
     self.assertTrue("~/ndbg/quickopen/src/db_proxy_test.py" in self.index.search('src/db_proxy_test.py').hits)
 
+
+class DBIndexSearchResultTest(unittest.TestCase):
+  def test_is_exact_match_1(self):
+    res = db_index.DBIndexSearchResult()
+    self.assertTrue(res._is_exact_match("a.txt", "a.txt"))
+    self.assertTrue(res._is_exact_match("b/a.txt", "b/a.txt"))
+
+    self.assertTrue(res._is_exact_match("a.txt", "a/b/a.txt"))
+    self.assertTrue(res._is_exact_match("abcd.txt", "a/b/abcd.txt"))
+    self.assertFalse(res._is_exact_match("a.txt", "a/b/ba.txt"))
+
+    self.assertFalse(res._is_exact_match("a/b.txt", "a/b/b.txt"))
+    self.assertTrue(res._is_exact_match("a/b.txt", "a/a/b.txt"))
+
+    self.assertFalse(res._is_exact_match("a/b.txt", "ba/b.txt"))
+
+    self.assertFalse(res._is_exact_match("a/bcd.txt", "b/bcd.txt"))
+
+  def make_result(self, hits):
+    res = db_index.DBIndexSearchResult()
+    for h in hits:
+      res.hits.append(h)
+      res.ranks.append(10)
+    return res
+
+  def test_query_for_exact_matches(self):
+    res = self.make_result(["a/bcd.txt", "b/bcd.txt"])
+
+    exact_res = res.query_for_exact_matches("bcd.txt")
+    self.assertEquals(len(exact_res.ranks), len(exact_res.hits))
+    self.assertEquals(2, len(exact_res.hits))
+    self.assertEquals(["a/bcd.txt", "b/bcd.txt"], exact_res.hits)
+
+    exact_res = res.query_for_exact_matches("b/bcd.txt")
+    self.assertEquals(len(exact_res.ranks), len(exact_res.hits))
+    self.assertEquals(1, len(exact_res.hits))
+    self.assertEquals(["b/bcd.txt"], exact_res.hits)
+
+    exact_res = exact_res.query_for_exact_matches("x/bcd.txt")
+    self.assertEquals(len(exact_res.ranks), len(exact_res.hits))
+    self.assertEquals(0, len(exact_res.hits))
+    self.assertEquals([], exact_res.hits)
+
 class DBIndexTestMT(unittest.TestCase, DBIndexTestBase):
   def setUp(self,*args,**kwargs):
     self.threaded = True

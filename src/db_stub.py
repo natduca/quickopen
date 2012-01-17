@@ -15,6 +15,7 @@ import daemon
 import db
 import re
 import time
+import urlparse
 
 from trace_event import *
 
@@ -35,7 +36,7 @@ class DBStub(object):
     server.add_json_route('/ignores/remove', self.ignores_remove, ['POST'])
     server.add_json_route('/sync', self.sync, ['POST'])
     server.add_json_route('/status', self.status, ['GET'])
-    server.add_json_route('/search', self.search, ['POST'])
+    server.add_json_route('/search(.*)', self.search, ['POST'])
     if not self.db.is_up_to_date:
       self.on_db_needs_indexing()
 
@@ -87,7 +88,14 @@ class DBStub(object):
 
   @tracedmethod
   def search(self, m, verb, data):
-    return self.db.search(data).as_dict()
+    options = urlparse.parse_qs(urlparse.urlparse(m.group(0)).query)
+    kwargs = {}
+    if "max_hits" in options:
+      kwargs["max_hits"] = int(options["max_hits"][0])
+    if "exact_match" in options:
+      if options["exact_match"][0] == "True":
+        kwargs["exact_match"] = True
+    return self.db.search(data, **kwargs).as_dict()
 
   @tracedmethod
   def sync(self, m, verb, data):

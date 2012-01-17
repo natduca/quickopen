@@ -42,6 +42,46 @@ class DBIndexSearchResult(object):
     r.truncated = d["truncated"]
     return r
 
+  def _is_exact_match(self, query, hit):
+    # Endswith is a quick way to discard most non-exact matches.
+    # e.g. a/b.txt matched by b.txt simply ending with b.txt
+    if not hit.endswith(query):
+      return False
+
+    # This basic rule leaves the false positive:
+    #    ba/b.txt  as exact for b.txt
+    # so eliminate that as well by enforcing that the
+    # match covers the full string or is immediatley to the right
+    # of a separator.
+    first_idx = hit.rfind(query)
+    if first_idx == 0:
+      return True
+    if hit[first_idx - 1] == os.sep:
+      return True
+    return False
+
+  def query_for_exact_matches(self, query):
+    """
+    Returns a new DBIndexSearchResult object containing only hits that exactly
+    match the provided query.
+    """
+    
+    res = DBIndexSearchResult()
+    res.truncated = self.truncated
+
+    for hit,rank in self.items():
+      if self._is_exact_match(query, hit):
+        res.hits.append(hit)
+        res.ranks.append(rank)
+    return res
+
+  def is_empty(self):
+    return len(self.hits) == 0
+
+  def items(self):
+    for i in range(len(self.hits)):
+      yield (self.hits[i], self.ranks[i])
+
 def ShardInit(files_by_basename):
   global slave
   slave = db_index_shard.DBIndexShard(files_by_basename)
@@ -119,13 +159,14 @@ class DBIndex(object):
 
   @tracedmethod
   def search(self, query, max_hits = 100):
+    qkey = query + "@%i" % max_hits
     assert len(query) > 0
-    if query in self.query_cache:
-      res = self.query_cache[query]
+    if qkey in self.query_cache:
+      res = self.query_cache[qkey]
       return res
 
     res = self.search_nocache(query, max_hits)
-    self.query_cache[query] = res
+    self.query_cache[qkey] = res
     return res
 
   def search_nocache(self, query, max_hits = 100):
@@ -139,14 +180,18 @@ class DBIndex(object):
 
     hits = []
     truncated = False
-    max_chunk_hits = max(1, max_hits / len(self.shards))
+
+    # max_shard_hits does not control the amount of hits created. Its rather just a way to
+    # limit the work done per shard to a reasonable value. The max_hits value is enforced
+    # after all shard results have been computed.
+    max_shard_hits = max(10, max_hits / len(self.shards))
     if len(basename_query):
       shard_result_handles = []
       # Run the search in parallel across the shards.
       trace_begin("issue_search")
       for i in range(len(self.shards)):
         shard = self.shards[i]
-        shard_result_handles.append(shard.apply_async(ShardSearchBasenames, (basename_query, max_chunk_hits)))
+        shard_result_handles.append(shard.apply_async(ShardSearchBasenames, (basename_query, max_shard_hits)))
       trace_end("issue_search")
 
       # union the results
@@ -185,6 +230,8 @@ class DBIndex(object):
 
     # do one final ranking on the total rank
     adjusted_hits = self._ranker.sort_and_adjust_ranks_given_complete_hit_list(hits)
+    adjusted_hits = adjusted_hits[:max_hits]
+
     res = DBIndexSearchResult()
     res.hits = [c[0] for c in adjusted_hits]
     res.ranks = [c[1] for c in adjusted_hits]

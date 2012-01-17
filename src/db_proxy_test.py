@@ -40,27 +40,6 @@ class DBProxyTest(db_test_base.DBTestBase, unittest.TestCase):
     self.assertEquals(1, len(res.hits))
     self.assertEquals(os.path.join(self.test_data_dir, 'project1/MySubSystem.c'), res.hits[0])
 
-  def test_exact_search(self):
-    x = self.db.add_dir(self.test_data_dir)
-    self.db.sync()
-
-    r = self.db.search_exact("nonexistent")
-    self.assertEquals(r, None)
-
-    r = self.db.search_exact("MyClass.c")
-    self.assertEquals(r, self.test_data.path_to("project1/MyClass.c"))
-
-    r = self.db.search_exact("README")
-    self.assertEquals(r, None)
-
-    exact_file1 = self.test_data.path_to("something/README")
-    r = self.db.search_exact(exact_file1)
-    self.assertEquals(r, exact_file1)
-
-    exact_file2 = self.test_data.path_to("svnproj/README")
-    r = self.db.search_exact(exact_file2)
-    self.assertEquals(r, exact_file2)
-
   def tearDown(self):
     self.daemon.close()
     db_test_base.DBTestBase.tearDown(self)

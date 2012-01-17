@@ -240,21 +240,23 @@ class DB(object):
       self.step_indexer()
 
   ###########################################################################
-  def _empty_result(self):
-    return DBIndexSearchResult()
-
   @traced
-  def search(self, query, max_hits = -1):
+  def search(self, query, max_hits = -1, exact_match = False):
     if self._pending_indexer:
       self.step_indexer()
       # step sync might change the db sync status
       if not self._cur_index:
-        return self._empty_result()
+        return DBIndexSearchResult()
 
     if query == '':
-      return self._empty_result()
+      return DBIndexSearchResult()
 
     if max_hits == -1:
-      return self._cur_index.search(query)
+      result = self._cur_index.search(query)
     else:
-      return self._cur_index.search(query, max_hits)
+      result = self._cur_index.search(query, max_hits)
+
+    if exact_match:
+      return result.query_for_exact_matches(query)
+
+    return result

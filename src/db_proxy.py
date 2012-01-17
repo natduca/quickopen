@@ -19,6 +19,8 @@ import subprocess
 import sys
 import time
 import json
+import urllib
+import urlparse
 
 from db import DBStatus
 from db_index import DBIndexSearchResult
@@ -145,25 +147,17 @@ class DBProxy(object):
       raise "Pattern not found"
 
   @tracedmethod
-  def search(self, q):
-    d = self._req('POST', '/search', q)
+  def search(self, q, max_hits = -1, exact_match = False):
+    options = {}
+    if max_hits != -1:
+      options["max_hits"] = max_hits
+    if exact_match:
+      options["exact_match"] = True
+    if len(options):
+      d = self._req('POST', '/search?%s' % urllib.urlencode(options), q)
+    else:
+      d = self._req('POST', '/search', q)
     return DBIndexSearchResult.from_dict(d)
-
-  @tracedmethod
-  def search_exact(self, q):
-    res = self.search(q)
-
-    pattern = os.sep + q
-    found = None
-
-    for h in res.hits:
-      if h == q or h[len(h) - len(pattern):len(h)] == pattern:
-        if found:
-          return None
-        found = h;
-    if not found:
-      return None
-    return h
 
   def search_async(self, q):
     return AsyncSearch(self.host, self.port, q)

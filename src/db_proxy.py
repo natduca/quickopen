@@ -23,7 +23,7 @@ import urllib
 import urlparse
 
 from db import DBStatus
-from db_index import DBIndexSearchResult
+from search_result import SearchResult
 from event import Event
 from trace_event import *
 
@@ -161,7 +161,7 @@ class DBProxy(object):
       d = self._req('POST', '/search?%s' % urllib.urlencode(options), q)
     else:
       d = self._req('POST', '/search', q)
-    return DBIndexSearchResult.from_dict(d)
+    return SearchResult.from_dict(d)
 
   def search_async(self, q, max_hits = -1, exact_match = False, current_filename = None, open_filenames = []):
     return AsyncSearch(self.host, self.port, q, max_hits, exact_match, current_filename, open_filenames)
@@ -227,5 +227,5 @@ class AsyncSearch(object):
        else:
          data = res.read()
          res = json.loads(data.encode('utf8'))
-         self._result = DBIndexSearchResult.from_dict(res)
+         self._result = SearchResult.from_dict(res)
      return self._result

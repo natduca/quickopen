@@ -16,71 +16,13 @@ import fixed_size_dict
 import multiprocessing
 import os
 from basename_ranker import BasenameRanker
+from search_result import SearchResult
 from trace_event import *
 
 from local_pool import *
 
 slave = None
 slave_searchcount = 0
-
-class DBIndexSearchResult(object):
-  def __init__(self):
-    self.hits = []
-    self.ranks = []
-    self.truncated = False
-
-  def as_dict(self):
-    return {"hits": self.hits,
-            "ranks": self.ranks,
-            "truncated": self.truncated}
-
-  @staticmethod
-  def from_dict(d):
-    r = DBIndexSearchResult()
-    r.hits = d["hits"]
-    r.ranks = d["ranks"]
-    r.truncated = d["truncated"]
-    return r
-
-  def _is_exact_match(self, query, hit):
-    # Endswith is a quick way to discard most non-exact matches.
-    # e.g. a/b.txt matched by b.txt simply ending with b.txt
-    if not hit.endswith(query):
-      return False
-
-    # This basic rule leaves the false positive:
-    #    ba/b.txt  as exact for b.txt
-    # so eliminate that as well by enforcing that the
-    # match covers the full string or is immediatley to the right
-    # of a separator.
-    first_idx = hit.rfind(query)
-    if first_idx == 0:
-      return True
-    if hit[first_idx - 1] == os.sep:
-      return True
-    return False
-
-  def query_for_exact_matches(self, query):
-    """
-    Returns a new DBIndexSearchResult object containing only hits that exactly
-    match the provided query.
-    """
-    
-    res = DBIndexSearchResult()
-    res.truncated = self.truncated
-
-    for hit,rank in self.items():
-      if self._is_exact_match(query, hit):
-        res.hits.append(hit)
-        res.ranks.append(rank)
-    return res
-
-  def is_empty(self):
-    return len(self.hits) == 0
-
-  def items(self):
-    for i in range(len(self.hits)):
-      yield (self.hits[i], self.ranks[i])
 
 def ShardInit(files_by_basename):
   global slave
@@ -229,10 +171,10 @@ class DBIndex(object):
       hits = reshits
 
     # do one final ranking on the total rank
-    adjusted_hits = self._basename_ranker.sort_and_adjust_ranks_given_complete_hit_list(hits)
+    res = SearchResult()
+    adjusted_hits = res.sort_and_adjust_ranks_given_complete_hit_list(hits)
     adjusted_hits = adjusted_hits[:max_hits]
 
-    res = DBIndexSearchResult()
     res.hits = [c[0] for c in adjusted_hits]
     res.ranks = [c[1] for c in adjusted_hits]
     res.truncated = truncated

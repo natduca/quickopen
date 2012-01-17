@@ -225,25 +225,3 @@ class BasenameRanker(object):
 #    if best_rank > 0:
 #      print "[%s] %30s -> %i via %s" % ("%20s" % query, candidate[input_candidate_index:], best_rank, best_debugstr)
     return best_rank, for_best_rank__num_word_hits
-
-
-  def sort_and_adjust_ranks_given_complete_hit_list(self, hits):
-    def hit_cmp(x,y):
-      # compare on the rank
-      i = -cmp(x[1],y[1])
-      if i != 0:
-        return i
-      # if the ranks agree, compare on the filename,
-      # first by basename, then by fullname
-      x_base = os.path.basename(x[0])
-      y_base = os.path.basename(y[0])
-      j = cmp(x_base, y_base)
-      if j != 0:
-        return j
-      return cmp(x[0], y[0])
-
-    adjusted_hits = list(hits)
-    adjusted_hits.sort(hit_cmp)
-
-    return adjusted_hits
-

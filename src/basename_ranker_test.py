@@ -218,39 +218,3 @@ class BasenameRankerTest(unittest.TestCase):
     a = self.ranker.rank_query('render_', 'render_widget.cc')
     b = self.ranker.rank_query('render_widget', 'render_widget.cc')
     self.assertTrue(b > a)
-
-  def test_rank_sort_and_adjustment_puts_suffixes_into_predictable_order(self):
-    # render_widget.cpp should be get re-ranked higher than render_widget.h
-    adj = self.ranker.sort_and_adjust_ranks_given_complete_hit_list([
-        ("render_widget.h", 10),
-        ("render_widget.cpp", 10),
-        ])
-    self.assertEquals([("render_widget.cpp", 10),
-                       ("render_widget.h", 10)], adj)
-
-    # render_widget.cpp should stay ranked higher than render_widget.h
-    adj = self.ranker.sort_and_adjust_ranks_given_complete_hit_list([
-        ("render_widget.cpp", 10),
-        ("render_widget.h", 10),
-        ])
-    self.assertEquals([("render_widget.cpp", 10),
-                       ("render_widget.h", 10)], adj)
-
-    # but if the ranks mismatch, dont reorder
-    adj = self.ranker.sort_and_adjust_ranks_given_complete_hit_list([
-        ("render_widget.cpp", 10),
-        ("render_widget.h", 12),
-        ])
-    self.assertEquals([("render_widget.h", 12),
-                       ("render_widget.cpp", 10)], adj)
-
-  def test_rank_sort_and_adjustment_puts_directories_into_predictable_order(self):
-    # and if d if the ranks mismatch, dont reorder
-    adj = self.ranker.sort_and_adjust_ranks_given_complete_hit_list([
-        ("b/render_widget.cpp", 10),
-        ("a/render_widget.cpp", 10),
-        ])
-    self.assertEquals([("a/render_widget.cpp", 10),
-                       ("b/render_widget.cpp", 10)], adj)
-
-

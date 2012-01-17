@@ -16,10 +16,11 @@ import logging
 import os
 
 import daemon
-from db_index import DBIndex, DBIndexSearchResult
+from db_index import DBIndex
 from db_indexer import DBIndexer
 from dir_cache import DirCache
 from event import Event
+from search_result import SearchResult
 from trace_event import *
 
 DEFAULT_IGNORES=[
@@ -246,10 +247,10 @@ class DB(object):
       self.step_indexer()
       # step sync might change the db sync status
       if not self._cur_index:
-        return DBIndexSearchResult()
+        return SearchResult()
 
     if query == '':
-      return DBIndexSearchResult()
+      return SearchResult()
 
     if max_hits == -1:
       result = self._cur_index.search(query)

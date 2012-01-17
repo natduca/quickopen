@@ -14,10 +14,19 @@
 import os
 
 class SearchResult(object):
-  def __init__(self):
-    self.hits = []
-    self.ranks = []
-    self.truncated = False
+  def __init__(self, hits=None, ranks=None, items=None, truncated=False):
+    if hits and ranks:
+      self.hits = hits
+      self.ranks = ranks
+    elif items:
+      self.hits = [x[0] for x in items]
+      self.ranks = [x[1] for x in items]
+    elif not hits and not ranks:
+      self.hits = []
+      self.ranks = []
+    else:
+      raise Exception("Unexpected")
+    self.truncated = truncated
 
   def as_dict(self):
     return {"hits": self.hits,
@@ -72,7 +81,7 @@ class SearchResult(object):
     for i in range(len(self.hits)):
       yield (self.hits[i], self.ranks[i])
 
-  def sort_and_adjust_ranks_given_complete_hit_list(self, hits):
+  def apply_global_rank_adjustment(self):
     def hit_cmp(x,y):
       # compare on the rank
       i = -cmp(x[1],y[1])
@@ -87,7 +96,7 @@ class SearchResult(object):
         return j
       return cmp(x[0], y[0])
 
-    adjusted_hits = list(hits)
-    adjusted_hits.sort(hit_cmp)
-
-    return adjusted_hits
+    items = list(self.items())
+    items.sort(hit_cmp)
+    self.hits = [x[0] for x in items]
+    self.ranks = [x[1] for x in items]

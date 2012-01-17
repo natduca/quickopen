@@ -1,29 +1,24 @@
 Open files in Vim or Emacs quickly with fuzzy expressions and a live-updating
 UI, even for directory-trees containing hundreds of thousands of files.
 
-Fuzzy? When you enter "rwh", quickopen searches for things like
+Fuzzy? When you enter "rwh", quickopen finds files like
        RenderWidgetHost
        render-widget-host
        threaded_window_handler
 
-The results are ranked by relevance. All in 30ms. So you can refine as you type.
+The results are ranked by relevance. In 10s of milliseconds. So you get new results
+as you type. Thus, you might refine 'rwh' to 'rwhcpp' to get
+render_widget_host.cpp
 
+Key features:
+- Blazingly fast! 15ms search time on full 180k-file Chrome directory tree.
+- Integration with vim gf and emacs ff-find-other-file when they get stuck
+- Index maintained in-memory, persists across editor sessions/instances
+- Reasonablly pretty GUI, with fallback to curses in terminal sessions
+- Same backend shared between emacs and vim
 
-
-Compared To?
-===========================================================================
-FuzzyFilter for Vim/FuzzyMatch for Emacs
-  +:   Fast!!!!!!!!
-  +:   Index maintained in-memory, but outside editor process
-  +:   Reasonablly pretty GUI (even via ssh)
-  +:   Same backend shared between emacs and vim
-  -:   Doens't help when switching buffers
-
-git ls-files
-  +:   Search that Spans multiple projects, repositories, repository types
-  +:   Faster
-  -:   Doesn't support full regular expression matching goodness
-
+Coming soon:
+- Searches influenced by open/current buffers
 
 
 Dependencies
@@ -35,42 +30,7 @@ OSX:
         http://www.wxpython.org/download.php#stable
         wxPython 2.8-osx-unicode-2.6
 
-Experimental:
-        ./quickopen --curses 
-
-
-VIM Bindings
-================================================================================
-0. Use pathogen, if you're not using it already:
-      http://github.com/tpope/vim-pathogen
-1a. Either of the following, depending on how your .vim is set up:
-      git submodule add https://github.com/natduca/quickopen ~/.vim/bundle/quickopen
-      git clone https://github.com/natduca/quickopen.git ~/.vim/bundle/
-
-
-If you do things manually, the file you want vim to source is
-quickopen/plugin/quickopen.vim
-
-
-
-Emacs Bindings
-================================================================================
-Assuming you have ~/.emacs.d/site-lisp/, one of the following should work:
-  git submodule add https://github.com/natduca/quickopen ~/.emacs/site-lisp
-  git clone https://github.com/natduca/quickopen.git ~/.emacs/site-lisp
-
-If you do things manually, the file you want emacs to find is
-quickopen/elisp/quickopen.el
-
-This usually does the trick:
-  (let ((site-lisp-dir (expand-file-name "~/.emacs/site-lisp")))
-    (when (file-exists-p site-lisp-dir)
-      (let ((default-directory site-lisp-dir))
-        (normal-top-level-add-to-load-path '("."))
-        (normal-top-level-add-subdirs-to-load-path))))
-
-
-Post-install configuration
+Setting up the quickopen daemon
 ================================================================================
  0. Start quickopend
       nduca: ~/quickopen $ ./quickopend&
@@ -91,22 +51,55 @@ Post-install configuration
       nduca: ~/quickopen $ ./quickopen status
       up-to-date: 158553 files indexed; 2-threaded searches
 
+VIM Setup
+================================================================================
+
+Using pathogen:
+1. http://github.com/tpope/vim-pathogen
+2. git submodule add https://github.com/natduca/quickopen ~/.vim/bundle/quickopen
+
+By hand:
+1. source quickopen/plugin/quickopen.vim
+
+Emacs Setup
+================================================================================
+
+By hand:
+  (load quickopen/elisp/quickopen.el)
+
+Using site-lisp:
+  git clone https://github.com/natduca/quickopen.git ~/.emacs/site-lisp
+
+And if site-lisp isn't set up yet:
+  (let ((site-lisp-dir (expand-file-name "~/.emacs/site-lisp")))
+    (when (file-exists-p site-lisp-dir)
+      (let ((default-directory site-lisp-dir))
+        (normal-top-level-add-to-load-path '("."))
+        (normal-top-level-add-subdirs-to-load-path))))
+
+Consider setting up binding ff-find-other-file to a hotkey if you haven't done
+so already. Quickopen will be used if the basic ff-find-other-file produces no
+results:
+  (global-set-key (kbd "M-o") (lambda ()
+                                (interactive "")
+                                (ff-find-other-file)
+                                ))
+  (global-set-key (kbd "M-O") (lambda ()
+                                (interactive "")
+                                (ff-find-other-file t)
+                                ))
+
+
 Usage
 ================================================================================
 
-  1. VIM:     C-O                   (ctrl-shift-o)
-     Emacs:   M-S-o                 (meta-shift-o)
+  1. VIM:     C-O                   (ctrl-shift-o)  to open
+              gf   c-w                              to goto file
+              
+     Emacs:   M-S-o                 (meta-shift-o)  to open
+              C-Q                                   to open
 
   2. Command line
       nduca: ~/quickopen $ ./quickopen
          <brings up a GUI for a picking a file,
           prints file picked to stdout once done>
-
-  3. Command line, raw mode:
-      nduca: ~/quickopen $ ./quickopen rawsearch render_widgethvw
-      ~/chrome/src/content/browser/renderer_host/render_widget_host_view.h
-      ~/chrome/src/chrome/browser/renderer_host/render_widget_host_view_gtk.h
-      ~/chrome/src/chrome/browser/renderer_host/render_widget_host_view_views.h
-      ~/chrome/src/chrome/browser/renderer_host/render_widget_host_view_win.h
-      ~/chrome/src/chrome/browser/renderer_host/render_widget_host_view_mac.h
-

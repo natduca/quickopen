@@ -1,9 +1,6 @@
 Bugs
 ---------------------------------------------------------------------------
 
-exact-match base/bind.h --> 
-/Users/nduca/Local/chrome/src/chrome/test/base/browser_with_test_window_test.h
-
 Make emacs ff-find-*-file mode doesnt work in non-GUI environment
 [curses UI being async is the core issue]
 
@@ -17,21 +14,19 @@ curses UI doesn't know when the terminal resized.
 Features
 ---------------------------------------------------------------------------
 
-- improve directory filters
+- use current-buffer and active-buffer list in ranking
+
 - speed up empty-dir-query, e.g. foo/
 
-- prefer recently hit directories
-
-- Make indexer be multithreaded [move pool from index upward?]; use git
-  ls-files to help indexing?
-
-- Warning bar if search() truncated
-
-- Right click to ignore an object in open dialog
+- Speed up indexing operation
 
 - Elide the middles of long filename matches so that you can
   see the unique part of the filename when dupes are present
 
 - Reduce memory footprint
+
+- Right click to ignore an object in open dialog
+
+- Warning bar if search() truncated
 
 - emacs ffap-alist support

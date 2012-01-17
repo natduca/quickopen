@@ -72,19 +72,19 @@ class DBTestBase(object):
     self.db.sync()
     self.assertTrue(self.db.has_index and self.db.is_up_to_date)
     res = self.db.search('MySubSystem.c')
-    self.assertEquals(1, len(res.hits))
-    self.assertEquals(os.path.join(self.test_data_dir, 'project1/MySubSystem.c'), res.hits[0])
+    self.assertEquals(1, len(res.filenames))
+    self.assertEquals(os.path.join(self.test_data_dir, 'project1/MySubSystem.c'), res.filenames[0])
 
   def test_search_finds_new_file(self):
     self.db.add_dir(self.test_data_dir)
     self.db.sync()
     res = self.db.search('MySubSystem_NEW.c')
-    self.assertEquals(0, len(res.hits))    
+    self.assertEquals(0, len(res.filenames))    
     time.sleep(1.2) # let st_mtime advance a second
     self.test_data.write1('project1/MySubSystem_NEW.c')
     self.db.sync()
     res = self.db.search('MySubSystem_NEW.c')
-    self.assertEquals(1, len(res.hits))    
+    self.assertEquals(1, len(res.filenames))    
 
   def test_dir_query(self):
     self.db.add_dir(self.test_data_dir)
@@ -94,8 +94,8 @@ class DBTestBase(object):
     self.db.sync()
     self.assertTrue(self.db.has_index and self.db.is_up_to_date)
     res = self.db.search('MySubSystem.c')
-    self.assertTrue(len(res.hits) >= 1)
-    self.assertTrue(os.path.join(self.test_data_dir, 'project1/MySubSystem.c') in res.hits)
+    self.assertTrue(len(res.filenames) >= 1)
+    self.assertTrue(os.path.join(self.test_data_dir, 'project1/MySubSystem.c') in res.filenames)
 
   def test_search_unique(self):
     self.db.add_dir(self.test_data_dir)
@@ -103,8 +103,8 @@ class DBTestBase(object):
     self.db.sync()
     self.assertTrue(self.db.has_index and self.db.is_up_to_date)
     res = self.db.search('MySubSystem.c')
-    self.assertEquals(1, len(res.hits))
-    self.assertEquals(os.path.join(self.test_data_dir, 'project1/MySubSystem.c'), res.hits[0])
+    self.assertEquals(1, len(res.filenames))
+    self.assertEquals(os.path.join(self.test_data_dir, 'project1/MySubSystem.c'), res.filenames[0])
 
   def test_search_with_dir(self):
     self.db.add_dir(self.test_data_dir)
@@ -114,8 +114,8 @@ class DBTestBase(object):
     self.db.sync()
     self.assertTrue(self.db.has_index and self.db.is_up_to_date)
     res = self.db.search('project1/MySubSystem.c')
-    self.assertEquals(1, len(res.hits))
-    self.assertEquals(os.path.join(self.test_data_dir, 'project1/MySubSystem.c'), res.hits[0])
+    self.assertEquals(1, len(res.filenames))
+    self.assertEquals(os.path.join(self.test_data_dir, 'project1/MySubSystem.c'), res.filenames[0])
 
   def test_partial_search(self):
     self.db.add_dir(self.test_data_dir)
@@ -123,9 +123,9 @@ class DBTestBase(object):
     self.db.sync()
     self.assertTrue(self.db.has_index and self.db.is_up_to_date)
     res = self.db.search('MyClass')
-    self.assertTrue(len(res.hits) >= 2)
-    self.assertTrue(os.path.join(self.test_data_dir, 'project1/MyClass.c') in res.hits)
-    self.assertTrue(os.path.join(self.test_data_dir, 'project1/MyClass.h') in res.hits)
+    self.assertTrue(len(res.filenames) >= 2)
+    self.assertTrue(os.path.join(self.test_data_dir, 'project1/MyClass.c') in res.filenames)
+    self.assertTrue(os.path.join(self.test_data_dir, 'project1/MyClass.h') in res.filenames)
 
   def test_dir_symlinks_dont_dup(self):
     pass
@@ -138,16 +138,16 @@ class DBTestBase(object):
 
     # .git should not be found
     res = self.db.search('packed-refs')
-    self.assertEquals(0, len(res.hits))
+    self.assertEquals(0, len(res.filenames))
 
     # file inside .svn should not be found
     res = self.db.search('svn_should_not_show_up.txt')
-    self.assertEquals(0, len(res.hits))
+    self.assertEquals(0, len(res.filenames))
 
     # certain ignored suffixes should not be found
-    self.assertEquals([], self.db.search('ignored.o').hits)
-    self.assertEquals([], self.db.search('ignored.pyc').hits)
-    self.assertEquals([], self.db.search('ignored.pyo').hits)
+    self.assertEquals([], self.db.search('ignored.o').filenames)
+    self.assertEquals([], self.db.search('ignored.pyc').filenames)
+    self.assertEquals([], self.db.search('ignored.pyo').filenames)
 
   def test_ignore_path(self):
     # test ignore of absolute path
@@ -155,7 +155,7 @@ class DBTestBase(object):
     self.db.ignore(os.path.join(self.test_data_dir, 'something/*'))
     self.db.sync()
     self.assertTrue(self.db.has_index and self.db.is_up_to_date)
-    self.assertEquals([], self.db.search('something_file.txt').hits)
+    self.assertEquals([], self.db.search('something_file.txt').filenames)
 
   def test_ignore_inside_symlink(self):
     # the case of interest here is where someone has
@@ -172,7 +172,7 @@ class DBTestBase(object):
     ref_file = os.path.join(self.test_data_dir, "project1/module/project1_module1.txt")
 
     # first make sure it shows up via project1_symlink at the non-symlink location
-    hits = self.db.search('project1_module1.txt').hits
+    hits = self.db.search('project1_module1.txt').filenames
     self.assertTrue(ref_file in hits)
 
     # now ignore something inside project1_symlink
@@ -180,13 +180,13 @@ class DBTestBase(object):
     self.db.sync()
     self.assertTrue(self.db.has_index and self.db.is_up_to_date)
 
-    hits = self.db.search('project1_module1.txt').hits
+    hits = self.db.search('project1_module1.txt').filenames
     self.assertTrue(ref_file not in hits)
 
   def test_empty_search(self):
     self.db.add_dir(self.test_data_dir)
     self.db.sync()
-    self.assertEquals([], self.db.search('').hits)
+    self.assertEquals([], self.db.search('').filenames)
 
   def test_ignore_ctl(self):
     self.db.add_dir(self.test_data_dir)
@@ -194,7 +194,7 @@ class DBTestBase(object):
     self.assertTrue(self.db.has_index and self.db.is_up_to_date)
 
     res = self.db.search('svn_should_not_show_up.txt')
-    self.assertEquals(0, len(res.hits))
+    self.assertEquals(0, len(res.filenames))
 
     orig = list(self.db.ignores)
     for i in orig:
@@ -204,7 +204,7 @@ class DBTestBase(object):
     self.assertTrue(self.db.has_index and self.db.is_up_to_date)
 
     res = self.db.search('svn_should_not_show_up.txt')
-    self.assertEquals(1, len(res.hits))
+    self.assertEquals(1, len(res.filenames))
 
     for i in orig:
       self.db.ignore(i)
@@ -213,7 +213,7 @@ class DBTestBase(object):
     self.assertTrue(self.db.has_index and self.db.is_up_to_date)
 
     res = self.db.search('svn_should_not_show_up.txt')
-    self.assertEquals(0, len(res.hits))
+    self.assertEquals(0, len(res.filenames))
 
   def test_sync(self):
     self.db.add_dir(self.test_data_dir)
@@ -226,7 +226,7 @@ class DBTestBase(object):
     self.db.add_dir(self.test_data_dir)
     self.assertFalse(self.db.is_up_to_date)
     self.assertFalse(self.db.has_index)
-    self.assertEquals([], self.db.search("foo").hits)
+    self.assertEquals([], self.db.search("foo").filenames)
 
   def test_dup_ignore_ctl(self):
     self.db.add_dir(self.test_data_dir)
@@ -244,28 +244,28 @@ class DBTestBase(object):
     self.db.add_dir(self.test_data_dir)
     self.db.sync()
     res = self.db.search("a")
-    self.assertTrue(len(res.hits) > 2)
+    self.assertTrue(len(res.filenames) > 2)
     resLimited = self.db.search("a", max_hits=2)
-    self.assertEquals(2, len(resLimited.hits))
+    self.assertEquals(2, len(resLimited.filenames))
 
   def test_exact_search(self):
     x = self.db.add_dir(self.test_data_dir)
     self.db.sync()
 
     r = self.db.search("nonexistent", exact_match = True)
-    self.assertEquals(r.hits, [])
+    self.assertEquals(r.filenames, [])
 
     r = self.db.search("MyClass.c", exact_match = True)
-    self.assertEquals(r.hits, [self.test_data.path_to("project1/MyClass.c")])
+    self.assertEquals(r.filenames, [self.test_data.path_to("project1/MyClass.c")])
 
     exact_readme1 = self.test_data.path_to("something/README")
     exact_readme2 = self.test_data.path_to("svnproj/README")
     r = self.db.search("README", exact_match = True)
-    self.assertEquals(r.hits, [exact_readme1, exact_readme2])
+    self.assertEquals(r.filenames, [exact_readme1, exact_readme2])
 
     r = self.db.search(exact_readme1, exact_match = True)
-    self.assertEquals(r.hits, [exact_readme1])
+    self.assertEquals(r.filenames, [exact_readme1])
 
     r = self.db.search(exact_readme2, exact_match = True)
-    self.assertEquals(r.hits, [exact_readme2])
+    self.assertEquals(r.filenames, [exact_readme2])
 

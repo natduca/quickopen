@@ -14,29 +14,29 @@
 import os
 
 class SearchResult(object):
-  def __init__(self, hits=None, ranks=None, items=None, truncated=False):
-    if hits and ranks:
-      self.hits = hits
+  def __init__(self, filenames=None, ranks=None, items=None, truncated=False):
+    if filenames and ranks:
+      self.filenames = filenames
       self.ranks = ranks
     elif items:
-      self.hits = [x[0] for x in items]
+      self.filenames = [x[0] for x in items]
       self.ranks = [x[1] for x in items]
-    elif not hits and not ranks:
-      self.hits = []
+    elif not filenames and not ranks:
+      self.filenames = []
       self.ranks = []
     else:
       raise Exception("Unexpected")
     self.truncated = truncated
 
   def as_dict(self):
-    return {"hits": self.hits,
+    return {"filenames": self.filenames,
             "ranks": self.ranks,
             "truncated": self.truncated}
 
   @staticmethod
   def from_dict(d):
     r = SearchResult()
-    r.hits = d["hits"]
+    r.filenames = d["filenames"]
     r.ranks = d["ranks"]
     r.truncated = d["truncated"]
     return r
@@ -61,7 +61,7 @@ class SearchResult(object):
 
   def query_for_exact_matches(self, query):
     """
-    Returns a new SearchResult object containing only hits that exactly
+    Returns a new SearchResult object containing only filenames that exactly
     match the provided query.
     """
     
@@ -70,16 +70,16 @@ class SearchResult(object):
 
     for hit,rank in self.items():
       if self._is_exact_match(query, hit):
-        res.hits.append(hit)
+        res.filenames.append(hit)
         res.ranks.append(rank)
     return res
 
   def is_empty(self):
-    return len(self.hits) == 0
+    return len(self.filenames) == 0
 
   def items(self):
-    for i in range(len(self.hits)):
-      yield (self.hits[i], self.ranks[i])
+    for i in range(len(self.filenames)):
+      yield (self.filenames[i], self.ranks[i])
 
   def apply_global_rank_adjustment(self):
     def hit_cmp(x,y):
@@ -98,5 +98,5 @@ class SearchResult(object):
 
     items = list(self.items())
     items.sort(hit_cmp)
-    self.hits = [x[0] for x in items]
+    self.filenames = [x[0] for x in items]
     self.ranks = [x[1] for x in items]

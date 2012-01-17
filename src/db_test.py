@@ -44,8 +44,8 @@ class DBTest(DBTestBase, unittest.TestCase):
     self.db.add_dir(d2)
     self.db.sync()
     res = self.db.search('something_file.txt')
-    self.assertEquals(1, len(res.hits))
-    self.assertEquals(os.path.join(self.test_data_dir, 'something/something_file.txt'), res.hits[0])
+    self.assertEquals(1, len(res.filenames))
+    self.assertEquals(os.path.join(self.test_data_dir, 'something/something_file.txt'), res.filenames[0])
 
   def tearDown(self):
     DBTestBase.tearDown(self)

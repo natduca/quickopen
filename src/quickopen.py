@@ -181,8 +181,8 @@ def CMDsearch(parser):
     search_args["open_filenames"] = options.open_filenames
   if options.skip_if_exact:
     res = db.search(args[0], exact_match=True, **search_args)
-    if len(res.hits) == 1:
-      print_results(res.hits, False)
+    if len(res.filenames) == 1:
+      print_results(res.filenames, False)
       return 0
 
 
@@ -238,12 +238,12 @@ def CMDrawsearch(parser):
 
   res = db.search(args[0],**search_args)
   if options.show_rank:
-    combined = [(res.ranks[i],res.hits[i]) for i in range(len(res.hits))]
-    print "\n".join(["%i,%s" % c for c in combined])
+    combined = res.items()
+    print "\n".join(["%i,%s" % (c[1],c[0]) for c in combined])
   else:
-    print "\n".join([x for x in res.hits])
+    print "\n".join([x for x in res.filenames])
 
-  if len(res.hits) > 0:
+  if len(res.filenames) > 0:
     return 0
   return 255
 

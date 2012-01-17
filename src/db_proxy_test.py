@@ -37,8 +37,8 @@ class DBProxyTest(db_test_base.DBTestBase, unittest.TestCase):
       time.sleep(0.25)
     res = a.result
 
-    self.assertEquals(1, len(res.hits))
-    self.assertEquals(os.path.join(self.test_data_dir, 'project1/MySubSystem.c'), res.hits[0])
+    self.assertEquals(1, len(res.filenames))
+    self.assertEquals(os.path.join(self.test_data_dir, 'project1/MySubSystem.c'), res.filenames[0])
 
   def tearDown(self):
     self.daemon.close()

@@ -106,7 +106,7 @@ class OpenDialogBase(object):
       self._pending_search = None
       trace_begin("update_results_list")
       if res:
-        self.update_results_list(res.hits,res.ranks)
+        self.update_results_list(res.filenames,res.ranks)
       else:
         self.update_results_list([],[])
       trace_end("update_results_list")

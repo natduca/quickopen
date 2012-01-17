@@ -11,12 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import ranker
 import re
 import os
 import math
 
-class Ranker(object):
+class BasenameRanker(object):
+  """
+  Responsible for producing a ranking number for a given basename compared to a query string.
+
+  This forms the building block for hit ordering in the upper level search systems.
+  """
   def __init__(self):
     self._memoized_basic_ranks = {}
 

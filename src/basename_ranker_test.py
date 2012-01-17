@@ -12,13 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import unittest
-from ranker import Ranker
-import matcher
+from basename_ranker import BasenameRanker
 
-class RankerTest(unittest.TestCase):
+class BasenameRankerTest(unittest.TestCase):
   def setUp(self):
 #    self.basenames = json.load(open('test_data/cr_files_basenames.json'))
-    self.ranker = Ranker()
+    self.ranker = BasenameRanker()
 
   def test_is_wordstart(self):
     def check(s, expectations):

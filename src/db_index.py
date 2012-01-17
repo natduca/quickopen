@@ -15,7 +15,7 @@ import db_index_shard
 import fixed_size_dict
 import multiprocessing
 import os
-from ranker import Ranker
+from basename_ranker import BasenameRanker
 from trace_event import *
 
 from local_pool import *
@@ -117,7 +117,7 @@ class DBIndex(object):
     else:
       N = 1
 
-    self._ranker = Ranker()
+    self._basename_ranker = BasenameRanker()
     chunks = self._make_chunks(list(indexer.files_by_basename.items()), N)
 
     self.shards = [LocalPool(1)]
@@ -209,7 +209,7 @@ class DBIndex(object):
         files = self.files_by_lower_basename[hit]
         for f in files:
           basename = os.path.basename(f)
-          rank = self._ranker.rank_query(basename_query, basename)
+          rank = self._basename_ranker.rank_query(basename_query, basename)
           hits.append((f,rank))
       trace_end("rank_results")
     else:
@@ -229,7 +229,7 @@ class DBIndex(object):
       hits = reshits
 
     # do one final ranking on the total rank
-    adjusted_hits = self._ranker.sort_and_adjust_ranks_given_complete_hit_list(hits)
+    adjusted_hits = self._basename_ranker.sort_and_adjust_ranks_given_complete_hit_list(hits)
     adjusted_hits = adjusted_hits[:max_hits]
 
     res = DBIndexSearchResult()

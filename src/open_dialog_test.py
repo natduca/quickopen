@@ -24,10 +24,12 @@ import ui_test_case
 requires_manual_handling = True
 
 class FakeOptions(object):
-  def __init__(self):
+  def __init__(self, test_data_dir):
     self.ok = True
     self.lisp_results = False
     self.results_file = None
+    self.current_filename = os.path.join(test_data_dir, "project1/foo.txt")
+    self.open_filenames = [os.path.join(test_data_dir, "project1/foo.txt")]
 
 class OpenDialogTest(ui_test_case.UITestCase):
   def setUp(self):
@@ -38,7 +40,7 @@ class OpenDialogTest(ui_test_case.UITestCase):
     self.client_settings = settings.Settings(self.client_settings_file.name)
     self.db = self.daemon.db_proxy
     self.db.add_dir(self.db_test_base.test_data_dir)
-    self.options = FakeOptions()
+    self.options = FakeOptions(self.db_test_base.test_data_dir)
 
   def tearDown(self):
     self.client_settings_file.close()

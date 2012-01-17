@@ -147,20 +147,24 @@ class DBProxy(object):
       raise "Pattern not found"
 
   @tracedmethod
-  def search(self, q, max_hits = -1, exact_match = False):
+  def search(self, q, max_hits = -1, exact_match = False, current_filename = None, open_filenames = []):
     options = {}
     if max_hits != -1:
       options["max_hits"] = max_hits
     if exact_match:
       options["exact_match"] = True
+    if current_filename:
+      options["current_filename"] = current_filename
+    q = {"query" : q,
+         "open_filenames": open_filenames}
     if len(options):
       d = self._req('POST', '/search?%s' % urllib.urlencode(options), q)
     else:
       d = self._req('POST', '/search', q)
     return DBIndexSearchResult.from_dict(d)
 
-  def search_async(self, q):
-    return AsyncSearch(self.host, self.port, q)
+  def search_async(self, q, max_hits = -1, exact_match = False, current_filename = None, open_filenames = []):
+    return AsyncSearch(self.host, self.port, q, max_hits, exact_match, current_filename, open_filenames)
 
   @property
   def is_up_to_date(self):
@@ -187,9 +191,22 @@ class AsyncSearchError(object):
   pass
 
 class AsyncSearch(object):
-  def __init__(self, host, port, q):
+  def __init__(self, host, port, q, max_hits = -1, exact_match = False, current_filename = None, open_filenames = []):
     self.async_conn = async_http_connection.AsyncHTTPConnection(host, port)
-    self.async_conn.begin_request('POST', '/search', json.dumps(q))
+
+    options = {}
+    if max_hits != -1:
+      options["max_hits"] = max_hits
+    if exact_match:
+      options["exact_match"] = True
+    if current_filename:
+      options["current_filename"] = current_filename
+    q = {"query" : q,
+         "open_filenames": open_filenames}
+    if len(options):
+      self.async_conn.begin_request('POST', '/search?%s' % urllib.urlencode(options), json.dumps(q))
+    else:
+      self.async_conn.begin_request('POST', '/search', json.dumps(q))
     self._result = None
 
   @property

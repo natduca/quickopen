@@ -85,22 +85,52 @@
                (quickopen-strrchr true-load-file-name "/elisp"))))
 (message (format "QuickOpen loaded at %s" quickopen-dir-base))
 
+(defun quickopen-get-open-filenames-string()
+  (mapconcat 'identity
+             (mapcar (lambda (x) 
+                       (with-temp-buffer
+                         (insert (buffer-file-name x))
+                         (goto-char 0)
+                         (while (search-forward ":" nil t)
+                           (replace-match "\\:" nil t))
+                         (buffer-substring (point-min) (point-max))
+                         )
+                       )
+                     (filter (lambda (x) (buffer-file-name x))
+                             (buffer-list)
+                             )
+                     )
+             ":"
+             )
+  )
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun quickopen-find-file-using-gui(&optional query skip-ui-if-exact-match other-window)
   (interactive "")
-  (let (res)
+  (let (res
+        (current-buffer-filename (buffer-file-name (current-buffer)))
+        )
     (setq res (with-temp-buffer
-                (let ((args (list (format "%s/%s" quickopen-dir-base "quickopen") nil t nil "prelaunch" "search" "--ok" "--lisp-results")))
+                (let ((open-buffers (quickopen-get-open-filenames-string))
+                      (args (list (format "%s/%s" quickopen-dir-base "quickopen") nil t nil "prelaunch" "search" "--ok" "--lisp-results")))
+                  (when (> (length open-buffers) 0)
+                    (setq args (append args (list "--open-filenames" open-buffers)))
+                    )
                   (when skip-ui-if-exact-match
                     (setq args (append args '("--skip-ui-if-exact-match")))
+                    )
+                  (when current-buffer-filename
+                    (setq args (append args (list "--current-filename" current-buffer-filename)))
                     )
                   (when query
                     (setq args (append args (list query)))
                     )
                   (apply 'call-process  args)
                   )
-                (discard-input) ;; needed because call-process can take a WHILE
+                ;; There is a delay between call-process and the external UI
+                ;; taking over input. Discard any buffered characters that happened during this time.
+                (discard-input)
                 (quickopen-get-results-from-current-buffer)
                 )
           )
@@ -124,6 +154,7 @@
         (message "Already open, cannot continue.")
         )
     (let ((program (format "%s/%s" quickopen-dir-base "quickopen"))
+          (current-buffer-filename (buffer-file-name (current-buffer)))
           )
       (setq quickopen-old-window-configuration (current-window-configuration))
       (delete-other-windows)
@@ -133,9 +164,17 @@
           )
         )
       (setq quickopen-current-buffer 
-            (let ((args (list "quickopen" program nil "--curses" "--ok" "--lisp-results")))
+            (let ((open-buffers (quickopen-get-open-filenames-string))
+                  (args (list "quickopen" program nil "--curses" "--ok" "--lisp-results")))
+              (when (> (length open-buffers) 0)
+                (message (format "open buffers are [%s]" open-buffers))
+                (setq args (append args (list "--open-filenames" open-buffers)))
+                )
               (when skip-ui-if-exact-match
                 (setq args (append args '("--skip-ui-if-exact-match")))
+                )
+              (when current-buffer-filename
+                (setq args (append args (list "--current-filename" current-buffer-filename)))
                 )
               (when query
                 (setq args (append args (list query)))

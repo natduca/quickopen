@@ -241,7 +241,7 @@ class DB(object):
 
   ###########################################################################
   @traced
-  def search(self, query, max_hits = -1, exact_match = False):
+  def search(self, query, max_hits = -1, exact_match = False, current_filename = None, open_filenames = []):
     if self._pending_indexer:
       self.step_indexer()
       # step sync might change the db sync status

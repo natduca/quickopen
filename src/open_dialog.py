@@ -89,7 +89,13 @@ class OpenDialogBase(object):
     def begin_search():
       self.set_status("DB Status: %s" % "searching")
       self._last_search_query = self._filter_text
-      self._pending_search = self._db.search_async(self._last_search_query)
+
+      search_args = {}
+      if self._options.current_filename:
+        search_args["current_filename"] = self._options.current_filename
+      if self._options.open_filenames:
+        search_args["open_filenames"] = self._options.open_filenames
+      self._pending_search = self._db.search_async(self._last_search_query, **search_args)
 
     @traced
     def on_ready():

@@ -95,7 +95,10 @@ class DBStub(object):
     if "exact_match" in options:
       if options["exact_match"][0] == "True":
         kwargs["exact_match"] = True
-    return self.db.search(data, **kwargs).as_dict()
+    if "current_filename" in options:
+      kwargs["current_filename"] = options["current_filename"][0]
+    kwargs["open_filenames"] = data["open_filenames"]
+    return self.db.search(data["query"], **kwargs).as_dict()
 
   @tracedmethod
   def sync(self, m, verb, data):

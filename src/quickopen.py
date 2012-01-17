@@ -130,6 +130,10 @@ def CMDunignore(parser):
     return 0
   return 255
 
+def split_open_filenames(open_filenames):
+  # TODO(nduca): deal correctly with \: not being a delimiter
+  return open_filenames.split(":")
+
 @traced
 def CMDsearch(parser):
   """Search for a file"""
@@ -141,6 +145,8 @@ def CMDsearch(parser):
   parser.add_option('--lisp-results', dest='lisp_results', action='store_true', default=False, help='Output results as a lisp-formatted list')
   parser.add_option('--results-file', dest='results_file', action='store', help='Output results to the provided file instead of stdout')
   parser.add_option('--skip-ui-if-exact-match', dest='skip_if_exact', action='store_true', default=False, help="Don't show UI if there's an exact match")
+  parser.add_option('--current-filename', dest='current_filename', action='store', default=None, help="Hints quickopen about the current buffer to improve search relevance.")
+  parser.add_option('--open-filenames', dest='open_filenames', action='store', default=[], help="Hints quickopen about the filenames currently open to improve search relevance.")
   (options, args) = parser.parse_args()
   message_loop.ensure_has_message_loop()
   settings = load_settings(options)
@@ -166,11 +172,19 @@ def CMDsearch(parser):
     if options.results_file:
       ofile.close()
 
+  search_args = {}
+  if options.current_filename:
+    search_args["current_filename"] = options.current_filename
+  if options.open_filenames:
+    # Switch the options to the parsed form so the open dialog can use it directly.
+    options.open_filenames = split_open_filenames(options.open_filenames)
+    search_args["open_filenames"] = options.open_filenames
   if options.skip_if_exact:
-    res = db.search(args[0], exact_match=True)
+    res = db.search(args[0], exact_match=True, **search_args)
     if len(res.hits) == 1:
       print_results(res.hits, False)
       return 0
+
 
   if len(args):
     initial_filter = " ".join(args)
@@ -204,6 +218,8 @@ def CMDreindex(parser):
 def CMDrawsearch(parser):
   """Prints the raw database's results for <query>"""
   parser.add_option('--show-rank', '-r', dest='show_rank', action='store_true', help='Show the ranking of results')
+  parser.add_option('--current-filename', dest='current_filename', action='store', default=None, help="Hints quickopen about the current buffer to improve search relevance.")
+  parser.add_option('--open-filenames', dest='open_filenames', action='store', default=[], help="Hints quickopen about the filenames currently open to improve search relevance.")
   (options, args) = parser.parse_args()
 
   settings = load_settings(options)
@@ -213,7 +229,14 @@ def CMDrawsearch(parser):
   if not db.has_index:
     print "Database is not fully indexed. Wait a bit or try quickopen status"
     return 255
-  res = db.search(args[0])
+
+  search_args = {}
+  if options.current_filename:
+    search_args["current_filename"] = options.current_filename
+  if options.open_filenames:
+    search_args["open_filenames"] = split_open_filenames(options.open_filenames)
+
+  res = db.search(args[0],**search_args)
   if options.show_rank:
     combined = [(res.ranks[i],res.hits[i]) for i in range(len(res.hits))]
     print "\n".join(["%i,%s" % c for c in combined])

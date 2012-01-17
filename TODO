@@ -1,7 +1,9 @@
 Bugs
 ---------------------------------------------------------------------------
 
-Make emacs ff-find-*-file mode doesnt work in non-GUI environment
+Huge stall on empty-dir-query, e.g. foo/, makes dir queries impossible to type
+
+Emacs ff-find-*-file mode doesnt work in non-GUI environment
 [curses UI being async is the core issue]
 
 "filter_text" : "Øfd" --> wont work in most places
@@ -15,8 +17,6 @@ Features
 ---------------------------------------------------------------------------
 
 - use current-buffer and active-buffer list in ranking
-
-- speed up empty-dir-query, e.g. foo/
 
 - Speed up indexing operation
 

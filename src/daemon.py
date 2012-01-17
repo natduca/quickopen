@@ -67,7 +67,11 @@ class _RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     logging.info(format, args)
 
   def handleRequest(self, verb):
-    path = urlparse.urlsplit(self.path)[2]
+    s = urlparse.urlsplit(self.path)
+    if len(s[3]):
+      path = "%s?%s" % (s[2], s[3])
+    else:
+      path = s[2]
 
     if 'Content-Length' in self.headers:
       cl = int(self.headers['Content-Length'])

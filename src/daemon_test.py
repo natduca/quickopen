@@ -17,6 +17,7 @@ import json
 import temporary_daemon
 import time
 import unittest
+import urlparse
 
 class DaemonTest(unittest.TestCase):
   def setUp(self):
@@ -53,6 +54,9 @@ class DaemonTest(unittest.TestCase):
   def test_simple_handler(self):
     self.assertEquals(self.get_json('/test_simple'), 'simple_ok')
     self.assertEquals(self.post_json('/test_simple', 'simple_ok'), 'simple_ok')
+
+  def test_query(self):
+    self.assertEquals(self.get_json('/test_query?foo'), 'foo')
 
   def test_invalid_verb_on_simple(self):
     self.conn.request('DELETE', '/test_simple')
@@ -101,6 +105,10 @@ def add_test_handlers_to_daemon(daemon):
       assert data == 'simple_ok'
     return 'simple_ok'
   daemon.add_json_route('/test_simple', handler_for_simple, ['GET','POST'])
+
+  def handler_for_query(m, verb, data = None):
+    return urlparse.urlparse(m.group(0)).query
+  daemon.add_json_route('/test_query(.*)', handler_for_query, ['GET'])
 
   def handler_for_complex(m, verb, data = None):
     if verb == 'POST':

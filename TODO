@@ -13,6 +13,8 @@ OpenDialogGtk rather than a parent class.
 
 curses UI doesn't know when the terminal resized.
 
+emacs does not show error if quickopen prelaunch fails due to missing daemon
+
 Features
 ---------------------------------------------------------------------------
 

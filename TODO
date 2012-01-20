@@ -15,6 +15,8 @@ curses UI doesn't know when the terminal resized.
 
 emacs does not show error if quickopen prelaunch fails due to missing daemon
 
+vim does not show error if quickopen prelaunch fails due to missing daemon
+
 Vim gtk errors after opening file with gui quickopen: e.g.
     E172: Only one file name allowed: :find <gtk.gdk.Event at 0x7f88955811c0: GDK_KEY_PRESS keyval=Down>
     E488: Trailing characters: <gtk.gdk.Event at 0x7f88955811c0: GDK_KEY_PRESS keyval=Left>

@@ -287,11 +287,11 @@
               (message "quickopen fallback")
               (quickopen-find-file filename-template t other-window)
               t)
-             
+
              ((bufferp (get-file-buffer filename))
               (ff-switch-to-buffer (get-file-buffer filename) other-window)
               filename)
-             
+
              ((file-exists-p filename)
               (ff-find-file filename other-window nil)
               filename)
@@ -301,5 +301,3 @@
     )
     (ad-activate 'ff-get-file)
   )
-
-

@@ -24,6 +24,13 @@ import traceback
 import unittest
 
 def discover(filters, manual_handling_allowed):
+  for f in filters:
+    try:
+      re.compile(f)
+    except:
+      print "%s is not a valid regex" % f
+      sys.exit(255)
+
   # poor mans unittest.discover, but that ignores classes
   # that start with _
   loader = unittest.TestLoader()

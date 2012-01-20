@@ -33,9 +33,7 @@ class OpenDialogBase(object):
     settings.register("query_log", str, "") 
     if initial_filter:
       settings.filter_text = initial_filter
-    else:
-      had_position = False
-    self._filter_text = settings.filter_text
+    self._filter_text = ""
     self._settings = settings
     self._db = db
     self._can_process_queries = False

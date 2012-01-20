@@ -165,9 +165,8 @@
         )
       (setq quickopen-current-buffer 
             (let ((open-buffers (quickopen-get-open-filenames-string))
-                  (args (list "quickopen" program nil "--curses" "--ok" "--lisp-results")))
+                  (args (list "quickopen" program nil "search" "--curses" "--ok" "--lisp-results")))
               (when (> (length open-buffers) 0)
-                (message (format "open buffers are [%s]" open-buffers))
                 (setq args (append args (list "--open-filenames" open-buffers)))
                 )
               (when skip-ui-if-exact-match

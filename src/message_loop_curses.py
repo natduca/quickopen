@@ -84,7 +84,6 @@ def _on_exception():
 def _run_pending_tasks():
   now = time.time()
   old_pending = list(_pending_delayed_tasks)
-  old_pending.sort(lambda x, y: cmp(x, y))
   del _pending_delayed_tasks[:]
   for t in old_pending:
     if not _main_loop_running:
@@ -98,6 +97,7 @@ def _run_pending_tasks():
         _on_exception()
     else:
       _pending_delayed_tasks.append(t)
+  _pending_delayed_tasks.sort(lambda x, y: cmp(x, y))
 
 def post_task(cb, *args):
   post_delayed_task(cb, 0, *args)
@@ -106,6 +106,7 @@ def post_delayed_task(cb, delay, *args):
   def on_run():
     cb(*args)
   _pending_delayed_tasks.append(DelayedTask(on_run, delay))
+  _pending_delayed_tasks.sort(lambda x, y: cmp(x, y))
 
 def add_quit_handler(cb):
   _quit_handlers.insert(0, cb)
@@ -150,8 +151,13 @@ def run_main_loop():
     global _stdscr
     _stdscr = stdscr
     while _main_loop_running:
+      now = time.time()
+      if len(_pending_delayed_tasks) > 0:
+        delay = max(0.01, _pending_delayed_tasks[0].run_at_or_after - now)
+      else:
+        delay = 0.1
       try:
-        r, w, e = select.select([sys.stdin], [], [], 0.1)
+        r, w, e = select.select([sys.stdin], [], [], delay)
       except KeyboardInterrupt:
         raise
       except:

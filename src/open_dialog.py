@@ -22,6 +22,7 @@ import time
 
 from trace_event import *
 
+TICK_RATE_WHEN_SEARCHING = 0.005
 TICK_RATE_WHEN_UP_TO_DATE = 0.025
 TICK_RATE_WHEN_NOT_UP_TO_DATE = 0.2
 
@@ -48,7 +49,8 @@ class OpenDialogBase(object):
     else:
       self.should_position_cursor_for_replace = True
 
-    message_loop.post_delayed_task(self.on_tick, TICK_RATE_WHEN_UP_TO_DATE)
+    # first tick should be fast  
+    message_loop.post_delayed_task(self.on_tick, 0)
     
   @property
   def print_results_cb(self):
@@ -142,7 +144,9 @@ class OpenDialogBase(object):
         check_status()
 
     # renew the tick
-    if self._db_is_up_to_date:
+    if self._pending_search:
+      message_loop.post_delayed_task(self.on_tick, TICK_RATE_WHEN_SEARCHING)
+    elif self._db_is_up_to_date:
       message_loop.post_delayed_task(self.on_tick, TICK_RATE_WHEN_UP_TO_DATE)
     else:
       message_loop.post_delayed_task(self.on_tick, TICK_RATE_WHEN_NOT_UP_TO_DATE)

@@ -35,7 +35,7 @@ class DelayedTask(object):
     self.seq = _delayed_task_next_seq
 
     self.cb = cb
-    self.run_at_or_after = time.time() + (delay / 1000.0)
+    self.run_at_or_after = time.time() + delay
     _delayed_task_next_seq += 1
 
   def __cmp__(self, that):
@@ -153,7 +153,7 @@ def run_main_loop():
     while _main_loop_running:
       now = time.time()
       if len(_pending_delayed_tasks) > 0:
-        delay = max(0.01, _pending_delayed_tasks[0].run_at_or_after - now)
+        delay = max(0, _pending_delayed_tasks[0].run_at_or_after - now)
       else:
         delay = 0.1
       try:

@@ -279,7 +279,7 @@
 ;; asynchronous.
 (when (and quickopen-override-ff-find (quickopen-has-gui))
   (defadvice ff-get-file (around quickopen-ff-get-file (search-dirs filename-template &optional suffix-list other-window))
-    (message "quickopen hooked")
+    (message "ff-get-file-quickopen-wrapper")
     (setq ad-return-value 
           (let ((filename (ff-get-file-name search-dirs filename-template suffix-list)))
             (cond

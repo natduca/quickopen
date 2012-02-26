@@ -275,7 +275,12 @@ def CMDprelaunch(parser):
     sys.argv.extend(before_args)
     (options, args) = parser.parse_args()
     settings = load_settings(options)
-    sys.stdout.write(prelaunch.run_command_in_existing(options.host, options.port, after_args))
+    try:
+      sys.stdout.write(prelaunch.run_command_in_existing(options.host, options.port, after_args))
+      return 0
+    except Exception as e:
+      sys.stdout.write(str(e) + "\n")
+      return -1
 
 def load_settings(options):
   settings_file = os.path.expanduser(options.settings)

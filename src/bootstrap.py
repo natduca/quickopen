@@ -59,7 +59,7 @@ def run():
     return options, args
   parser.parse_args = parse_args_shim
 
-  mod.main(parser)
+  return mod.main(parser)
 
 def handle_options(options, args):
   """Called by bootstrapper to process global commandline options."""

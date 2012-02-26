@@ -60,7 +60,7 @@ function! s:QuickOpenPrompt(query)
 endfunction
 
 function! s:QuickOpenSingle(cmd, query)
-  let res = s:RunQuickOpen("search --only-if-exact " . a:query)
+  let res = s:RunQuickOpen("search --only-if-exact-match " . a:query)
   if empty(res) || res[0] == ""
     call QuickFind(a:cmd, a:query)
     return

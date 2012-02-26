@@ -21,10 +21,20 @@ let s:QuickOpenFile = resolve(expand("<sfile>"))
 let s:QuickOpenDir = strpart(s:QuickOpenFile, 0, strridx(s:QuickOpenFile,"/plugin"))
 let s:QuickOpenApp = s:QuickOpenDir . "/quickopen"
 
+function! s:RunQuickOpen(args)
+    let res = system(s:QuickOpenApp . " " . a:args)
+    if v:shell_error
+      echohl ErrorMsg
+      echo substitute(escape(res, "\""), "\n$", "", "g")
+      echohl None
+      return []
+    endif
+    return split(res, "\n", 0)
+endfunction
+
 function! s:QuickOpenPrompt()
   if has("gui_running")
-    let res = system(s:QuickOpenApp. " prelaunch search")
-    return split(res, "\n", 0)
+    return s:RunQuickOpen("prelaunch search")
   else
     let resultsfile = tempname()
 
@@ -50,10 +60,11 @@ function! s:QuickOpenPrompt()
 endfunction
 
 function! s:QuickOpenSingle(cmd, query)
-  let res = system(s:QuickOpenApp . " search --skip-ui-if-exact " . a:query)
-  if res != ""
-    exec(a:cmd . " " . fnameescape(res))
+  let res = s:RunQuickOpen("search --skip-ui-if-exact " . a:query)
+  if (len(res) == 0 || res[0] == "")
+    return
   endif
+  exec(a:cmd . " " . fnameescape(res[0]))
 endfunction
 
 function! QuickFind()

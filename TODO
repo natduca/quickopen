@@ -15,8 +15,6 @@ curses UI doesn't know when the terminal resized.
 
 emacs does not show error if quickopen prelaunch fails due to missing daemon
 
-vim does not show error if quickopen prelaunch fails due to missing daemon
-
 --skip-ui-if-exact opens gui even if in non-gui editor
 
 Features

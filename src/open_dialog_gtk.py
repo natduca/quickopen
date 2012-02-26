@@ -108,7 +108,6 @@ class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
     self.response(None, gtk.RESPONSE_CANCEL)
 
   def redirect_to_treeview(self, event):
-    print event
     prev = self.get_focus()
     self._treeview.grab_focus()
     ret = self._treeview.emit('key_press_event', event)

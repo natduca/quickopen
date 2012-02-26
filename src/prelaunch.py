@@ -124,8 +124,7 @@ def run_command_in_existing(daemon_host, daemon_port, args):
   try:
     conn.request('GET', '/existing_quickopen/%s' % display)
   except socket.error:
-    t = "quickopend not running." # keep this synchronized with CMDstatus from quickopen.py
-    return t
+    raise Exception("quickopend not running.")
 
   res = conn.getresponse()
   assert res.status == 200

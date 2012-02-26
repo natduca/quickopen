@@ -32,9 +32,9 @@ function! s:RunQuickOpen(args)
     return split(res, "\n", 0)
 endfunction
 
-function! s:QuickOpenPrompt()
+function! s:QuickOpenPrompt(query)
   if has("gui_running")
-    return s:RunQuickOpen("prelaunch search")
+    return s:RunQuickOpen("prelaunch search " . a:query)
   else
     let resultsfile = tempname()
 
@@ -44,7 +44,7 @@ function! s:QuickOpenPrompt()
     setlocal noswapfile
     setlocal buflisted
 
-    exec("silent! !" . s:QuickOpenApp . " --curses --results-file=" . resultsfile)
+    exec("silent! !" . s:QuickOpenApp . " search --curses --results-file=" . resultsfile . " " . a:query)
     exe "bdel"
 
     exec(":redraw!")
@@ -60,24 +60,25 @@ function! s:QuickOpenPrompt()
 endfunction
 
 function! s:QuickOpenSingle(cmd, query)
-  let res = s:RunQuickOpen("search --skip-ui-if-exact " . a:query)
-  if (len(res) == 0 || res[0] == "")
+  let res = s:RunQuickOpen("search --only-if-exact " . a:query)
+  if empty(res) || res[0] == ""
+    call QuickFind(a:cmd, a:query)
     return
   endif
   exec(a:cmd . " " . fnameescape(res[0]))
 endfunction
 
-function! QuickFind()
-  let files_to_open = s:QuickOpenPrompt()
+function! QuickFind(cmd, query)
+  let files_to_open = s:QuickOpenPrompt(a:query)
   for f in files_to_open
-    exec(":find " . fnameescape(f))
+    exec(a:cmd . " " . fnameescape(f))
   endfor
 endfunction
 
 " Ugh, someone with a clue about Vim, help me, what're good key bindings?
-noremap <silent> <C-O> <Esc>:call QuickFind()<CR>
+noremap <silent> <C-O> <Esc>:call QuickFind(':find', "")<CR>
 
-noremap <silent> <D-O> <Esc>:call QuickFind()<CR>
+noremap <silent> <D-O> <Esc>:call QuickFind(':find', "")<CR>
 
 nnoremap <silent> gf :call <sid>QuickOpenSingle(':find', expand('<cfile>'))<cr>
 nnoremap <silent> <c-w>gf :call <sid>QuickOpenSingle(':sp', expand('<cfile>'))<cr>

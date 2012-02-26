@@ -145,6 +145,7 @@ def CMDsearch(parser):
   parser.add_option('--lisp-results', dest='lisp_results', action='store_true', default=False, help='Output results as a lisp-formatted list')
   parser.add_option('--results-file', dest='results_file', action='store', help='Output results to the provided file instead of stdout')
   parser.add_option('--skip-ui-if-exact-match', dest='skip_if_exact', action='store_true', default=False, help="Don't show UI if there's an exact match")
+  parser.add_option('--only-if-exact-match', dest='only_if_exact', action='store_true', default=False, help="Print only if there is an exact match, nothing otherwise")
   parser.add_option('--current-filename', dest='current_filename', action='store', default=None, help="Hints quickopen about the current buffer to improve search relevance.")
   parser.add_option('--open-filenames', dest='open_filenames', action='store', default=[], help="Hints quickopen about the filenames currently open to improve search relevance.")
   (options, args) = parser.parse_args()
@@ -179,12 +180,17 @@ def CMDsearch(parser):
     # Switch the options to the parsed form so the open dialog can use it directly.
     options.open_filenames = split_open_filenames(options.open_filenames)
     search_args["open_filenames"] = options.open_filenames
+  # FIXME: Modify emacs to not use this option anymore and then remove it.
   if options.skip_if_exact:
     res = db.search(args[0], exact_match=True, **search_args)
     if len(res.filenames) == 1:
       print_results(res.filenames, False)
       return 0
-
+  if options.only_if_exact:
+    res = db.search(args[0], exact_match=True, **search_args)
+    if len(res.filenames) == 1:
+      print_results(res.filenames, False)
+    return 0
 
   if len(args):
     initial_filter = " ".join(args)

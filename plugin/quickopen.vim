@@ -52,14 +52,14 @@ endfunction
 function! s:QuickOpenSingle(cmd, query)
   let res = system(s:QuickOpenApp . " search --skip-ui-if-exact " . a:query)
   if res != ""
-    exec(a:cmd . " " . res)
+    exec(a:cmd . " " . fnameescape(res))
   endif
 endfunction
 
 function! QuickFind()
   let files_to_open = s:QuickOpenPrompt()
   for f in files_to_open
-    exec(":find " . f)
+    exec(":find " . fnameescape(f))
   endfor
 endfunction
 

@@ -17,7 +17,7 @@ import message_loop
 import message_loop_curses
 import time
 import os
-import ranker
+import basename_ranker
 
 from open_dialog import OpenDialogBase
 
@@ -124,7 +124,7 @@ class OpenDialogCurses(OpenDialogBase):
       self._filter_text_point = max(0, min(self._filter_text_point, len(self._filter_text)))
       self._update_filter_text()
     elif k == 'M-b':
-      wordstarts = ranker.Ranker().get_starts(self._filter_text)
+      wordstarts = basename_ranker.BasenameRanker().get_starts(self._filter_text)
       wordstarts.append(len(self._filter_text))
       candidates = []
       for start in wordstarts:

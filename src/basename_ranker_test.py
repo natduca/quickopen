@@ -138,7 +138,7 @@ class BasenameRankerTest(unittest.TestCase):
     self.assertEquals(0, self.ranker.rank_query('f', 'oom'))
 
     # overconditioned
-    self.assertEquals(2, self.ranker.rank_query('test_thread_tab.py', 'tw'))
+    self.assertEquals(6, self.ranker.rank_query('test_thread_tab.py', 'tw'))
 
   def test_rank_subclasses_lower_ranked_than_base(self):
     # this tests that hitting all words counts higher than hitting some of the words
@@ -218,3 +218,8 @@ class BasenameRankerTest(unittest.TestCase):
     a = self.ranker.rank_query('render_', 'render_widget.cc')
     b = self.ranker.rank_query('render_widget', 'render_widget.cc')
     self.assertTrue(b > a)
+
+  def test_document_rank(self):
+    a = self.ranker.rank_query('document.cpp', 'Document.cpp')
+    b = self.ranker.rank_query('document.cpp', 'AccessibleDocument.cpp')
+    self.assertTrue(a > b)

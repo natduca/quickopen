@@ -133,8 +133,8 @@ class BasenameRanker(object):
     # Give bonus for hitting all the words.
     if not truncated:
       max_num_word_hits = self.get_num_words(candidate)
-      if max_num_word_hits >= 2:
-        percent_hit = float(num_word_hits) / max_num_word_hits
+      if max_num_word_hits >= 1:
+        percent_hit = float(num_word_hits) / float(max_num_word_hits)
         rank += 4 * percent_hit # tune this constant
 
     # big points if you match the full string

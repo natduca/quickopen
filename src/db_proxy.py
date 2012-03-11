@@ -23,10 +23,10 @@ import urllib
 import urlparse
 
 from db_status import DBStatus
-from search_result import SearchResult
 from event import Event
 from trace_event import *
 from query import Query
+from query_result import QueryResult
 
 class DBDirProxy(object):
   def __init__(self, id, path):
@@ -156,7 +156,7 @@ class DBProxy(object):
     """
     query = Query.from_kargs(args, kwargs)
     d = self._req('POST', '/search', query.as_dict())
-    return SearchResult.from_dict(d)
+    return QueryResult.from_dict(d)
 
   def search_async(self, *args, **kwargs):
     return AsyncSearch(self.host, self.port, *args, **kwargs)
@@ -220,5 +220,5 @@ class AsyncSearch(object):
        else:
          data = res.read()
          res = json.loads(data.encode('utf8'))
-         self._result = SearchResult.from_dict(res)
+         self._result = QueryResult.from_dict(res)
      return self._result

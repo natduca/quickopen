@@ -11,6 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import fixed_size_dict
+import os
+
+from basename_ranker import BasenameRanker
+from query_result import QueryResult
+from trace_event import *
+
+class QueryCache(object):
+  """Cached query execution results."""
+  def __init__(self):
+    self.searches = fixed_size_dict.FixedSizeDict(256)
 
 class Query(object):
   """Encapsulates all the options to Quickopen search system."""
@@ -49,4 +60,65 @@ class Query(object):
       "current_filename": self.current_filename,
       "open_filenames": self.open_filenames
       }
+
+
+  @tracedmethod
+  def execute(self, shard_manager, query_cache):
+    """
+    Searches the index given the provided query.
+
+    args should be either a Query object, or arguments to the Query-object constructor.
+    """
+    if self.text == '':
+      return QueryResult()
+
+    assert self.max_hits >= 0
+
+    qkey = self.text + "@%i" % self.max_hits
+    if qkey in query_cache.searches:
+      res = query_cache.searches[qkey]
+    else:
+      res = self.execute_nocache(shard_manager, query_cache)
+      query_cache.searches[qkey] = res
+
+    if self.exact_match:
+      return res.query_for_exact_matches(self.text)
+
+    return res
+
+  def execute_nocache(self, shard_manager, query_cache):
+    self.text = self.text
+    slashIdx = self.text.rfind('/')
+    if slashIdx != -1:
+      dirpart = self.text[:slashIdx]
+      basename_query = self.text[slashIdx+1:]
+    else:
+      dirpart = None
+      basename_query = self.text
+
+    truncated = False
+
+    if len(basename_query):
+      hits, truncated = shard_manager.search_basenames(basename_query, self.max_hits)
+    else:
+      if len(dirpart):
+        hits = []
+        hits.extend([(f, 1) for f in shard_manager.files])
+      else:
+        hits = []
+
+    if dirpart:
+      reshits = []
+      lower_dirpart = dirpart.lower()
+      for hit in hits:
+        dirname = os.path.dirname(hit[0])
+        lower_dirname = dirname.lower()
+        if lower_dirname.endswith(lower_dirpart):
+          reshits.append(hit)
+      hits = reshits
+
+    # do one final ranking on the total rank
+    res = QueryResult(hits=hits, truncated=truncated)
+    res.apply_global_rank_adjustment()
+    return res.get_copy_with_max_hits(self.max_hits)
 

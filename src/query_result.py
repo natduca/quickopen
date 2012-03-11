@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 
-class SearchResult(object):
+class QueryResult(object):
   def __init__(self, hits=None, truncated=False):
     if hits:
       self.filenames = [x[0] for x in hits]
@@ -30,7 +30,7 @@ class SearchResult(object):
 
   @staticmethod
   def from_dict(d):
-    r = SearchResult()
+    r = QueryResult()
     r.filenames = d["filenames"]
     r.ranks = d["ranks"]
     r.truncated = d["truncated"]
@@ -56,11 +56,11 @@ class SearchResult(object):
 
   def query_for_exact_matches(self, query):
     """
-    Returns a new SearchResult object containing only filenames that exactly
+    Returns a new QueryResult object containing only filenames that exactly
     match the provided query.
     """
     
-    res = SearchResult()
+    res = QueryResult()
     res.truncated = self.truncated
 
     for hit,rank in self.hits():
@@ -97,4 +97,4 @@ class SearchResult(object):
     self.ranks = [x[1] for x in hits]
 
   def get_copy_with_max_hits(self, max_hits):
-    return SearchResult(hits=list(self.hits())[:max_hits], truncated=self.truncated)
+    return QueryResult(hits=list(self.hits())[:max_hits], truncated=self.truncated)

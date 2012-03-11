@@ -16,15 +16,14 @@ import logging
 import os
 
 from db_exception import DBException
+from db_shard_manager import DBShardManager
 from db_status import DBStatus
-from db_index import DBIndex
 from db_indexer import DBIndexer
 from dir_cache import DirCache
 from event import Event
-from search_result import SearchResult
-
 from trace_event import *
-from query import Query
+from query import *
+from query_result import QueryResult
 
 DEFAULT_IGNORES=[
   ".*",
@@ -57,8 +56,9 @@ class DB(object):
   def __init__(self, settings):
     self.settings = settings
     self.needs_indexing = Event() # fired when the database gets dirtied and needs syncing
-    self._pending_indexer = None # non-None if a DBIndex is running
-    self._cur_index = None # the last DBIndex object --> actually runs the searches
+    self._pending_indexer = None # non-None if a DBIndexer is running
+    self._cur_shard_manager = None # the current DBShardManager object. This has all the DBIndexShards.
+    self._cur_query_cache = None
 
     self._dir_cache = DirCache() # thread only state
 
@@ -131,7 +131,7 @@ class DB(object):
 
   @property
   def has_index(self):
-    return self._cur_index != None
+    return self._cur_shard_manager != None
 
   @property
   def is_up_to_date(self):
@@ -182,15 +182,15 @@ class DB(object):
   def status(self):
     if self._pending_indexer:
       if isinstance(self._pending_indexer, DBIndexer): # is an integer briefly between _set_dirty and first step_indexer
-        if self._cur_index:
-          status = "syncing: %s, %s" % (self._pending_indexer.progress, self._cur_index.status)
+        if self._cur_shard_manager:
+          status = "syncing: %s, %s" % (self._pending_indexer.progress, self._cur_shard_manager.status)
         else:
           status = "first-time sync: %s" % self._pending_indexer.progress
       else:
         status = "sync scheduled"
     else:
-      if self._cur_index:
-        status = "up-to-date: %s" % self._cur_index.status
+      if self._cur_shard_manager:
+        status = "up-to-date: %s" % self._cur_shard_manager.status
       else:
         status = "sync required"
 
@@ -210,7 +210,8 @@ class DB(object):
       self._pending_indexer = DBIndexer(self.settings.dirs, self._dir_cache)
 
     if self._pending_indexer.complete:
-      self._cur_index = DBIndex(self._pending_indexer)
+      self._cur_shard_manager = DBShardManager(self._pending_indexer)
+      self._cur_query_cache = QueryCache()
       self._pending_indexer = None
     else:
       self._pending_indexer.index_a_bit_more()
@@ -232,8 +233,8 @@ class DB(object):
     if self._pending_indexer:
       self.step_indexer()
       # step sync might change the db sync status
-      if not self._cur_index:
-        return SearchResult()
+      if not self._cur_shard_manager:
+        return QueryResult()
 
     query = Query.from_kargs(args, kwargs)
-    return self._cur_index.search(query)
+    return query.execute(self._cur_shard_manager, self._cur_query_cache)

@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import db_index
+import db_shard_manager
 import db_indexer
 import sys
 import unittest
@@ -19,10 +19,10 @@ import time
 
 FILES_BY_BASENAME = None
 
-class DBIndexTestBase(object):
+class DBShardManagerTestBase(object):
   def setUp(self):
     mock_indexer = db_indexer.MockIndexer('test_data/cr_files_by_basename_five_percent.json')
-    self.index = db_index.DBIndex(mock_indexer,threaded=self.threaded)
+    self.index = db_shard_manager.DBShardManager(mock_indexer,threaded=self.threaded)
 
   def tearDown(self):
     self.index.close()
@@ -68,20 +68,20 @@ class DBIndexTestBase(object):
   def test_dir_and_name_query(self):
     self.assertTrue("~/ndbg/quickopen/src/db_proxy_test.py" in self.index.search('src/db_proxy_test.py').filenames)
 
-class DBIndexTestMT(unittest.TestCase, DBIndexTestBase):
+class DBShardManagerTestMT(unittest.TestCase, DBShardManagerTestBase):
   def setUp(self,*args,**kwargs):
     self.threaded = True
     unittest.TestCase.setUp(self,*args,**kwargs)
-    DBIndexTestBase.setUp(self)
+    DBShardManagerTestBase.setUp(self)
 
   def tearDown(self):
-    DBIndexTestBase.tearDown(self)
+    DBShardManagerTestBase.tearDown(self)
 
-class DBIndexTestST(unittest.TestCase, DBIndexTestBase):
+class DBShardManagerTestST(unittest.TestCase, DBShardManagerTestBase):
   def setUp(self,*args,**kwargs):
     unittest.TestCase.setUp(self,*args,**kwargs)
     self.threaded = False
-    DBIndexTestBase.setUp(self)
+    DBShardManagerTestBase.setUp(self)
 
   def test_chunker(self):
     def validate(num_items,nchunks):
@@ -99,12 +99,12 @@ class DBIndexTestST(unittest.TestCase, DBIndexTestBase):
     validate(10,3)
 
   def tearDown(self):
-    DBIndexTestBase.tearDown(self)
+    DBShardManagerTestBase.tearDown(self)
 
-class DBIndexPerfTest():
+class DBShardManagerPerfTest():
   def __init__(self, testfile):
     mock_indexer = db_indexer.MockIndexer(testfile)
-    self.index = db_index.DBIndex(mock_indexer)
+    self.index = db_shard_manager.DBShardManager(mock_indexer)
 
   def test_matcher_perf(self,max_hits):
     print "%15s %s" % ("query", "time")
@@ -144,7 +144,7 @@ class DBIndexPerfTest():
       print '%15s %.3f' % (q ,elapsed)
       
 if __name__ == '__main__':
-  test = DBIndexPerfTest('test_data/cr_files_by_basename.json')
+  test = DBShardManagerPerfTest('test_data/cr_files_by_basename.json')
   print "Results for max=30:"
   test.test_matcher_perf(max_hits=30)
   print "\n"

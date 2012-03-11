@@ -15,11 +15,12 @@ import db_index_shard
 import fixed_size_dict
 import multiprocessing
 import os
+
 from basename_ranker import BasenameRanker
+from local_pool import *
 from search_result import SearchResult
 from trace_event import *
-
-from local_pool import *
+from query import *
 
 slave = None
 slave_searchcount = 0
@@ -100,15 +101,29 @@ class DBIndex(object):
         p.terminate()
 
   @tracedmethod
-  def search(self, query, max_hits = 100):
-    qkey = query + "@%i" % max_hits
-    assert len(query) > 0
+  def search(self, *args, **kwargs):
+    """
+    Searches the index given the provided query.
+
+    args should be either a Query object, or arguments to the Query-object constructor.
+    """
+    query = Query.from_kargs(args, kwargs)
+    if query.text == '':
+      return SearchResult()
+
+    if query.max_hits == -1:
+      query.get_max_hits_or_default()
+
+    qkey = query.text + "@%i" % query.max_hits
     if qkey in self.query_cache:
       res = self.query_cache[qkey]
-      return res
+    else:
+      res = self.search_nocache(query.text, query.max_hits)
+      self.query_cache[qkey] = res
 
-    res = self.search_nocache(query, max_hits)
-    self.query_cache[qkey] = res
+    if query.exact_match:
+      return res.query_for_exact_matches(query.text)
+
     return res
 
   def search_nocache(self, query, max_hits = 100):

@@ -24,6 +24,7 @@ from event import Event
 from search_result import SearchResult
 
 from trace_event import *
+from query import Query
 
 DEFAULT_IGNORES=[
   ".*",
@@ -222,22 +223,17 @@ class DB(object):
 
   ###########################################################################
   @traced
-  def search(self, query, max_hits = -1, exact_match = False, current_filename = None, open_filenames = []):
+  def search(self, *args, **kwargs):
+    """
+    Searches the database.
+
+    args/kwargs should be either a Query object, or arguments to the Query-object constructor.
+    """
     if self._pending_indexer:
       self.step_indexer()
       # step sync might change the db sync status
       if not self._cur_index:
         return SearchResult()
 
-    if query == '':
-      return SearchResult()
-
-    if max_hits == -1:
-      result = self._cur_index.search(query)
-    else:
-      result = self._cur_index.search(query, max_hits)
-
-    if exact_match:
-      return result.query_for_exact_matches(query)
-
-    return result
+    query = Query.from_kargs(args, kwargs)
+    return self._cur_index.search(query)

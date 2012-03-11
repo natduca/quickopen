@@ -18,6 +18,8 @@ import time
 import urlparse
 
 from trace_event import *
+from query import Query
+
 
 # TODO(nduca): is Stub the right word for this class? Mehh
 class DBStub(object):
@@ -88,17 +90,8 @@ class DBStub(object):
 
   @tracedmethod
   def search(self, m, verb, data):
-    options = urlparse.parse_qs(urlparse.urlparse(m.group(0)).query)
-    kwargs = {}
-    if "max_hits" in options:
-      kwargs["max_hits"] = int(options["max_hits"][0])
-    if "exact_match" in options:
-      if options["exact_match"][0] == "True":
-        kwargs["exact_match"] = True
-    if "current_filename" in options:
-      kwargs["current_filename"] = options["current_filename"][0]
-    kwargs["open_filenames"] = data["open_filenames"]
-    return self.db.search(data["query"], **kwargs).as_dict()
+    query = Query.from_dict(data)
+    return self.db.search(query).as_dict()
 
   @tracedmethod
   def sync(self, m, verb, data):

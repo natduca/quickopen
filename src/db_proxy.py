@@ -26,6 +26,7 @@ from db_status import DBStatus
 from search_result import SearchResult
 from event import Event
 from trace_event import *
+from query import Query
 
 class DBDirProxy(object):
   def __init__(self, id, path):
@@ -147,24 +148,18 @@ class DBProxy(object):
       raise "Pattern not found"
 
   @tracedmethod
-  def search(self, q, max_hits = -1, exact_match = False, current_filename = None, open_filenames = []):
-    options = {}
-    if max_hits != -1:
-      options["max_hits"] = max_hits
-    if exact_match:
-      options["exact_match"] = True
-    if current_filename:
-      options["current_filename"] = current_filename
-    q = {"query" : q,
-         "open_filenames": open_filenames}
-    if len(options):
-      d = self._req('POST', '/search?%s' % urllib.urlencode(options), q)
-    else:
-      d = self._req('POST', '/search', q)
+  def search(self, *args, **kwargs):
+    """
+    Searches the database.
+
+    args should be either a Query object, or arguments to the Query-object constructor.
+    """
+    query = Query.from_kargs(args, kwargs)
+    d = self._req('POST', '/search', query.as_dict())
     return SearchResult.from_dict(d)
 
-  def search_async(self, q, max_hits = -1, exact_match = False, current_filename = None, open_filenames = []):
-    return AsyncSearch(self.host, self.port, q, max_hits, exact_match, current_filename, open_filenames)
+  def search_async(self, *args, **kwargs):
+    return AsyncSearch(self.host, self.port, *args, **kwargs)
 
   @property
   def is_up_to_date(self):
@@ -194,22 +189,17 @@ class AsyncSearchError(object):
   pass
 
 class AsyncSearch(object):
-  def __init__(self, host, port, q, max_hits = -1, exact_match = False, current_filename = None, open_filenames = []):
-    self.async_conn = async_http_connection.AsyncHTTPConnection(host, port)
+  def __init__(self, host, port, *args, **kwargs):
+    """
+    Begins an asynchronous searche of the database.
 
-    options = {}
-    if max_hits != -1:
-      options["max_hits"] = max_hits
-    if exact_match:
-      options["exact_match"] = True
-    if current_filename:
-      options["current_filename"] = current_filename
-    q = {"query" : q,
-         "open_filenames": open_filenames}
-    if len(options):
-      self.async_conn.begin_request('POST', '/search?%s' % urllib.urlencode(options), json.dumps(q))
-    else:
-      self.async_conn.begin_request('POST', '/search', json.dumps(q))
+    host and port point to a running quickopend instance.
+
+    args should be either a Query object, or arguments to the Query-object constructor.
+    """
+    query = Query.from_kargs(args, kwargs)
+    self.async_conn = async_http_connection.AsyncHTTPConnection(host, port)
+    self.async_conn.begin_request('POST', '/search', json.dumps(query.as_dict()))
     self._result = None
 
   @property

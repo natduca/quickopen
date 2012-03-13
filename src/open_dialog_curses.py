@@ -13,6 +13,7 @@
 # limitations under the License.
 import curses
 import curses.ascii as ascii
+import math
 import message_loop
 import message_loop_curses
 import time
@@ -31,6 +32,19 @@ def spad(s, w):
     while len(t) < w:
       t += ' '
     return t
+
+def elide(text, width):
+  assert width >= 0
+  if len(text) <= width:
+    return text
+  if width < 4:
+    return text[0:3]
+  N = len(text)
+
+  num_to_use = width - 3
+  num_to_use_left = int(math.ceil(float(num_to_use) / 2.0))
+  num_to_use_right = num_to_use - num_to_use_left
+  return "%s...%s" % (text[:num_to_use_left], text[N - num_to_use_right:])
 
 class OpenDialogCurses(OpenDialogBase):
   def __init__(self, settings, options, db, initial_filter):
@@ -204,15 +218,20 @@ class OpenDialogCurses(OpenDialogBase):
     h = wh - 5
     w = ww - 2
 
+    R_W = 4
+    BN_W = 40
+    P_W = w - (R_W + 1 + BN_W + 1)
+    ROW_FORMAT = "%%%is %%-%is %%s" % (R_W, BN_W)
+
     # update the screen
     for i in range(h):
       if i < len(self._result_files):
         f = self._result_files[i]
-        bn = os.path.basename(f)
-        p = os.path.dirname(f)
-        l = "%2i   %40s   %s" % (self._result_ranks[i],
-                                 bn,
-                                 p)
+        r = ("%4.1f" % (self._result_ranks[i]))[:R_W]
+        bn = elide(os.path.basename(f), BN_W)
+        p = elide(os.path.dirname(f), P_W)
+
+        l = ROW_FORMAT % (r, bn, p)
         t = spad(l, w)
         if i == self._selected_index:
           a = curses.color_pair(1) | curses.A_REVERSE

@@ -78,6 +78,19 @@
     (search-backward y)
     (- (point) 1)))
 
+(defun quickopen-filter(predicate list)
+  "Return items in LIST satisfying."
+  (delq nil
+	(mapcar (lambda (x)
+		  (and (funcall predicate x)
+		       x
+		       )
+		  )
+		list
+		)
+	)
+  )
+
 (setq quickopen-dir-base
   (let ((true-load-file-name (file-truename load-file-name)))
     (substring true-load-file-name
@@ -96,7 +109,7 @@
                          (buffer-substring (point-min) (point-max))
                          )
                        )
-                     (filter (lambda (x) (buffer-file-name x))
+                     (quickopen-filter (lambda (x) (buffer-file-name x))
                              (buffer-list)
                              )
                      )

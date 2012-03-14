@@ -144,7 +144,14 @@
                 ;; There is a delay between call-process and the external UI
                 ;; taking over input. Discard any buffered characters that happened during this time.
                 (discard-input)
-                (quickopen-get-results-from-current-buffer)
+
+                (condition-case ex
+                    (quickopen-get-results-from-current-buffer)
+                  ('error
+                   (message (format "quickopen error: %s" (error-message-string ex)))
+                   nil
+                   )
+                  )
                 )
           )
     (mapcar (lambda (file)
@@ -232,41 +239,52 @@
           (setq res (replace-regexp-in-string "\n" "" res)) ;; get rid of newlines
           (read res)
           )
-      nil
+      (progn
+        (if   (search-backward-regexp "quickopend not running." nil t)
+            (error "Quickopend not running.")
+          nil
+          )
+        )
       )
     )
   )
 
 (defun quickopen-find-file-using-curses-exited (process-name msg)
-  (let ((res (quickopen-get-results-from-current-buffer)))
-    ;; Kill old buffer later --- we're inside the proc-death function so killing it 
-    ;; now will make term-mode cry.
-    (run-at-time "0.01 sec"
-                 nil
-                 (lambda (buf)
-                   (kill-buffer buf)
-                   )
-                 quickopen-current-buffer
-                 )
-    ;; Clear the buffer flag immediately so that quickopen-find-file-using-curses understands
-    ;; that it can create a new buffer.
-    (setq quickopen-current-buffer nil)
+  (condition-case ex
+      (let ((res (quickopen-get-results-from-current-buffer)))
+        ;; Kill old buffer later --- we're inside the proc-death function so killing it
+        ;; now will make term-mode cry.
+        (run-at-time "0.01 sec"
+                     nil
+                     (lambda (buf)
+                       (kill-buffer buf)
+                       )
+                     quickopen-current-buffer
+                     )
+        ;; Clear the buffer flag immediately so that quickopen-find-file-using-curses understands
+        ;; that it can create a new buffer.
+        (setq quickopen-current-buffer nil)
 
-    ;; restore window config
-    (set-window-configuration quickopen-old-window-configuration)
-    (setq quickopen-old-window-configuration nil)
+        ;; restore window config
+        (set-window-configuration quickopen-old-window-configuration)
+        (setq quickopen-old-window-configuration nil)
 
-    ;; open stuff up
-    (when res
-      (mapcar (lambda (file)
-                (if (not quickopen-current-buffer-open-result-in-other-window)
-                    (find-file file)
-                  (find-file-other-window file)
+        ;; open stuff up
+        (when res
+          (mapcar (lambda (file)
+                    (if (not quickopen-current-buffer-open-result-in-other-window)
+                        (find-file file)
+                      (find-file-other-window file)
+                      )
+                    )
+                  res
                   )
-                )
-              res
-              )
-      )
+          )
+        )
+    ('error
+     (message (format "quickopen error: %s" cdr(ex)))
+     nil
+     )
     )
   )
 

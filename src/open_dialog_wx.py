@@ -39,10 +39,10 @@ class OpenDialogWx(wx.Dialog, OpenDialogBase):
 
     top_box = wx.BoxSizer(wx.HORIZONTAL)
 
-    self.status_text = wx.StaticText(self, -1, '')
+    self.status_text_widget = wx.StaticText(self, -1, '')
 
     top_box.Add((10,0))
-    top_box.Add(self.status_text,1, wx.EXPAND | wx.ALL | wx.ALIGN_CENTER_VERTICAL)
+    top_box.Add(self.status_text_widget,1, wx.EXPAND | wx.ALL | wx.ALIGN_CENTER_VERTICAL)
     reindex_bn = wx.Button(self, -1, "Reindex")
     reindex_bn.Bind(wx.EVT_BUTTON, lambda *args: self.on_reindex_clicked())
     top_box.Add(reindex_bn)
@@ -97,8 +97,8 @@ class OpenDialogWx(wx.Dialog, OpenDialogBase):
   def on_cancel(self, event):
     self.on_done(True)
 
-  def set_status(self,status_text):
-    self.status_text.SetLabel(status_text)
+  def status_changed(self):
+    self.status_text_widget.SetLabel(self.status_text)
 
   def set_results_enabled(self,en):
     self._results_list.Enable(en)

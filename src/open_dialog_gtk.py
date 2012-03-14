@@ -162,8 +162,8 @@ class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
     self._treeview.set_sensitive(en)
     self.set_response_sensitive(gtk.RESPONSE_OK, en)
 
-  def set_status(self, status_text):
-    self.status_label.set_text(status_text)
+  def status_changed(self):
+    self.status_label.set_text(self.status_text)
 
   # update the model based on result
   def update_results_list(self, files, ranks):

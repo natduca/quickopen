@@ -29,6 +29,7 @@ import httplib
 import time
 import StringIO
 
+from db import DBStatus
 from trace_event import *
 
 _is_prelaunched_process = False
@@ -124,7 +125,7 @@ def run_command_in_existing(daemon_host, daemon_port, args):
   try:
     conn.request('GET', '/existing_quickopen/%s' % display)
   except socket.error:
-    raise Exception("quickopend not running.")
+    return "%s.\n" % DBStatus.not_running_string()
 
   res = conn.getresponse()
   assert res.status == 200

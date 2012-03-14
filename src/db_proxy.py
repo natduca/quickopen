@@ -180,8 +180,11 @@ class DBProxy(object):
 
   @tracedmethod
   def status(self):
-    d = self._req('GET', '/status')
-    return DBStatus.from_dict(d)
+    try:
+      d = self._req('GET', '/status')
+      return DBStatus.from_dict(d)
+    except IOError:
+      return DBStatus.not_running()
 
   def begin_reindex(self):
     return self._req('POST', '/begin_reindex')

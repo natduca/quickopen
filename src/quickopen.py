@@ -21,7 +21,7 @@ import prelaunch
 import re
 import sys
 
-from db import DBException
+from db import DBException, DBStatus
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../third_party/py_trace_event/"))
 try:
@@ -205,10 +205,7 @@ def CMDstatus(parser):
   (options, args) = parser.parse_args()
   settings = load_settings(options)
   db = open_db(options)
-  try:
-    print db.status().status
-  except IOError:
-    print "quickopend not running."
+  print "%s." % db.status().status
 
 def CMDreindex(parser):
   """Begins to reindex the quickopen database"""
@@ -219,7 +216,7 @@ def CMDreindex(parser):
     db.begin_reindex()
     print "Reindexing has begun."
   except IOError:
-    print "quickopend not running."
+    print "%s." % DBStatus.not_running_string()
 
 def CMDrawsearch(parser):
   """Prints the raw database's results for <query>"""

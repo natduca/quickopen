@@ -20,6 +20,7 @@ import os
 import sys
 import time
 
+from db import DBStatus
 from trace_event import *
 
 TICK_RATE_WHEN_SEARCHING = 0.005
@@ -37,6 +38,8 @@ class OpenDialogBase(object):
       self._filter_text = initial_filter
     self._settings = settings
     self._db = db
+    self._frontend_status = None
+    self._backend_status = DBStatus()
     self._can_process_queries = False
     self._db_is_up_to_date = True
     self._last_search_query = None
@@ -84,11 +87,38 @@ class OpenDialogBase(object):
   def on_reindex_clicked(self):
     self._db.begin_reindex()
 
+  @property
+  def frontend_status(self):
+    return self._frontend_status
+
+  @frontend_status.setter
+  def frontend_status(self, status):
+    self._frontend_status = status
+    self.status_changed()
+
+  @property
+  def backend_status(self):
+    return self._backend_status
+
+  @backend_status.setter
+  def backend_status(self, status):
+    self._db_is_up_to_date = status.is_up_to_date
+    self._can_process_queries = status.has_index and status.running
+    self._backend_status = status
+    self.status_changed()
+
+  @property
+  def status_text(self):
+    if self.frontend_status:
+      return "%s (%s)" % (self._backend_status.status, self._frontend_status)
+    else:
+      return "%s" % self._backend_status.status
+
   @tracedmethod
   def on_tick(self,*args):
     @traced
     def begin_search():
-      self.set_status("DB Status: %s" % "searching")
+      self.frontend_status = "searching"
       self._last_search_query = self._filter_text
 
       search_args = {}
@@ -104,6 +134,7 @@ class OpenDialogBase(object):
         res = self._pending_search.result
       except db_proxy.AsyncSearchError:
         res = None
+      self.frontend_status = None
       self._pending_search = None
       trace_begin("update_results_list")
       if res:
@@ -114,21 +145,10 @@ class OpenDialogBase(object):
       self._pending_search = None
 
     @traced
-    def check_status():
-      try:
-        stat = self._db.status()
-        status = stat.status
-        enabled = stat.has_index
-        self._db_is_up_to_date = stat.is_up_to_date
-      except Exception, ex:
-        status = "quickopend not running"
-        enabled = False
-        self._db_is_up_to_date = False
-      self.set_status("DB Status: %s" % status)
-      self.set_can_process_queries(enabled)
+    def update_backend_status():
+      self.backend_status = self._db.status()
 
     if self._pending_search:
-      self.set_status("DB Status: %s" % "searching")
       if self._pending_search.ready:
         on_ready()
 
@@ -139,8 +159,8 @@ class OpenDialogBase(object):
       if need_to_begin_search and self._can_process_queries:
         begin_search()
       else:
-        # poll status
-        check_status()
+        # poll backend status
+        update_backend_status()
 
     # renew the tick
     if self._pending_search:

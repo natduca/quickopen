@@ -55,7 +55,6 @@ class OpenDialogCurses(OpenDialogBase):
     self._refresh_pending = False
     self._invalidate()
 
-    self._status = ''
     self._update_border()
 
     self._update_filter_text()
@@ -81,9 +80,9 @@ class OpenDialogCurses(OpenDialogBase):
     # self._keylog = open('/tmp/quickopen.keylog', 'w', False)
 
   def _update_border(self):
-    status = 'QuickOpen: %s' % self._status
+    status = 'QuickOpen: %s' % self.status_text
     h,w = self._stdscr.getmaxyx()
-    self._stdscr.addstr(0, 0, status[:w])
+    self._stdscr.addstr(0, 0, spad(status, w))
 
   def _on_readable(self):
     kcode = self._stdscr.getch()
@@ -198,8 +197,7 @@ class OpenDialogCurses(OpenDialogBase):
   def set_results_enabled(self, en):
     pass
 
-  def set_status(self, status_text):
-    self._status = status_text
+  def status_changed(self):
     self._update_border()
     self._invalidate()
 

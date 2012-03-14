@@ -41,11 +41,23 @@ class DBStatus(object):
     self.is_up_to_date = False
     self.has_index = False
     self.status = "Unknown"
+    self.running = True
 
   def as_dict(self):
     return {"is_up_to_date": self.is_up_to_date,
             "has_index": self.has_index,
-            "status": self.status}
+            "status": self.status,
+            "running": self.running }
+
+  @staticmethod
+  def not_running_string():
+    return "quickopend not running"
+
+  @staticmethod
+  def not_running():
+    s = DBStatus()
+    s.status = DBStatus.not_running_string()
+    return s
 
   @staticmethod
   def from_dict(d):
@@ -53,6 +65,7 @@ class DBStatus(object):
     s.is_up_to_date = d["is_up_to_date"]
     s.has_index = d["has_index"]
     s.status = d["status"]
+    s.running = d["running"]
     return s
 
 class DBDir(object):

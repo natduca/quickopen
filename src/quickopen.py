@@ -243,35 +243,15 @@ def CMDrawsearch(parser):
 def CMDprelaunch(parser):
   """Performs a quickopen command in a prelaunched instance. Reduces delay in seeing the initial search dialog."""
   args = sys.argv[1:]
-  if "--wait" in args:
-    parser.add_option("--wait", action="store_true", dest="wait")
-    parser.add_option("--control-port", action="store", dest="control_port")
-    (options, args) = parser.parse_args()
-    assert options.wait
-    options.control_port = int(options.control_port)
-    prelaunch.wait_for_command(options.control_port)
-  else:
-    # split up args into stuff before the prelaunch command and stuff after
-    before_args = []
-    after_args = None
-    for i in range(len(args)):
-      if args[i].startswith("-"):
-        before_args.append(args[i])
-      else:
-        after_args = args[i:]
-        break
-    if not after_args:
-      GenUsage(parser, 'prelaunch')
-      return CMDhelp(parser)
-    sys.argv = [sys.argv[0]]
-    sys.argv.extend(before_args)
-    (options, args) = parser.parse_args()
-    try:
-      sys.stdout.write(prelaunch.run_command_in_existing(options.host, options.port, after_args))
-      return 0
-    except Exception as e:
-      sys.stdout.write(str(e) + "\n")
-      return -1
+  if not "--wait" in args:
+    print "Error: prelaunch command must have a --wait in it if it got this far. There must be a bug in the bootstrap."
+
+  parser.add_option("--wait", action="store_true", dest="wait")
+  parser.add_option("--control-port", action="store", dest="control_port")
+  (options, args) = parser.parse_args()
+  assert options.wait
+  options.control_port = int(options.control_port)
+  prelaunch.wait_for_command(options.control_port)
 
 @traced
 def open_db(options):

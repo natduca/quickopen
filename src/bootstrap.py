@@ -11,13 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import logging
-import optparse
-import os
 import prelaunch_client
+import os
 import sys
 
-def run():
+def run(prelaunch=False):
   """Called by bootstrapper when the environment is ready to run."""
   if sys.argv[1] != '--main-name':
     raise Exception("launched wrong: expected --main-name <mainname> as first argument")
@@ -46,6 +44,7 @@ def run():
     sys.exit(255)
 
   mod = __import__(main_name, {}, {}, True)
+  import optparse
   parser = optparse.OptionParser(usage=mod.main_usage())
   parser.add_option('--curses', action="store_true", dest="curses", help="Use curses UI")
   parser.add_option('--objc', action="store_true", dest="objc", help="Enable objc support")
@@ -63,6 +62,7 @@ def run():
 
 def handle_options(options, args):
   """Called by bootstrapper to process global commandline options."""
+  import logging
   if options.verbose >= 2:
     logging.basicConfig(level=logging.DEBUG)
   elif options.verbose:
@@ -74,13 +74,11 @@ def main(main_name):
   """The main entry point to the bootstrapper. Call this with the module name to
   use as your main app."""
   if sys.platform == 'darwin':
-    if ('--curses' in sys.argv):
-      sys.argv.insert(1, '--main-name')
-      sys.argv.insert(2, main_name)
-      sys.exit(run())
-
     # prelaunch should bypass full bootstrap
     if prelaunch_client.is_prelaunch_client(sys.argv):
+      sys.exit(prelaunch_client.main(sys.argv))
+
+    if ('--curses' in sys.argv):
       sys.argv.insert(1, '--main-name')
       sys.argv.insert(2, main_name)
       sys.exit(run())

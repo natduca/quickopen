@@ -73,11 +73,12 @@ def handle_options(options, args):
 def main(main_name):
   """The main entry point to the bootstrapper. Call this with the module name to
   use as your main app."""
-  if sys.platform == 'darwin':
-    # prelaunch should bypass full bootstrap
-    if prelaunch_client.is_prelaunch_client(sys.argv):
-      sys.exit(prelaunch_client.main(sys.argv))
+  # prelaunch should bypass full bootstrap
+  if prelaunch_client.is_prelaunch_client(sys.argv):
+    sys.exit(prelaunch_client.main(sys.argv))
 
+
+  if sys.platform == 'darwin':
     if ('--curses' in sys.argv):
       sys.argv.insert(1, '--main-name')
       sys.argv.insert(2, main_name)

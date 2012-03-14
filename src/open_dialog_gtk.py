@@ -22,9 +22,9 @@ from info_bar_gtk import *
 from open_dialog import OpenDialogBase
 
 class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
-  def __init__(self, settings, options, db, initial_filter):
+  def __init__(self, options, db, initial_filter):
     gtk.Dialog.__init__(self)
-    OpenDialogBase.__init__(self, settings, options, db, initial_filter)
+    OpenDialogBase.__init__(self, options, db, initial_filter)
 
     self.set_title("Quick open...")
     self.set_size_request(1000,400)
@@ -239,21 +239,3 @@ class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
       obj = model.get(iter,0)[0][0]
       files.append(obj)
     return files
-
-if __name__ == "__main__":
-  # BROKEN by message loop changes
-  import db_test_base
-  import settings
-  import tempfile
-  import temporary_daemon
-
-  db_test_base = db_test_base.DBTestBase()
-  db_test_base.setUp()
-  daemon = temporary_daemon.TemporaryDaemon()
-  client_settings_file = tempfile.NamedTemporaryFile()
-  client_settings = settings.Settings(client_settings_file.name)
-  db = daemon.db_proxy
-  db.add_dir(db_test_base.test_data_dir)
-  run(client_settings, db)
-  db_test_base.tearDown()
-  client_settings_file.close()

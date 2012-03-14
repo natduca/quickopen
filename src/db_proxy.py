@@ -22,7 +22,7 @@ import json
 import urllib
 import urlparse
 
-from db import DBStatus
+from db_status import DBStatus
 from search_result import SearchResult
 from event import Event
 from trace_event import *

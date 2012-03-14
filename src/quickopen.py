@@ -1,4 +1,3 @@
-#!/usr/bin/python2.6
 # Copyright 2011 Google Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import default_port
 import logging
 import message_loop
 import optparse
@@ -21,7 +21,8 @@ import prelaunch
 import re
 import sys
 
-from db import DBException, DBStatus
+from db_exception import DBException
+from db_status import DBStatus
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../third_party/py_trace_event/"))
 try:
@@ -30,7 +31,6 @@ except:
   print "Could not find py_trace_event. Did you forget 'git submodule update --init'"
   sys.exit(255)
 
-import src.settings
 import src.db_proxy
 
 ###########################################################################
@@ -38,7 +38,6 @@ import src.db_proxy
 def CMDadd(parser):
   """Adds a directory to the index"""
   (options, args) = parser.parse_args()
-  settings = load_settings(options)
   db = open_db(options)
   if len(args) == 0:
     parser.error('Expected at least one directory')
@@ -56,7 +55,6 @@ def CMDadd(parser):
 def CMDdirs(parser):
   """Lists currently-indexed directories"""
   (options, args) = parser.parse_args()
-  settings = load_settings(options)
   db = open_db(options)
   if len(args):
     parser.error('Unrecognized args: %s' % ' '.join(args))
@@ -66,7 +64,6 @@ def CMDdirs(parser):
 def CMDrmdir(parser):
   """Removes a currently-indexed directory"""
   (options, args) = parser.parse_args()
-  settings = load_settings(options)
   db = open_db(options)
   dmap = {}
   for d in db.dirs:
@@ -94,7 +91,6 @@ def CMDrmdir(parser):
 def CMDignore(parser):
   """Ignores files matching the given regexp"""
   (options, args) = parser.parse_args()
-  settings = load_settings(options)
   db = open_db(options)
   if len(args) == 0:
     parser.error('Expected at least one directory')
@@ -105,7 +101,6 @@ def CMDignore(parser):
 def CMDignores(parser):
   """Lists currently-ignored files"""
   (options, args) = parser.parse_args()
-  settings = load_settings(options)
   db = open_db(options)
   if len(args):
     parser.error('Unrecognized args: %s' % ' '.join(args))
@@ -115,7 +110,6 @@ def CMDignores(parser):
 def CMDunignore(parser):
   """Stops ignoring a given regexp"""
   (options, args) = parser.parse_args()
-  settings = load_settings(options)
   db = open_db(options)
   ignores = db.ignores
   ok = True
@@ -150,8 +144,7 @@ def CMDsearch(parser):
   parser.add_option('--open-filenames', dest='open_filenames', action='store', default=[], help="Hints quickopen about the filenames currently open to improve search relevance.")
   (options, args) = parser.parse_args()
   message_loop.ensure_has_message_loop()
-  settings = load_settings(options)
-  if not trace_is_enabled() and settings.trace:
+  if not trace_is_enabled() and options.trace:
     trace_enable("%s.trace" % sys.argv[0])
   db = open_db(options)
 
@@ -198,19 +191,17 @@ def CMDsearch(parser):
     initial_filter = None
 
   import src.open_dialog as open_dialog
-  open_dialog.run(settings, options, db, initial_filter, print_results) # will not return on osx.
+  open_dialog.run(options, db, initial_filter, print_results) # will not return on osx.
 
 def CMDstatus(parser):
   """Checks the status of the quick open database"""
   (options, args) = parser.parse_args()
-  settings = load_settings(options)
   db = open_db(options)
   print "%s." % db.status().status
 
 def CMDreindex(parser):
   """Begins to reindex the quickopen database"""
   (options, args) = parser.parse_args()
-  settings = load_settings(options)
   db = open_db(options)
   try:
     db.begin_reindex()
@@ -225,7 +216,6 @@ def CMDrawsearch(parser):
   parser.add_option('--open-filenames', dest='open_filenames', action='store', default=[], help="Hints quickopen about the filenames currently open to improve search relevance.")
   (options, args) = parser.parse_args()
 
-  settings = load_settings(options)
   db = open_db(options)
   if len(args) != 1:
     parser.error('Expected: <query>')
@@ -257,7 +247,6 @@ def CMDprelaunch(parser):
     parser.add_option("--wait", action="store_true", dest="wait")
     parser.add_option("--control-port", action="store", dest="control_port")
     (options, args) = parser.parse_args()
-    settings = load_settings(options)
     assert options.wait
     options.control_port = int(options.control_port)
     prelaunch.wait_for_command(options.control_port)
@@ -277,36 +266,12 @@ def CMDprelaunch(parser):
     sys.argv = [sys.argv[0]]
     sys.argv.extend(before_args)
     (options, args) = parser.parse_args()
-    settings = load_settings(options)
     try:
       sys.stdout.write(prelaunch.run_command_in_existing(options.host, options.port, after_args))
       return 0
     except Exception as e:
       sys.stdout.write(str(e) + "\n")
       return -1
-
-def load_settings(options):
-  settings_file = os.path.expanduser(options.settings)
-  settings = src.settings.Settings(settings_file)
-  settings.register('host', str, 'localhost')
-  settings.register('port', int, -1)
-  settings.register('trace', bool, False)
-
-  if settings.port == -1:
-    # Open the quickopend settings file to get the default
-    # port for the daemon. Then, push that value to the quickopen settings
-    daemon_settings_file = os.path.expanduser("~/.quickopend")
-    daemon_settings = src.settings.Settings(daemon_settings_file)
-    daemon_settings.register('port', int, 10248)
-    settings.port = daemon_settings.port
-
-  if not options.host:
-    options.host = settings.host
-  if not options.port:
-    options.port = settings.port
-  else:
-    options.port = int(options.port)
-  return settings
 
 @traced
 def open_db(options):
@@ -355,15 +320,20 @@ def main(parser):
   """Doesn't parse the arguments here, just find the right subcommand to
   execute."""
   # Create the option parse and add --verbose support.
-  parser.add_option('--host', dest='host', action='store', help='Hostname of quickopend server')
+  parser.add_option('--host', dest='host', action='store', help='Hostname of quickopend server. Default is %i' % default_port.get())
   parser.add_option('--port', dest='port', action='store', help='Port for quickopend')
-  parser.add_option('--settings', dest='settings', action='store', default='~/.quickopen', help='Settings file to use, ~/.quickopen by default')
   parser.add_option('--trace', dest='trace', action='store_true', default=False, help='Records performance tracing information to quickopen.trace')
   old_parser_args = parser.parse_args
   def parse():
     options, args = old_parser_args()
     if options.trace:
       trace_enable("./%s.trace" % "quickopen")
+    if not options.host:
+      options.host = 'localhost'
+    if not options.port:
+      options.port = default_port.get()
+    else:
+      options.port = int(options.port)
     return options, args
   parser.parse_args = parse
 

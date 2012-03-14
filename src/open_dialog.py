@@ -20,7 +20,7 @@ import os
 import sys
 import time
 
-from db import DBStatus
+from db_status import DBStatus
 from trace_event import *
 
 TICK_RATE_WHEN_SEARCHING = 0.005
@@ -29,14 +29,10 @@ TICK_RATE_WHEN_NOT_UP_TO_DATE = 0.2
 
 class OpenDialogBase(object):
   @tracedmethod
-  def __init__(self, settings, options, db, initial_filter = None):
-    settings.register("filter_text", str, "")
-    settings.register("query_log", str, "") 
+  def __init__(self, options, db, initial_filter = None):
     self._filter_text = ""
     if initial_filter:
-      settings.filter_text = initial_filter
       self._filter_text = initial_filter
-    self._settings = settings
     self._db = db
     self._frontend_status = None
     self._backend_status = DBStatus()
@@ -74,15 +70,6 @@ class OpenDialogBase(object):
   @tracedmethod
   def set_filter_text(self, text):
     self._filter_text = text
-    if self._settings.query_log != "":
-      try:
-        f = open(os.path.expanduser(self._settings.query_log), 'a')
-        f.write(json.dumps({"ts": time.time(), "query": text}))
-        f.write("\n");
-        f.close()
-      except IOError:
-        import traceback; traceback.print_exc()
-        pass
 
   def on_reindex_clicked(self):
     self._db.begin_reindex()
@@ -195,7 +182,6 @@ class OpenDialogBase(object):
 
   @traced
   def on_done(self, canceled):
-    self._settings.filter_text = self._filter_text.encode('utf8')
     if canceled:
       res = []
     else:
@@ -223,9 +209,9 @@ def _pick_open_dialog():
     raise Exception("Unrecognized message loop type.")
 OpenDialog = _pick_open_dialog()
 
-def run(settings, options, db, initial_filter, print_results_cb = None):
+def run(options, db, initial_filter, print_results_cb = None):
   def go():
-    dlg = OpenDialog(settings, options, db, initial_filter)
+    dlg = OpenDialog(options, db, initial_filter)
     if print_results_cb:
       dlg.print_results_cb = print_results_cb
 

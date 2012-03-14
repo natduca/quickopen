@@ -24,19 +24,12 @@ import time
 
 from event import Event
 from trace_event import *
+from silent_exception import *
 
 """
 Exception that you can throw in a handler that will trigger a 404 response.
 """
 class NotFoundException(Exception):
-  def __init__(self,*args):
-    Exception.__init__(self, *args)
-
-"""
-Exception that you can throw in a handler that will not get logged, but 
-that will trigger a 500 response.
-"""
-class SilentException(Exception):
   def __init__(self,*args):
     Exception.__init__(self, *args)
 

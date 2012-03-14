@@ -47,8 +47,8 @@ def elide(text, width):
   return "%s...%s" % (text[:num_to_use_left], text[N - num_to_use_right:])
 
 class OpenDialogCurses(OpenDialogBase):
-  def __init__(self, settings, options, db, initial_filter):
-    OpenDialogBase.__init__(self, settings, options, db, initial_filter)
+  def __init__(self, options, db, initial_filter):
+    OpenDialogBase.__init__(self, options, db, initial_filter)
     message_loop_curses.on_terminal_readable.add_listener(self._on_readable)
     self._stdscr = message_loop_curses.get_stdscr()
 

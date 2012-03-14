@@ -29,7 +29,7 @@ import httplib
 import time
 import StringIO
 
-from db import DBStatus
+from db_status import DBStatus
 from trace_event import *
 
 _is_prelaunched_process = False

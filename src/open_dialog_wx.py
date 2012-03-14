@@ -28,9 +28,9 @@ class TestListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin):
         listmix.ListCtrlAutoWidthMixin.__init__(self)
 
 class OpenDialogWx(wx.Dialog, OpenDialogBase):
-  def __init__(self, settings, options, db, initial_filter):
+  def __init__(self, options, db, initial_filter):
     wx.Dialog.__init__(self, None, wx.ID_ANY, "Quick open...", style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER, size=(1000,400))
-    OpenDialogBase.__init__(self, settings, options, db, initial_filter)
+    OpenDialogBase.__init__(self, options, db, initial_filter)
 
     if wx.Platform == "__WXMAC__":
       wx.SystemOptions.SetOptionInt("mac.listctrl.always_use_generic", False)
@@ -204,21 +204,3 @@ class OpenDialogWx(wx.Dialog, OpenDialogBase):
 
   def get_selected_items(self):
     return map(lambda i: self._cur_results[i], self.get_selected_indices())
-
-if __name__ == "__main__":
-  # KNOWN BROKEN by work to integrate with message_loop
-  import db_test_base
-  import settings
-  import tempfile
-  import temporary_daemon
-
-  db_test_base = db_test_base.DBTestBase()
-  db_test_base.setUp()
-  daemon = temporary_daemon.TemporaryDaemon()
-  client_settings_file = tempfile.NamedTemporaryFile()
-  client_settings = settings.Settings(client_settings_file.name)
-  db = daemon.db_proxy
-  db.add_dir(db_test_base.test_data_dir)
-  run(client_settings, db)
-  db_test_base.tearDown()
-  client_settings_file.close()

@@ -15,12 +15,14 @@ import hashlib
 import logging
 import os
 
-import daemon
+from db_exception import DBException
+from db_status import DBStatus
 from db_index import DBIndex
 from db_indexer import DBIndexer
 from dir_cache import DirCache
 from event import Event
 from search_result import SearchResult
+
 from trace_event import *
 
 DEFAULT_IGNORES=[
@@ -32,41 +34,6 @@ DEFAULT_IGNORES=[
   "*.o.d",
   "#*",
 ]
-
-class DBException(daemon.SilentException):
-  pass
-
-class DBStatus(object):
-  def __init__(self):
-    self.is_up_to_date = False
-    self.has_index = False
-    self.status = "Unknown"
-    self.running = True
-
-  def as_dict(self):
-    return {"is_up_to_date": self.is_up_to_date,
-            "has_index": self.has_index,
-            "status": self.status,
-            "running": self.running }
-
-  @staticmethod
-  def not_running_string():
-    return "quickopend not running"
-
-  @staticmethod
-  def not_running():
-    s = DBStatus()
-    s.status = DBStatus.not_running_string()
-    return s
-
-  @staticmethod
-  def from_dict(d):
-    s = DBStatus()
-    s.is_up_to_date = d["is_up_to_date"]
-    s.has_index = d["has_index"]
-    s.status = d["status"]
-    s.running = d["running"]
-    return s
 
 class DBDir(object):
   def __init__(self, d):

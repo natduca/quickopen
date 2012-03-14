@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import default_port
 import httplib
 import json
 import logging
@@ -19,32 +20,12 @@ import optparse
 import os
 import re
 import time
-
-sys.path.append(os.path.join(os.path.dirname(__file__), "../third_party/py_trace_event/"))
-try:
-  from trace_event import *
-except:
-  print "Could not find py_trace_event. Did you forget 'git submodule update --init'"
-  sys.exit(255)
-
 import src.daemon
 import src.db_stub
 import src.settings
 import src.prelaunchd
 
-def load_settings(options):
-  settings_file = os.path.expanduser(options.settings)
-  settings = src.settings.Settings(settings_file)
-  settings.register('host', str, 'localhost')
-  settings.register('port', int, 10248)
-
-  if options.port:
-    settings.port = int(options.port)
-
-  if options.host != None:
-    settings.host = options.host
-
-  return settings
+from trace_event import *
 
 def is_port_listening(host, port):
   import socket
@@ -63,16 +44,15 @@ def flush_trace_event(daemon):
 def CMDrun(parser):
   """Runs the quickopen daemon"""
   (options, args) = parser.parse_args()
-  settings = load_settings(options)
-  if is_port_listening(settings.host, settings.port):
-    print "%s:%s in use. Try 'quickopend stop' first?" % (settings.host, settings.port)
+  if is_port_listening(options.host, options.port):
+    print "%s:%s in use. Try 'quickopend stop' first?" % (options.host, options.port)
     return 255
   prelaunchdaemon = None
   try:
-    daemon = src.daemon.create(settings.host, settings.port, options.test)
+    daemon = src.daemon.create(options.host, options.port, options.test)
     if trace_is_enabled():
       daemon.add_delayed_task(flush_trace_event, 5, daemon)
-    db_stub = src.db_stub.DBStub(settings, daemon)
+    db_stub = src.db_stub.DBStub(options.settings, daemon)
     prelaunchd = src.prelaunchd.PrelaunchDaemon(daemon)
 
     daemon.run()
@@ -85,13 +65,12 @@ def CMDrun(parser):
 def CMDstatus(parser):
   """Gets the status of the quickopen daemon"""
   (options, args) = parser.parse_args()
-  settings = load_settings(options)
-  if not is_port_listening(settings.host, settings.port):
+  if not is_port_listening(options.host, options.port):
     print "Not running"
     return 255
 
   try:
-    conn = httplib.HTTPConnection(settings.host, settings.port, True)
+    conn = httplib.HTTPConnection(options.host, options.port, True)
     conn.request('GET', '/status')
     resp = conn.getresponse()
   except:
@@ -99,7 +78,7 @@ def CMDstatus(parser):
     return 255
 
   if resp.status != 200:
-    print "Service running on %s:%i is probaby not quickopend" % (settings.host, settings.port)
+    print "Service running on %s:%i is probaby not quickopend" % (options.host, options.port)
     return 255
 
   status_str = resp.read()
@@ -110,9 +89,8 @@ def CMDstatus(parser):
 def CMDstop(parser):
   """Gets the status of the quickopen daemon"""
   (options, args) = parser.parse_args()
-  settings = load_settings(options)
   try:
-    conn = httplib.HTTPConnection(settings.host, settings.port, True)
+    conn = httplib.HTTPConnection(options.host, options.port, True)
     conn.request('GET', '/exit')
     resp = conn.getresponse()
   except:
@@ -120,7 +98,7 @@ def CMDstop(parser):
     return 255
 
   if resp.status != 200:
-    print "Service running on %s:%i is probaby not quickopend" % (settings.host, settings.port)
+    print "Service running on %s:%i is probaby not quickopend" % (options.host, options.port)
     return 255
 
   status_str = resp.read()
@@ -128,13 +106,12 @@ def CMDstop(parser):
   if status["status"] != "OK":
     print "Stop failed with unexpected result %s" % status["status"]
     return 255
-  print "Existing quickopend on %s:%i stopped" % (settings.host, settings.port)
+  print "Existing quickopend on %s:%i stopped" % (options.host, options.port)
   return 0
 
 def CMDrestart(parser):
   """Restarts the quickopen daemon"""
   (options, args) = parser.parse_args()
-  settings = load_settings(options)
 
   ret = CMDstop(parser)
   if ret != 0:
@@ -142,7 +119,7 @@ def CMDrestart(parser):
   time.sleep(0.25)
 
   tries = 0
-  while is_port_listening(settings.host, settings.port) and tries < 10:
+  while is_port_listening(options.host, options.port) and tries < 10:
     tries += 1
     time.sleep(0.1)
   if tries == 10:
@@ -208,6 +185,20 @@ def main(parser):
     options, args = old_parser_args()
     if options.trace:
       trace_enable("./%s.trace" % "quickopen")
+    settings_file = os.path.expanduser(options.settings)
+    settings = src.settings.Settings(settings_file)
+    settings.register('host', str, 'localhost')
+    settings.register('port', int, default_port.get())
+    options.settings = settings
+
+    if not options.port:
+      options.port = settings.port
+    else:
+      options.port = int(options.port)
+
+    if not options.host:
+      options.host = settings.host
+
     return options, args
   parser.parse_args = parse
 

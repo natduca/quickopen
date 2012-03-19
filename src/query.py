@@ -44,6 +44,13 @@ def _is_exact_match(query_text, hit):
 class Query(object):
   """Encapsulates all the options to Quickopen search system."""
 
+  def __init__(self, text, max_hits = 100, exact_match = False, current_filename = None, open_filenames = []):
+    self.text = text
+    self.max_hits = max_hits
+    self.exact_match = exact_match
+    self.current_filename = current_filename
+    self.open_filenames = open_filenames
+
   @staticmethod
   def from_kargs(args = [], kwargs = {}):
     """A wrapper for old mechanisms of implicitly constructing queries."""
@@ -54,13 +61,6 @@ class Query(object):
         return Query(*args, **kwargs)        
     else:
       return Query(*args, **kwargs)
-
-  def __init__(self, text, max_hits = 100, exact_match = False, current_filename = None, open_filenames = []):
-    self.text = text
-    self.max_hits = max_hits
-    self.exact_match = exact_match
-    self.current_filename = current_filename
-    self.open_filenames = open_filenames
 
   @staticmethod
   def from_dict(d):

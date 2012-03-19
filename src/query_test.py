@@ -13,7 +13,8 @@
 # limitations under the License.
 import unittest
 import query
-from query import Query
+
+from query import Query, QueryCache
 from query_result import QueryResult
 
 def make_result(hits):
@@ -22,6 +23,31 @@ def make_result(hits):
     res.filenames.append(h)
     res.ranks.append(10)
   return res
+
+
+class FakeDBIndex(object):
+  def __init__(self, result_template = QueryResult()):
+    self._result_template = result_template
+
+  def search_basenames(self, basename_query, max_hits):
+    # Return a copy of the template to preserve semantics of
+    # the underlying search_basenames implementation.
+    res = QueryResult.from_dict(self._result_template.as_dict())
+    return res.hits(), res.truncated
+
+class MockQuery(Query):
+  def __init__(self, *args, **kwargs):
+    Query.__init__(self, *args, **kwargs)
+    self.did_call_execute_nocache = False
+    self.did_call_filter_result_for_exact_matches = False
+
+  def execute_nocache(self, shard_manager, query_cache):
+    self.did_call_execute_nocache = True
+    return Query.execute_nocache(self, shard_manager, query_cache)
+
+  def filter_result_for_exact_matches(self, res):
+    self.did_call_filter_result_for_exact_matches = True
+    return Query.filter_result_for_exact_matches(self, res)
 
 class QueryTest(unittest.TestCase):
   def test_cons(self):
@@ -105,4 +131,55 @@ class QueryTest(unittest.TestCase):
     self.assertEquals(["a/render_widget.cpp",
                        "b/render_widget.cpp"], res.filenames)
 
+  def test_cache_same_maxhits(self):
+    q1 = MockQuery("a", 10)
+    query_cache = QueryCache()
+    shard_manager = FakeDBIndex()
+    q1.execute(shard_manager, query_cache)
+    self.assertTrue(q1.did_call_execute_nocache)
 
+    q2 = MockQuery("a", 10)
+    q2.execute(shard_manager, query_cache)
+    self.assertFalse(q2.did_call_execute_nocache)
+
+  def test_cache_different_maxhits(self):
+    q1 = MockQuery("a", 10)
+    query_cache = QueryCache()
+    shard_manager = FakeDBIndex()
+    q1.execute(shard_manager, query_cache)
+    self.assertTrue(q1.did_call_execute_nocache)
+
+    q2 = MockQuery("a", 11)
+    q2.execute(shard_manager, query_cache)
+    self.assertTrue(q2.did_call_execute_nocache)
+
+  def test_empty_query(self):
+    q1 = MockQuery("", 10)
+    query_cache = QueryCache()
+    shard_manager = FakeDBIndex()
+    q1.execute(shard_manager, query_cache)
+    self.assertFalse(q1.did_call_execute_nocache)
+
+  def test_exact_filter_called(self):
+    q1 = MockQuery("xxx", exact_match = True)
+    query_cache = QueryCache()
+    shard_manager = FakeDBIndex()
+    q1.execute(shard_manager, query_cache)
+    self.assertTrue(q1.did_call_filter_result_for_exact_matches)
+
+  def test_execute_nocache_plainword(self):
+    q1 = Query("a", 10)
+    query_cache = QueryCache()
+    shard_manager = FakeDBIndex()
+    q1.execute(shard_manager, query_cache)
+
+
+# execute_nocache
+## plain word
+## case sensitivity?
+## extension
+## directory
+## empty directory (foo/)
+## two dir query  (foo/bar/)
+## dir and name (foo/bar)
+## dir and name (foo/bar.py)

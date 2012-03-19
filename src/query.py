@@ -96,8 +96,13 @@ class Query(object):
     if qkey in query_cache.searches:
       res = query_cache.searches[qkey]
     else:
-      res = self.execute_nocache(shard_manager, query_cache)
-      query_cache.searches[qkey] = res
+      base_results = self.execute_nocache(shard_manager, query_cache)
+
+      ranked_results = self.apply_global_rank_adjustment(base_results)
+
+      ranked_and_truncated_results = ranked_results.get_copy_with_max_hits(self.max_hits)
+      query_cache.searches[qkey] = ranked_and_truncated_results
+      res = ranked_and_truncated_results
 
     if self.exact_match:
       return self.filter_result_for_exact_matches(res)
@@ -167,9 +172,4 @@ class Query(object):
         if lower_dirname.endswith(lower_dirpart):
           reshits.append(hit)
       hits = reshits
-
-    # do one final ranking on the total rank
-    res = QueryResult(hits=hits, truncated=truncated)
-    res2 = self.apply_global_rank_adjustment(res)
-    return res2.get_copy_with_max_hits(self.max_hits)
-
+    return QueryResult(hits=hits, truncated=truncated)

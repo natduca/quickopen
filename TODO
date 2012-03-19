@@ -8,24 +8,20 @@ Emacs ff-find-*-file mode doesnt work in non-GUI environment
 
 "filter_text" : "Øfd" --> wont work in most places
 
-Fix gtk dialog warning on close by making the gtk.Window a member var of
-OpenDialogGtk rather than a parent class.
-
 curses UI doesn't know when the terminal resized.
-
-emacs does not show error if quickopen prelaunch fails due to missing daemon
 
 --skip-ui-if-exact opens gui even if in non-gui editor in emacs
 
 Features
 ---------------------------------------------------------------------------
 
-- use current-buffer and active-buffer list in ranking
+- Use current-buffer and active-buffer list in ranking
+
+- Try out Goog codesearch-style trigraph-based indexes for fuzzy matching
+
+- rwh::ddu -> use ctags to do fuzzy search for ddu on the files matching rwh
 
 - Speed up indexing operation
-
-- Elide the middles of long filename matches so that you can
-  see the unique part of the filename when dupes are present
 
 - Reduce memory footprint
 
@@ -34,3 +30,5 @@ Features
 - Warning bar if search() truncated
 
 - emacs ffap-alist support
+
+- qo-modded ff-find-*-file should catch things like foo.cc -> foo_unittest.cc or foo_test.py

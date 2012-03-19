@@ -23,6 +23,24 @@ class QueryCache(object):
   def __init__(self):
     self.searches = fixed_size_dict.FixedSizeDict(256)
 
+def _is_exact_match(query_text, hit):
+  # Endswith is a quick way to discard most non-exact matches.
+  # e.g. a/b.txt matched by b.txt simply ending with b.txt
+  if not hit.endswith(query_text):
+    return False
+
+  # This basic rule leaves the false positive:
+  #    ba/b.txt  as exact for b.txt
+  # so eliminate that as well by enforcing that the
+  # match covers the full string or is immediatley to the right
+  # of a separator.
+  first_idx = hit.rfind(query_text)
+  if first_idx == 0:
+    return True
+  if hit[first_idx - 1] == os.sep:
+    return True
+  return False
+
 class Query(object):
   """Encapsulates all the options to Quickopen search system."""
 
@@ -82,9 +100,42 @@ class Query(object):
       query_cache.searches[qkey] = res
 
     if self.exact_match:
-      return res.query_for_exact_matches(self.text)
+      return self.filter_result_for_exact_matches(res)
 
     return res
+
+  def filter_result_for_exact_matches(self, base_result):
+    """
+    Returns a new QueryResult object containing only filenames that exactly
+    match the provided query.
+    """
+    res = QueryResult()
+    res.truncated = base_result.truncated
+
+    for hit,rank in base_result.hits():
+      if _is_exact_match(self.text, hit):
+        res.filenames.append(hit)
+        res.ranks.append(rank)
+    return res
+
+  def apply_global_rank_adjustment(self, base_result):
+    def hit_cmp(x,y):
+      # compare on the rank
+      i = -cmp(x[1],y[1])
+      if i != 0:
+        return i
+      # if the ranks agree, compare on the filename,
+      # first by basename, then by fullname
+      x_base = os.path.basename(x[0])
+      y_base = os.path.basename(y[0])
+      j = cmp(x_base, y_base)
+      if j != 0:
+        return j
+      return cmp(x[0], y[0])
+
+    hits = list(base_result.hits())
+    hits.sort(hit_cmp)
+    return QueryResult(hits, base_result.truncated)
 
   def execute_nocache(self, shard_manager, query_cache):
     self.text = self.text
@@ -119,6 +170,6 @@ class Query(object):
 
     # do one final ranking on the total rank
     res = QueryResult(hits=hits, truncated=truncated)
-    res.apply_global_rank_adjustment()
-    return res.get_copy_with_max_hits(self.max_hits)
+    res2 = self.apply_global_rank_adjustment(res)
+    return res2.get_copy_with_max_hits(self.max_hits)
 

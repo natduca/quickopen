@@ -202,6 +202,17 @@ class QueryTest(unittest.TestCase):
     res = MockQuery("foo/").execute(shard_manager, query_cache)
     self.assertEquals(["foo/bar.txt", "foo/rebar.txt"], res.filenames)
 
+  def test_query_that_times_out(self):
+    files = []
+    for i in range(100000):
+      files.append("f/x%i.txt" % i)
+    shard_manager = FakeDBShardManager(files)
+    query_cache = QueryCache()
+    q = MockQuery("x/")
+    q._dir_search_timeout = 0.00001
+    res = q.execute(shard_manager, query_cache)
+    self.assertTrue(res.truncated)
+
   def test_basename_only_query(self):
     shard_manager = FakeDBShardManager(["foo/bar.txt", "foo/rebar.txt", "blah/baz.txt"])
     query_cache = QueryCache()

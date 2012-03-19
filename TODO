@@ -1,8 +1,6 @@
 Bugs
 ---------------------------------------------------------------------------
 
-Huge stall on empty-dir-query, e.g. foo/, makes dir queries impossible to type
-
 Emacs ff-find-*-file mode doesnt work in non-GUI environment
 [curses UI being async is the core issue]
 

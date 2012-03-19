@@ -13,6 +13,7 @@
 # limitations under the License.
 import fixed_size_dict
 import os
+import time
 
 from basename_ranker import BasenameRanker
 from query_result import QueryResult
@@ -88,6 +89,7 @@ class Query(object):
     self.exact_match = exact_match
     self.current_filename = current_filename
     self.open_filenames = open_filenames
+    self._dir_search_timeout = 0.2
 
   @staticmethod
   def from_kargs(args = [], kwargs = {}):
@@ -170,11 +172,19 @@ class Query(object):
           if _is_dirmatch(lower_dirpart_query, f):
             files.append(f)
     else:
+      i = 0
+      start = time.time()
+      timeout = start + self._dir_search_timeout
       for f in shard_manager.files:
         if _is_dirmatch(lower_dirpart_query, f):
           files.append(f)
         if len(files) > self.max_hits:
           break
+        i += 1
+        if i % 1000 == 0:
+          if time.time() >= timeout:
+            truncated = True
+            break
 
     # Rank the results
     trace_begin("rank_results")

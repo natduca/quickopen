@@ -64,7 +64,7 @@ class DirCache(object):
   def listdir_with_changed_status(self, d):
     """
     Lists contents of a dir, but only using its realpath.
-    
+
     Returns tuple ([array of entries],changed)
 
     Changed is only True if the current directory changed. Will not change if the child directory changes.
@@ -105,7 +105,7 @@ class DirCache(object):
       de = DirEnt(st_mtime, ents)
       self.dirs[d] = de
       return (de.ents, True)
-    
+
   def listdir(self, d):
     """Lists contents of a dir, but only using its realpath."""
     return self.listdir_with_changed_status(d)[0]

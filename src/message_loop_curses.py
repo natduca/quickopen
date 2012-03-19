@@ -136,7 +136,7 @@ def run_main_loop():
     tempStdout = cStringIO.StringIO()
     sys.stdout = tempStdout
     sys.stderr = sys.stdout
-  
+
   assert not is_main_loop_running()
   if _unittests_running and not _active_test:
     del _pending_delayed_tasks[:]

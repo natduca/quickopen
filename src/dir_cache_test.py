@@ -22,7 +22,7 @@ class DirCacheTest(unittest.TestCase):
 
   def tearDown(self):
     self.test_data.close()
-    
+
   def test_listdir_on_invalid_dir(self):
     c = DirCache()
     # shoudl not raise exception

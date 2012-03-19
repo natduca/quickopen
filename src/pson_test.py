@@ -97,4 +97,4 @@ class PSONTest(unittest.TestCase):
   def test_load(self):
     for i in range(len(self._objs)):
       self.assertEqual(pson.loads(self._strs[i]),self._objs[i])
- 
+

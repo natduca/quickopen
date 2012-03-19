@@ -107,7 +107,7 @@ def main(in_args):
       port = in_args[i+1]
       i += 1
       continue
-    
+
     if in_args[i] == 'prelaunch':
       after_args = in_args[i+1:]
       break
@@ -127,4 +127,3 @@ def main(in_args):
   except Exception as e:
     sys.stdout.write(str(e) + "\n")
     return -1
-  

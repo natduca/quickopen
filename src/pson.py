@@ -74,7 +74,7 @@ def _dumps_pretty(i,obj):
   if isinstance(obj,list):
     if _issimple(obj):
       return _dumps_flat(obj)
-    
+
     s = StringIO()
     s.write("[\n")
     for j in range(len(obj)):

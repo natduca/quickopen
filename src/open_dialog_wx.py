@@ -87,7 +87,7 @@ class OpenDialogWx(wx.Dialog, OpenDialogBase):
     cancel = self.FindWindowById(wx.ID_CANCEL)
     ok.Bind(wx.EVT_BUTTON, self.on_ok)
     cancel.Bind(wx.EVT_BUTTON, self.on_cancel)
-    
+
   def destroy(self):
     self.Destroy()
 

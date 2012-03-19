@@ -52,8 +52,6 @@ class OpenDialogObjcRaw(NSObject, OpenDialogBase):
     cancel_bn.setTarget_(self)
     cancel_bn.setAction_(self.__class__.on_cancel)
 
-    
-
     self.window.contentView().addSubview_(ok_bn)
 
     self.window.makeKeyAndOrderFront_(self)

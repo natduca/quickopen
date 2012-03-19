@@ -76,7 +76,6 @@ class DBProxy(object):
     if not ok:
       self.couldnt_start_daemon.fire()
       raise Exception("Daemon did not come up")
-    
 
   def _req(self, method, path, data = None):
     if data != None:
@@ -117,7 +116,7 @@ class DBProxy(object):
       self._dir_lut[id] = DBDirProxy(id, path)
     assert self._dir_lut[id].path== path
     return self._dir_lut[id]
-    
+
   @property
   def dirs(self):
     ret = self._req('GET', '/dirs')

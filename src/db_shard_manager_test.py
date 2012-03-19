@@ -155,7 +155,7 @@ class DBShardManagerPerfTest():
       self.index.search(q,max_hits)
       elapsed = time.time() - start
       print '%15s %.3f' % (q ,elapsed)
-      
+
 if __name__ == '__main__':
   test = DBShardManagerPerfTest('test_data/cr_files_by_basename.json')
   print "Results for max=30:"

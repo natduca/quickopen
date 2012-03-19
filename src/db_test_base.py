@@ -79,12 +79,12 @@ class DBTestBase(object):
     self.db.add_dir(self.test_data_dir)
     self.db.sync()
     res = self.db.search('MySubSystem_NEW.c')
-    self.assertEquals(0, len(res.filenames))    
+    self.assertEquals(0, len(res.filenames))
     time.sleep(1.2) # let st_mtime advance a second
     self.test_data.write1('project1/MySubSystem_NEW.c')
     self.db.sync()
     res = self.db.search('MySubSystem_NEW.c')
-    self.assertEquals(1, len(res.filenames))    
+    self.assertEquals(1, len(res.filenames))
 
   def test_dir_query(self):
     self.db.add_dir(self.test_data_dir)
@@ -163,7 +163,6 @@ class DBTestBase(object):
     # /project1_symlink is the one requested to be indexed
     # and they ask to ignore something inside the symlink
 
-    # set up so that 
     project1_symlink_dir = os.path.join(self.test_data_dir, "project1_symlink/")
     self.db.add_dir(project1_symlink_dir)
     self.db.sync()

@@ -65,7 +65,7 @@ class DB(object):
 
     # if we are currently looking for changed dirs, this is the iterator
     # directories remaining to be checked
-    self._pending_up_to_date_generator = None 
+    self._pending_up_to_date_generator = None
 
     self.settings.register('dirs', list, [], self._on_settings_dirs_changed)
     self._on_settings_dirs_changed(None, self.settings.dirs)

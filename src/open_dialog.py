@@ -47,9 +47,9 @@ class OpenDialogBase(object):
     else:
       self.should_position_cursor_for_replace = True
 
-    # first tick should be fast  
+    # First tick should be fast.
     message_loop.post_delayed_task(self.on_tick, 0)
-    
+
   @property
   def print_results_cb(self):
     """When results from the dialog are available, this callback is called.

@@ -57,7 +57,7 @@ class QueryTest(unittest.TestCase):
     Query("a", 10, True)
     Query("a", 10, True, "blahblah")
     Query("a", 10, True, "blahblah", ["bar"])
-  
+
   def test_to_and_from_dict(self):
     x = Query("a", 10, True, "blahblah", ["bar"])
     y = x.as_dict()

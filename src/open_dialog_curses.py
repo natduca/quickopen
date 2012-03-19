@@ -62,7 +62,7 @@ class OpenDialogCurses(OpenDialogBase):
     h,w = self._stdscr.getmaxyx()
     self._stdscr.hline(1, 0, '-', w)
     self._stdscr.hline(h - 3, 0, '-', w)
-    
+
     self._selected_index = 0
     self._result_files = []
     self._result_ranks = []
@@ -210,7 +210,7 @@ class OpenDialogCurses(OpenDialogBase):
 
   def _update_results(self):
     wh,ww = self._stdscr.getmaxyx()
-   
+
     x = 1
     y = 2
     h = wh - 5

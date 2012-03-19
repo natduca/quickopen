@@ -26,7 +26,7 @@ class _LinkedListNode(object):
       nd = self.next.data
     else:
       nd = "None"
-    
+
     return "(prev=%s, %s, next=%s)" % (pd, self.data, nd)
 
 class _LinkedList(object):
@@ -89,7 +89,7 @@ class _LinkedList(object):
     node.next = new_node
     return new_node
 
-  def append(self, d):      
+  def append(self, d):
     if self.tail == None:
       return self.insert_front(d)
     else:

@@ -82,6 +82,6 @@ class DBIndexShardTest(unittest.TestCase):
         "foo.cpp": ["foo.cpp"],
         "bar.cpp": ["bar.cpp"],
         })
-    
+
     hits, truncated = m.search_basenames("rwh", 10000)
     self.assertTrue("render_widget_host.cpp" in hits)

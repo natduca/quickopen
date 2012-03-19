@@ -24,7 +24,7 @@ if sys.platform != 'darwin':
 # commandline needs to use an App bundle to launch. But I can't, for the life of
 # me, figure out how to boot an objc app up without a bundle.
 #
-# The first of this file is to create the 
+# The first of this file is to create the
 # support/quickopen_stub app that we use to start the
 # viewer.
 #
@@ -146,7 +146,7 @@ def run_real_main():
   import os
   basedir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../../"))
   os.chdir(basedir)
-  
+
   if sys.argv[1] != '--main-name':
     raise Exception("Do not launch this stub directly.")
 

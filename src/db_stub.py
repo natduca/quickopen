@@ -72,7 +72,7 @@ class DBStub(object):
       if d.id == id:
         self.db.delete_dir(d)
         return {"status": 'OK'}
-    raise daemon.NotFoundException()    
+    raise daemon.NotFoundException()
 
   def get_ignores(self, m, verb, data):
     return self.db.ignores

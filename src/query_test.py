@@ -14,7 +14,8 @@
 import unittest
 import query
 
-from query import Query, QueryCache
+from query import Query
+from query_cache import QueryCache
 from query_result import QueryResult
 
 def make_result(hits):

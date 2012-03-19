@@ -22,7 +22,8 @@ from db_indexer import DBIndexer
 from dir_cache import DirCache
 from event import Event
 from trace_event import *
-from query import *
+from query import Query
+from query_cache import QueryCache
 from query_result import QueryResult
 
 DEFAULT_IGNORES=[

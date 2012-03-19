@@ -16,7 +16,6 @@ import multiprocessing
 
 from local_pool import *
 from trace_event import *
-from query import *
 
 slave = None
 slave_searchcount = 0
@@ -55,7 +54,6 @@ class DBShardManager(object):
     else:
       N = 1
 
-    self._basename_ranker = BasenameRanker()
     chunks = self._make_chunks(list(indexer.files_by_basename.items()), N)
 
     self.shards = [LocalPool(1)]
@@ -97,11 +95,15 @@ class DBShardManager(object):
 
   def search_basenames(self, basename_query, max_hits_hint):
     """
+    Searches all controlled index shards for basenames matching the query.
+
+    Returns (hits, truncated) where:
+       hits is an array of basenames that matched.
+       truncated is a bool indicated whether not all possible matches were found.
+
     Note: max_hits_hint does not control the amount of hits created. Its rather just a way to
     limit the work done per shard to a reasonable value. If you want an actual maximum result size,
     enforce that in an upper layer.
-
-    returns (hits, truncated)
     """
     max_shard_hits_hint = max(10, max_hits_hint / len(self.shards))
 
@@ -123,21 +125,4 @@ class DBShardManager(object):
       for hit in shard_hits:
         base_hits.add(hit)
     trace_end("gather_results")
-
-    trace_begin("rank_results")
-    hits = []
-    for hit in base_hits:
-      files = self.files_by_lower_basename[hit]
-      for f in files:
-        basename = os.path.basename(f)
-        rank = self._basename_ranker.rank_query(basename_query, basename)
-        hits.append((f,rank))
-    trace_end("rank_results")
-    return (hits, truncated)
-
-  # TODO: remove this method once the db_shard_manager_tests stop testing using queries
-  def search(self, *args, **kwargs):
-    if not hasattr(self, 'query_cache'):
-      self.query_cache = QueryCache()
-    query = Query.from_kargs(args, kwargs)
-    return query.execute(self, self.query_cache)
+    return list(base_hits), truncated

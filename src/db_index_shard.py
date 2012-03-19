@@ -53,19 +53,30 @@ class DBIndexShard(object):
       self.basenames_by_wordstarts[ws] = [i[0] for i in items]
 
   @traced
-  def search_basenames(self, query, max_hits):
+  def search_basenames(self, query, max_hits_hint):
+    """
+    Searches index for basenames matching the query.
+
+    Returns (hits, truncated) where:
+       hits is an array of basenames that matched.
+       truncated is a bool indicated whether not all possible matches were found.
+
+    Note: max_hits_hint does not control the amount of hits created. Its rather just a way to
+    limit the work done per shard to a reasonable value. If you want an actual maximum result size,
+    enforce that in an upper layer.
+    """
     lower_query = query.lower()
 
     lower_hits = set()
 
     # word starts first
     trace_begin("wordstarts")
-    self.add_all_wordstarts_matching( lower_hits, query, max_hits )
+    self.add_all_wordstarts_matching( lower_hits, query, max_hits_hint )
     trace_end("wordstarts")
 
     # add in substring matches
     trace_begin("substrings")
-    self.add_all_matching( lower_hits, query, self.get_substring_filter(lower_query), max_hits )
+    self.add_all_matching( lower_hits, query, self.get_substring_filter(lower_query), max_hits_hint )
     trace_end("substrings")
 
     # add in superfuzzy matches ONLY if we have no high-quality hit
@@ -77,17 +88,17 @@ class DBIndexShard(object):
         break
     if not has_hq:
       trace_begin("superfuzzy")
-      self.add_all_matching( lower_hits, query, self.get_superfuzzy_filter(lower_query), max_hits )
+      self.add_all_matching( lower_hits, query, self.get_superfuzzy_filter(lower_query), max_hits_hint )
       trace_end("superfuzzy")
 
-    return lower_hits, len(lower_hits) == max_hits
+    return lower_hits, len(lower_hits) == max_hits_hint
 
-  def add_all_wordstarts_matching( self, lower_hits, query, max_hits ):
+  def add_all_wordstarts_matching( self, lower_hits, query, max_hits_hint ):
     lower_query = query.lower()
     if lower_query in self.basenames_by_wordstarts:
       for basename in self.basenames_by_wordstarts[lower_query]:
         lower_hits.add(basename)
-        if len(lower_hits) >= max_hits:
+        if len(lower_hits) >= max_hits_hint:
           return
 
 
@@ -128,12 +139,12 @@ class DBIndexShard(object):
     flt = "\n.*%s.*\n" % '.*'.join(tmp)
     return (flt, False)
 
-  def add_all_matching(self, lower_hits, query, flt_tuple, max_hits):
+  def add_all_matching(self, lower_hits, query, flt_tuple, max_hits_hint):
     """
     lower_hits is the dictionary to put results in
     query is the query string originally entered by user, used by ranking
     flt_tuple is [filter_regex, case_sensitive_bool]
-    max_hits is largest hits should grow before matching terminates.
+    max_hits_hint is largest hits should grow before matching terminates.
     """
     flt, case_sensitive = flt_tuple
 
@@ -153,7 +164,7 @@ class DBIndexShard(object):
           hit = hit.lower()
         lower_hits.add(hit)
         base = m.end() - 1
-        if len(lower_hits) >= max_hits:
+        if len(lower_hits) >= max_hits_hint:
           truncated = True
           break
       else:

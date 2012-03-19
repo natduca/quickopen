@@ -17,12 +17,25 @@ import sys
 import unittest
 import time
 
+from query import Query
+from query_cache import QueryCache
+
+
 FILES_BY_BASENAME = None
+
+class DBShardManagerWithSearchMethod(db_shard_manager.DBShardManager):
+  # TODO: remove this method once the db_shard_manager_tests stop testing using queries
+  def search(self, *args, **kwargs):
+    import query_cache
+    if not hasattr(self, 'query_cache'):
+      self.query_cache = query_cache.QueryCache()
+    query = Query.from_kargs(args, kwargs)
+    return query.execute(self, self.query_cache)
 
 class DBShardManagerTestBase(object):
   def setUp(self):
     mock_indexer = db_indexer.MockIndexer('test_data/cr_files_by_basename_five_percent.json')
-    self.index = db_shard_manager.DBShardManager(mock_indexer,threaded=self.threaded)
+    self.index = DBShardManagerWithSearchMethod(mock_indexer,threaded=self.threaded)
 
   def tearDown(self):
     self.index.close()

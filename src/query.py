@@ -1,4 +1,4 @@
-# Copyright 2011 Google Inc.
+# Copyright 2012 Google Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,11 +17,6 @@ import os
 from basename_ranker import BasenameRanker
 from query_result import QueryResult
 from trace_event import *
-
-class QueryCache(object):
-  """Cached query execution results."""
-  def __init__(self):
-    self.searches = fixed_size_dict.FixedSizeDict(256)
 
 def _is_exact_match(query_text, hit):
   # Endswith is a quick way to discard most non-exact matches.
@@ -58,7 +53,7 @@ class Query(object):
       if isinstance(args[0], Query):
         return args[0]
       else:
-        return Query(*args, **kwargs)        
+        return Query(*args, **kwargs)
     else:
       return Query(*args, **kwargs)
 
@@ -155,7 +150,20 @@ class Query(object):
     truncated = False
 
     if len(basename_query):
-      hits, truncated = shard_manager.search_basenames(basename_query, self.max_hits)
+      basename_hits, truncated = shard_manager.search_basenames(basename_query, self.max_hits)
+
+      # rank the results
+      trace_begin("rank_results")
+      hits = []
+      basename_ranker = BasenameRanker()
+      for hit in basename_hits:
+        files = shard_manager.files_by_lower_basename[hit]
+        for f in files:
+          basename = os.path.basename(f)
+          rank = basename_ranker.rank_query(basename_query, basename)
+          hits.append((f,rank))
+      trace_end("rank_results")
+
     else:
       if len(dirpart):
         hits = []

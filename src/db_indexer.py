@@ -17,8 +17,13 @@ import time
 import json
 
 class MockIndexer(object):
-  def __init__(self, filename):
-    self.files_by_basename = json.load(open(filename))
+  def __init__(self, files = [], files_by_basename = {}):
+    self.files_by_basename = files_by_basename
+    for f in files:
+      bn = os.path.basename(f)
+      if bn not in self.files_by_basename:
+        self.files_by_basename[bn] = []
+      self.files_by_basename[bn].append(f)
 
 class DBIndexer(object):
   def __init__(self, dirs, dir_cache):

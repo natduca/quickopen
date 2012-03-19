@@ -38,7 +38,7 @@ class DBShardManager(object):
   The DBShardManager takes a complete list of basenames in the database and manages the sharding
   of those basenames using the multiprocessing module.
   """
-  def __init__(self, indexer, threaded = True):
+  def __init__(self, indexer):
     self.files = []
     self.files_by_lower_basename = dict()
     for basename,files_with_basename in indexer.files_by_basename.items():
@@ -49,10 +49,7 @@ class DBShardManager(object):
         self.files_by_lower_basename[lower_basename] = files_with_basename
       self.files.extend(files_with_basename)
 
-    if threaded:
-      N = min(multiprocessing.cpu_count(), 4) # test for scaling beyond 4
-    else:
-      N = 1
+    N = min(multiprocessing.cpu_count(), 4) # test for scaling beyond 4
 
     chunks = self._make_chunks(list(indexer.files_by_basename.items()), N)
 

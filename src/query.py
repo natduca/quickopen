@@ -36,6 +36,49 @@ def _is_exact_match(query_text, hit):
     return True
   return False
 
+def _apply_global_rank_adjustment(base_result):
+  def hit_cmp(x,y):
+    # compare on the rank
+    i = -cmp(x[1],y[1])
+    if i != 0:
+      return i
+    # if the ranks agree, compare on the filename,
+    # first by basename, then by fullname
+    x_base = os.path.basename(x[0])
+    y_base = os.path.basename(y[0])
+    j = cmp(x_base, y_base)
+    if j != 0:
+      return j
+    return cmp(x[0], y[0])
+
+  hits = list(base_result.hits())
+  hits.sort(hit_cmp)
+  return QueryResult(hits, base_result.truncated)
+
+def _filter_result_for_exact_matches(query_text, base_result):
+  """
+  Returns a new QueryResult object containing only filenames that exactly
+  match the provided query.
+  """
+  res = QueryResult()
+  res.truncated = base_result.truncated
+
+  for hit,rank in base_result.hits():
+    if _is_exact_match(query_text, hit):
+      res.filenames.append(hit)
+      res.ranks.append(rank)
+  return res
+
+def _is_dirmatch(lower_dirpart_query, filename):
+  if lower_dirpart_query == '':
+    return True
+
+  dirname = os.path.dirname(filename)
+  lower_dirname = dirname.lower()
+  if lower_dirname.endswith(lower_dirpart_query):
+    return True
+  return False
+
 class Query(object):
   """Encapsulates all the options to Quickopen search system."""
 
@@ -93,91 +136,54 @@ class Query(object):
     else:
       base_results = self.execute_nocache(shard_manager, query_cache)
 
-      ranked_results = self.apply_global_rank_adjustment(base_results)
+      ranked_results = _apply_global_rank_adjustment(base_results)
 
       ranked_and_truncated_results = ranked_results.get_copy_with_max_hits(self.max_hits)
       query_cache.searches[qkey] = ranked_and_truncated_results
       res = ranked_and_truncated_results
 
     if self.exact_match:
-      return self.filter_result_for_exact_matches(res)
+      return _filter_result_for_exact_matches(self.text, res)
 
     return res
-
-  def filter_result_for_exact_matches(self, base_result):
-    """
-    Returns a new QueryResult object containing only filenames that exactly
-    match the provided query.
-    """
-    res = QueryResult()
-    res.truncated = base_result.truncated
-
-    for hit,rank in base_result.hits():
-      if _is_exact_match(self.text, hit):
-        res.filenames.append(hit)
-        res.ranks.append(rank)
-    return res
-
-  def apply_global_rank_adjustment(self, base_result):
-    def hit_cmp(x,y):
-      # compare on the rank
-      i = -cmp(x[1],y[1])
-      if i != 0:
-        return i
-      # if the ranks agree, compare on the filename,
-      # first by basename, then by fullname
-      x_base = os.path.basename(x[0])
-      y_base = os.path.basename(y[0])
-      j = cmp(x_base, y_base)
-      if j != 0:
-        return j
-      return cmp(x[0], y[0])
-
-    hits = list(base_result.hits())
-    hits.sort(hit_cmp)
-    return QueryResult(hits, base_result.truncated)
 
   def execute_nocache(self, shard_manager, query_cache):
-    self.text = self.text
-    slashIdx = self.text.rfind('/')
-    if slashIdx != -1:
-      dirpart = self.text[:slashIdx]
-      basename_query = self.text[slashIdx+1:]
-    else:
-      dirpart = None
-      basename_query = self.text
-
+    # What we'll actually return
     truncated = False
 
+    slashIdx = self.text.rfind('/')
+    if slashIdx != -1:
+      dirpart_query = self.text[:slashIdx]
+      basename_query = self.text[slashIdx+1:]
+    else:
+      dirpart_query = ''
+      basename_query = self.text
+    lower_dirpart_query = dirpart_query.lower()
+
+    # Get the files
+    files = []
     if len(basename_query):
       basename_hits, truncated = shard_manager.search_basenames(basename_query, self.max_hits)
-
-      # rank the results
-      trace_begin("rank_results")
-      hits = []
-      basename_ranker = BasenameRanker()
       for hit in basename_hits:
-        files = shard_manager.files_by_lower_basename[hit]
-        for f in files:
-          basename = os.path.basename(f)
-          rank = basename_ranker.rank_query(basename_query, basename)
-          hits.append((f,rank))
-      trace_end("rank_results")
-
+        hit_files = shard_manager.files_by_lower_basename[hit]
+        for f in hit_files:
+          if _is_dirmatch(lower_dirpart_query, f):
+            files.append(f)
     else:
-      if len(dirpart):
-        hits = []
-        hits.extend([(f, 1) for f in shard_manager.files])
-      else:
-        hits = []
+      for f in shard_manager.files:
+        if _is_dirmatch(lower_dirpart_query, f):
+          files.append(f)
+        if len(files) > self.max_hits:
+          break
 
-    if dirpart:
-      reshits = []
-      lower_dirpart = dirpart.lower()
-      for hit in hits:
-        dirname = os.path.dirname(hit[0])
-        lower_dirname = dirname.lower()
-        if lower_dirname.endswith(lower_dirpart):
-          reshits.append(hit)
-      hits = reshits
+    # Rank the results
+    trace_begin("rank_results")
+    hits = []
+    basename_ranker = BasenameRanker()
+    for f in files:
+      basename = os.path.basename(f)
+      rank = basename_ranker.rank_query(basename_query, basename)
+      hits.append((f,rank))
+    trace_end("rank_results")
+
     return QueryResult(hits=hits, truncated=truncated)

@@ -15,6 +15,14 @@ import db_index_shard
 import unittest
 import re
 
+def _assertSetEquals(self, ref,src):
+  src_set = set(src)
+  ref_set = set(ref)
+  if set(ref) != set(src):
+    src_only = src_set.difference(ref_set)
+    ref_only = ref_set.difference(src_set)
+    self.assertEquals(ref_set,src_set)
+
 class DBIndexShardTest(unittest.TestCase):
   def test_filters(self):
     m = db_index_shard.DBIndexShard({})

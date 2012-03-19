@@ -11,9 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 import unittest
 import query
 
+from basename_ranker import BasenameRanker
 from query import Query
 from query_cache import QueryCache
 from query_result import QueryResult
@@ -26,29 +28,36 @@ def make_result(hits):
   return res
 
 
-class FakeDBIndex(object):
-  def __init__(self, result_template = QueryResult()):
-    self._result_template = result_template
+class FakeDBShardManager(object):
+  """
+  A super-simple implementation of the DBShardManager interface for use
+  in unit tests. Uses file.find(query_text) != -1 as a match.
+  """
+  def __init__(self, files = []):
+    self.files = files
+    self.files_by_lower_basename = {}
+    for f in files:
+      bn = os.path.basename(f).lower()
+      if bn not in self.files_by_lower_basename:
+        self.files_by_lower_basename[bn] = []
+      self.files_by_lower_basename[bn].append(f)
 
-  def search_basenames(self, basename_query, max_hits):
-    # Return a copy of the template to preserve semantics of
-    # the underlying search_basenames implementation.
-    res = QueryResult.from_dict(self._result_template.as_dict())
-    return res.hits(), res.truncated
+  def search_basenames(self, basename_query, max_hits_hint):
+    res = []
+    lower_basename_query = basename_query.lower()
+    for bn in self.files_by_lower_basename.keys():
+      if bn.find(lower_basename_query) != -1:
+        res.append(bn)
+    return res, len(res) > max_hits_hint
 
 class MockQuery(Query):
   def __init__(self, *args, **kwargs):
     Query.__init__(self, *args, **kwargs)
     self.did_call_execute_nocache = False
-    self.did_call_filter_result_for_exact_matches = False
 
   def execute_nocache(self, shard_manager, query_cache):
     self.did_call_execute_nocache = True
     return Query.execute_nocache(self, shard_manager, query_cache)
-
-  def filter_result_for_exact_matches(self, res):
-    self.did_call_filter_result_for_exact_matches = True
-    return Query.filter_result_for_exact_matches(self, res)
 
 class QueryTest(unittest.TestCase):
   def test_cons(self):
@@ -87,17 +96,17 @@ class QueryTest(unittest.TestCase):
   def test_filter_result_for_exact_matches(self):
     res = make_result(["a/bcd.txt", "b/bcd.txt"])
 
-    exact_res = Query("bcd.txt").filter_result_for_exact_matches(res)
+    exact_res = query._filter_result_for_exact_matches("bcd.txt", res)
     self.assertEquals(len(exact_res.ranks), len(exact_res.filenames))
     self.assertEquals(2, len(exact_res.filenames))
     self.assertEquals(["a/bcd.txt", "b/bcd.txt"], exact_res.filenames)
 
-    exact_res = Query("b/bcd.txt").filter_result_for_exact_matches(res)
+    exact_res = query._filter_result_for_exact_matches("b/bcd.txt", res)
     self.assertEquals(len(exact_res.ranks), len(exact_res.filenames))
     self.assertEquals(1, len(exact_res.filenames))
     self.assertEquals(["b/bcd.txt"], exact_res.filenames)
 
-    exact_res = Query("x/bcd.txt").filter_result_for_exact_matches(res)
+    exact_res = query._filter_result_for_exact_matches("x/bcd.txt", res)
     self.assertEquals(len(exact_res.ranks), len(exact_res.filenames))
     self.assertEquals(0, len(exact_res.filenames))
     self.assertEquals([], exact_res.filenames)
@@ -106,21 +115,21 @@ class QueryTest(unittest.TestCase):
     # render_widget.cpp should be get re-ranked higher than render_widget.h
     in_res = QueryResult(hits=[("render_widget.h", 10),
                                ("render_widget.cpp", 10)])
-    res = Query("rw").apply_global_rank_adjustment(in_res)
+    res = query._apply_global_rank_adjustment(in_res)
     self.assertEquals(["render_widget.cpp",
                        "render_widget.h",], res.filenames)
 
     # render_widget.cpp should stay ranked higher than render_widget.h
     in_res = QueryResult(hits=[("render_widget.cpp", 10),
                               ("render_widget.h", 10)])
-    res = Query("rw").apply_global_rank_adjustment(in_res)
+    res = query._apply_global_rank_adjustment(in_res)
     self.assertEquals(["render_widget.cpp",
                        "render_widget.h"], res.filenames)
 
     # but if the ranks mismatch, dont reorder
     in_res = QueryResult(hits=[("render_widget.cpp", 10),
                               ("render_widget.h", 12)])
-    res = Query("rw").apply_global_rank_adjustment(in_res)
+    res = query._apply_global_rank_adjustment(in_res)
     self.assertEquals(["render_widget.h",
                        "render_widget.cpp"], res.filenames)
 
@@ -128,14 +137,14 @@ class QueryTest(unittest.TestCase):
     # and if d if the ranks mismatch, dont reorder
     in_res = QueryResult(hits=[("b/render_widget.cpp", 10),
                                ("a/render_widget.cpp", 10)])
-    res = Query("rw").apply_global_rank_adjustment(in_res)
+    res = query._apply_global_rank_adjustment(in_res)
     self.assertEquals(["a/render_widget.cpp",
                        "b/render_widget.cpp"], res.filenames)
 
   def test_cache_same_maxhits(self):
     q1 = MockQuery("a", 10)
     query_cache = QueryCache()
-    shard_manager = FakeDBIndex()
+    shard_manager = FakeDBShardManager()
     q1.execute(shard_manager, query_cache)
     self.assertTrue(q1.did_call_execute_nocache)
 
@@ -146,7 +155,7 @@ class QueryTest(unittest.TestCase):
   def test_cache_different_maxhits(self):
     q1 = MockQuery("a", 10)
     query_cache = QueryCache()
-    shard_manager = FakeDBIndex()
+    shard_manager = FakeDBShardManager()
     q1.execute(shard_manager, query_cache)
     self.assertTrue(q1.did_call_execute_nocache)
 
@@ -157,30 +166,62 @@ class QueryTest(unittest.TestCase):
   def test_empty_query(self):
     q1 = MockQuery("", 10)
     query_cache = QueryCache()
-    shard_manager = FakeDBIndex()
+    shard_manager = FakeDBShardManager()
     q1.execute(shard_manager, query_cache)
     self.assertFalse(q1.did_call_execute_nocache)
 
-  def test_exact_filter_called(self):
-    q1 = MockQuery("xxx", exact_match = True)
+  def test_is_dirmatch(self):
+    self.assertTrue(query._is_dirmatch("foo", "a/b/foo/"))
+    self.assertTrue(query._is_dirmatch("foo", "a/b/foo/c.txt"))
+    self.assertFalse(query._is_dirmatch("foo", "a/b/foo/bar/s.txt"))
+
+    self.assertTrue(query._is_dirmatch("foo/bar", "/foo/bar/s.txt"))
+    self.assertFalse(query._is_dirmatch("foo/bar", "/foo/bar/a/s.txt"))
+
+  def test_exact_filter_plumbing(self):
+    shard_manager = FakeDBShardManager(["foo/bar.txt", "foo/rebar.txt"])
     query_cache = QueryCache()
-    shard_manager = FakeDBIndex()
-    q1.execute(shard_manager, query_cache)
-    self.assertTrue(q1.did_call_filter_result_for_exact_matches)
 
-  def test_execute_nocache_plainword(self):
-    q1 = Query("a", 10)
+    res = MockQuery("bar", 10, exact_match=True).execute(shard_manager, query_cache)
+    self.assertTrue(res.is_empty())
+
+    res = MockQuery("bar.txt", 10, exact_match=True).execute(shard_manager, query_cache)
+    self.assertEquals(["foo/bar.txt"], res.filenames)
+
+  def test_empty_dir_query(self):
+    shard_manager = FakeDBShardManager(["foo/bar.txt", "foo/rebar.txt"])
     query_cache = QueryCache()
-    shard_manager = FakeDBIndex()
-    q1.execute(shard_manager, query_cache)
 
+    res = MockQuery("/").execute(shard_manager, query_cache)
+    self.assertTrue(len(res.filenames) != 0)
 
-# execute_nocache
-## plain word
-## case sensitivity?
-## extension
-## directory
-## empty directory (foo/)
-## two dir query  (foo/bar/)
-## dir and name (foo/bar)
-## dir and name (foo/bar.py)
+  def test_dir_only_query(self):
+    shard_manager = FakeDBShardManager(["foo/bar.txt", "foo/rebar.txt", "blah/baz.txt"])
+    query_cache = QueryCache()
+
+    res = MockQuery("foo/").execute(shard_manager, query_cache)
+    self.assertEquals(["foo/bar.txt", "foo/rebar.txt"], res.filenames)
+
+  def test_basename_only_query(self):
+    shard_manager = FakeDBShardManager(["foo/bar.txt", "foo/rebar.txt", "blah/baz.txt"])
+    query_cache = QueryCache()
+
+    res = MockQuery("bar").execute(shard_manager, query_cache)
+    self.assertEquals(["foo/bar.txt", "foo/rebar.txt"], res.filenames)
+
+  def test_dir_and_basename_query(self):
+    shard_manager = FakeDBShardManager(["foo/bar.txt", "foo/rebar.txt", "blah/baz.txt"])
+    query_cache = QueryCache()
+
+    res = MockQuery("oo/bar").execute(shard_manager, query_cache)
+    self.assertEquals(["foo/bar.txt", "foo/rebar.txt"], res.filenames)
+
+  def test_basename_only_query_rank_results(self):
+    basename_ranker = BasenameRanker()
+    shard_manager = FakeDBShardManager(["foo/bar.txt", "foo/rebar.txt", "blah/baz.txt"])
+    query_cache = QueryCache()
+
+    res = MockQuery("bar").execute_nocache(shard_manager, query_cache)
+    self.assertEquals(set(["foo/bar.txt", "foo/rebar.txt"]), set(res.filenames))
+    self.assertEquals([basename_ranker.rank_query("bar", os.path.basename(res.filenames[0])),
+                       basename_ranker.rank_query("bar", os.path.basename(res.filenames[1]))], res.ranks)

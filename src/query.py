@@ -13,6 +13,7 @@
 # limitations under the License.
 import fixed_size_dict
 import os
+import sys
 import time
 
 from basename_ranker import BasenameRanker
@@ -37,12 +38,43 @@ def _is_exact_match(query_text, hit):
     return True
   return False
 
-def _apply_global_rank_adjustment(base_result):
+class DirPriority(object):
+  def __init__(self, dir, priority):
+    self.dir = dir
+    self.priority = priority
+
+def _apply_global_rank_adjustment(base_result, indexed_dirs, query):
+  all_open_filenames = []
+  if query.current_filename:
+    all_open_filenames.append(query.current_filename)
+  all_open_filenames.extend(query.open_filenames)
+
+  # The active_dir_orders goes from a directory prefix to an order
+  # value.  We use this to break ties when the same basename crops up in two
+  # places: the basename that is in the most recently active directory wins.
+  #
+  # This is built as a dict, but then converted to a flat list because we iterate it
+  # during execution.
+  active_dir_orders = {}
+  for open_filename in all_open_filenames:
+    for d in indexed_dirs:
+      if open_filename.startswith(d):
+        if d not in active_dir_orders:
+          active_dir_orders[d] = len(active_dir_orders)
+  active_dir_orders = [(x,y) for x,y in active_dir_orders.items()]
+
+  def get_order(f):
+    for d,order in active_dir_orders:
+      if f.startswith(d):
+        return order
+    return sys.maxint
+
   def hit_cmp(x,y):
     # compare on the rank
-    i = -cmp(x[1],y[1])
-    if i != 0:
-      return i
+    j = -cmp(x[1],y[1])
+    if j != 0:
+      return j
+
     # if the ranks agree, compare on the filename,
     # first by basename, then by fullname
     x_base = os.path.basename(x[0])
@@ -50,11 +82,40 @@ def _apply_global_rank_adjustment(base_result):
     j = cmp(x_base, y_base)
     if j != 0:
       return j
+
+    # break ties based on directory order
+    j = get_order(x[0]) - get_order(y[0])
+    if j != 0:
+      return j
+
+    # last resort is to compare full names
     return cmp(x[0], y[0])
 
   hits = list(base_result.hits())
   hits.sort(hit_cmp)
-  return QueryResult(hits, base_result.truncated)
+  new_hits = _rerank(hits)
+  return QueryResult(new_hits, base_result.truncated)
+
+def _rerank(hits):
+  """
+  Used to uniquefy ranks after sorting operations have been
+  applied to position duplicate ranks.
+  """
+  if len(hits) == 0:
+    return []
+  # 10 10 10 11 12 -> 10 10.1 10.2 11.2 12.2
+  # so adjust accordingly
+  deltas = [1 for x in range(len(hits))]
+  deltas[0] = 0
+  for i in range(1, len(hits)):
+    deltas[i] = hits[i][1] - hits[i-1][1]
+  res = [hits[0]]
+  for i in range(1, len(hits)):
+    delta = deltas[i]
+    if delta <= 0:
+      delta = 0.1
+    res.append((hits[i][0], res[i-1][1] + delta))
+  return res
 
 def _filter_result_for_exact_matches(query_text, base_result):
   """
@@ -136,10 +197,7 @@ class Query(object):
     if qkey in query_cache.searches:
       res = query_cache.searches[qkey]
     else:
-      base_results = self.execute_nocache(shard_manager, query_cache)
-
-      ranked_results = _apply_global_rank_adjustment(base_results)
-
+      ranked_results = self.execute_nocache(shard_manager, query_cache)
       ranked_and_truncated_results = ranked_results.get_copy_with_max_hits(self.max_hits)
       query_cache.searches[qkey] = ranked_and_truncated_results
       res = ranked_and_truncated_results
@@ -147,7 +205,8 @@ class Query(object):
     if self.exact_match:
       return _filter_result_for_exact_matches(self.text, res)
 
-    return res
+    ranked_res = _apply_global_rank_adjustment(res, shard_manager.dirs, self)
+    return ranked_res
 
   def execute_nocache(self, shard_manager, query_cache):
     # What we'll actually return

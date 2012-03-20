@@ -29,7 +29,7 @@ class DBShardManagerTest(unittest.TestCase):
         "k/dsfsfd.txt",
         "k/sdf.txt",
         ]
-    mock_indexer = db_indexer.MockIndexer(self.files)
+    mock_indexer = db_indexer.MockIndexer(["a/", "k/"], self.files)
     self.shard_manager = db_shard_manager.DBShardManager(mock_indexer)
 
   def test_props(self):

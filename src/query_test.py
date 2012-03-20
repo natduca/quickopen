@@ -33,7 +33,8 @@ class FakeDBShardManager(object):
   A super-simple implementation of the DBShardManager interface for use
   in unit tests. Uses file.find(query_text) != -1 as a match.
   """
-  def __init__(self, files = []):
+  def __init__(self, files = [], dirs = []):
+    self.dirs = dirs
     self.files = files
     self.files_by_lower_basename = {}
     for f in files:
@@ -111,35 +112,67 @@ class QueryTest(unittest.TestCase):
     self.assertEquals(0, len(exact_res.filenames))
     self.assertEquals([], exact_res.filenames)
 
-  def test_rank_sort_and_adjustment_puts_suffixes_into_predictable_order(self):
+  def test_global_rank_adjustment_puts_suffixes_into_predictable_order(self):
     # render_widget.cpp should be get re-ranked higher than render_widget.h
-    in_res = QueryResult(hits=[("render_widget.h", 10),
-                               ("render_widget.cpp", 10)])
-    res = query._apply_global_rank_adjustment(in_res)
-    self.assertEquals(["render_widget.cpp",
-                       "render_widget.h",], res.filenames)
+    in_res = QueryResult(hits=[("/render_widget.h", 10),
+                               ("/render_widget.cpp", 10)])
+    res = query._apply_global_rank_adjustment(in_res, ["/"], Query("rw"))
+    self.assertEquals(["/render_widget.cpp",
+                       "/render_widget.h",], res.filenames)
 
     # render_widget.cpp should stay ranked higher than render_widget.h
-    in_res = QueryResult(hits=[("render_widget.cpp", 10),
-                              ("render_widget.h", 10)])
-    res = query._apply_global_rank_adjustment(in_res)
-    self.assertEquals(["render_widget.cpp",
-                       "render_widget.h"], res.filenames)
+    in_res = QueryResult(hits=[("/render_widget.cpp", 10),
+                              ("/render_widget.h", 10)])
+    res = query._apply_global_rank_adjustment(in_res, ["/"], Query("rw"))
+    self.assertEquals(["/render_widget.cpp",
+                       "/render_widget.h"], res.filenames)
 
     # but if the ranks mismatch, dont reorder
-    in_res = QueryResult(hits=[("render_widget.cpp", 10),
-                              ("render_widget.h", 12)])
-    res = query._apply_global_rank_adjustment(in_res)
-    self.assertEquals(["render_widget.h",
-                       "render_widget.cpp"], res.filenames)
+    in_res = QueryResult(hits=[("/render_widget.cpp", 10),
+                              ("/render_widget.h", 12)])
+    res = query._apply_global_rank_adjustment(in_res, ["/"], Query("rw"))
+    self.assertEquals(["/render_widget.h",
+                       "/render_widget.cpp"], res.filenames)
 
-  def test_rank_sort_and_adjustment_puts_directories_into_predictable_order(self):
+  def test_global_rank_adjustment_puts_directories_into_predictable_order(self):
     # and if d if the ranks mismatch, dont reorder
-    in_res = QueryResult(hits=[("b/render_widget.cpp", 10),
-                               ("a/render_widget.cpp", 10)])
-    res = query._apply_global_rank_adjustment(in_res)
-    self.assertEquals(["a/render_widget.cpp",
-                       "b/render_widget.cpp"], res.filenames)
+    in_res = QueryResult(hits=[("/b/render_widget.cpp", 10),
+                               ("/a/render_widget.cpp", 10)])
+    res = query._apply_global_rank_adjustment(in_res, ["/"], Query("rw"))
+    self.assertEquals(["/a/render_widget.cpp",
+                       "/b/render_widget.cpp"], res.filenames)
+
+  def test_adjustment_puts_current_project_above_noncurrent(self):
+    in_res = QueryResult(hits=[("/b/render_widget.cpp", 10),
+                               ("/a/render_widget.cpp", 10)])
+    res = query._apply_global_rank_adjustment(in_res,
+                                       ["/a/", "/b/"],
+                                       Query("rw", current_filename="/b/k/foobar.cpp"))
+    rA = res.rank_of("/a/render_widget.cpp")
+    rB = res.rank_of("/b/render_widget.cpp")
+    self.assertTrue(rA > rB, "Expected %s > %s" % (rA, rB))
+
+  def test_rerank(self):
+    self.assertEquals([],
+                      query._rerank([]))
+    self.assertEquals([("a/b.txt", 10)],
+                      query._rerank([("a/b.txt", 10)]))
+    self.assertEquals([("a/b1.txt", 10),
+                       ("a/b2.txt", 10.1),
+                       ("a/c.txt", 11.1),
+                       ("a/c.txt", 13.1)],
+                      query._rerank([("a/b1.txt", 10),
+                                     ("a/b2.txt", 10),
+                                     ("a/c.txt", 11),
+                                     ("a/c.txt", 13)
+                                     ]))
+    self.assertEquals([("a/b.txt", 10),
+                       ("a/x.txt", 10.1),
+                       ("a/y.txt", 12.1)],
+                      query._rerank([("a/b.txt", 10),
+                                     ("a/x.txt", 9),
+                                     ("a/y.txt", 11)]))
+
 
   def test_cache_same_maxhits(self):
     q1 = MockQuery("a", 10)

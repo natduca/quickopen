@@ -260,7 +260,7 @@ class DBTestBase(object):
     exact_readme1 = self.test_data.path_to("something/README")
     exact_readme2 = self.test_data.path_to("svnproj/README")
     r = self.db.search("README", exact_match = True)
-    self.assertEquals(r.filenames, [exact_readme1, exact_readme2])
+    self.assertEquals(set(r.filenames), set([exact_readme1, exact_readme2]))
 
     r = self.db.search(exact_readme1, exact_match = True)
     self.assertEquals(r.filenames, [exact_readme1])

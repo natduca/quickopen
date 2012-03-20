@@ -39,6 +39,7 @@ class DBShardManager(object):
   of those basenames using the multiprocessing module.
   """
   def __init__(self, indexer):
+    self.dirs = indexer.dirs
     self.files = []
     self.files_by_lower_basename = dict()
     for basename,files_with_basename in indexer.files_by_basename.items():

@@ -49,3 +49,9 @@ class QueryResult(object):
 
   def get_copy_with_max_hits(self, max_hits):
     return QueryResult(hits=list(self.hits())[:max_hits], truncated=self.truncated)
+
+  def rank_of(self, filename):
+    for i in range(len(self.filenames)):
+      if self.filenames[i] == filename:
+        return self.ranks[i]
+    raise Exception("%s not found" % filename)

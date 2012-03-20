@@ -17,7 +17,8 @@ import time
 import json
 
 class MockIndexer(object):
-  def __init__(self, files = [], files_by_basename = {}):
+  def __init__(self, dirs, files = [], files_by_basename = {}):
+    self.dirs = dirs
     self.files_by_basename = files_by_basename
     for f in files:
       bn = os.path.basename(f)
@@ -29,6 +30,7 @@ class DBIndexer(object):
   def __init__(self, dirs, dir_cache):
     self.dir_cache = dir_cache
     self.dir_cache.reset_realpath_cache()
+    self.dirs = [self.dir_cache.realpath(d) for d in dirs]
 
     self._basename_slots = dict()
 

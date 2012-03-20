@@ -13,11 +13,15 @@ curses UI doesn't know when the terminal resized.
 Features
 ---------------------------------------------------------------------------
 
+- Dont use extensions in raw index; fix those up afterward.
+
 - Use current-buffer and active-buffer list in ranking
 
 - Try out Goog codesearch-style trigraph-based indexes for fuzzy matching
 
 - rwh::ddu -> use ctags to do fuzzy search for ddu on the files matching rwh
+
+- Add fuzziness to dir matching and ranking?
 
 - Speed up indexing operation
 

@@ -85,11 +85,10 @@ class DBIndexShardTest(unittest.TestCase):
 
 
   def test_wordstart_db_index_shard(self):
-    m = db_index_shard.DBIndexShard({
-        "render_widget_host.cpp": ["a/render_widget_host.cpp","b/render_widget_host.cpp"],
-        "foo.cpp": ["foo.cpp"],
-        "bar.cpp": ["bar.cpp"],
-        })
+    m = db_index_shard.DBIndexShard([
+        "render_widget_host.cpp",
+        "foo.cpp"
+        "bar.cpp"])
 
     hits, truncated = m.search_basenames("rwh", 10000)
     self.assertTrue("render_widget_host.cpp" in hits)

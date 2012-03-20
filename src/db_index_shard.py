@@ -18,23 +18,19 @@ from basename_ranker import BasenameRanker
 from trace_event import *
 
 class DBIndexShard(object):
-  def __init__(self, files_by_basename):
-
-    files_by_lower_basename = dict()
-    for basename,files_with_basename in files_by_basename.items():
+  def __init__(self, basenames):
+    lower_basenames = set()
+    for basename in basenames:
       lower_basename = basename.lower()
-      if lower_basename in files_by_lower_basename:
-        files_by_lower_basename[lower_basename].extend(files_with_basename)
-      else:
-        files_by_lower_basename[lower_basename] = files_with_basename
+      lower_basenames.add(lower_basename)
 
-    self.basenames_unsplit = ("\n" + "\n".join(files_by_basename.keys()) + "\n").encode('utf8')
-    self.lower_basenames_unsplit = ("\n" + "\n".join(files_by_lower_basename.keys()) + "\n").encode('utf8')
+    self.basenames_unsplit = ("\n" + "\n".join(basenames) + "\n").encode('utf8')
+    self.lower_basenames_unsplit = ("\n" + "\n".join(lower_basenames) + "\n").encode('utf8')
     assert type(self.lower_basenames_unsplit) == str
 
     self._basename_ranker = BasenameRanker()
     wordstarts = {}
-    for basename,files_with_basename in files_by_basename.items():
+    for basename in basenames:
       start_letters = self._basename_ranker.get_start_letters(basename)
       if len(start_letters) <= 1:
         continue

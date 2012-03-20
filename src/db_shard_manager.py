@@ -20,9 +20,9 @@ from trace_event import *
 slave = None
 slave_searchcount = 0
 
-def ShardInit(files_by_basename):
+def ShardInit(basenames):
   global slave
-  slave = db_index_shard.DBIndexShard(files_by_basename)
+  slave = db_index_shard.DBIndexShard(basenames)
 
 def ShardSearchBasenames(query, max_hits):
   assert slave
@@ -50,9 +50,9 @@ class DBShardManager(object):
         self.files_by_lower_basename[lower_basename] = files_with_basename
       self.files.extend(files_with_basename)
 
-    N = min(multiprocessing.cpu_count(), 4) # test for scaling beyond 4
+    N = min(multiprocessing.cpu_count(), 4) # Arbitrary limit to 4-threads.
 
-    chunks = self._make_chunks(list(indexer.files_by_basename.items()), N)
+    chunks = self._make_chunks(list(indexer.files_by_basename.keys()), N)
 
     self.shards = [LocalPool(1)]
     self.shards.extend([multiprocessing.Pool(1) for x in range(len(chunks)-1)])
@@ -69,14 +69,11 @@ class DBShardManager(object):
       chunksize = 1
     chunks = []
     for i in range(N):
-      chunk = dict()
-      for j in items[base:base+chunksize]:
-        chunk[j[0]] = j[1]
+      chunk = items[base:base+chunksize]
       base += chunksize
       chunks.append(chunk)
-    # items may not have evenly divided by N
-    for j in items[base:]:
-        chunks[0][j[0]] = j[1]
+    # Items may not have evenly divided by N.
+    chunks[0].extend(items[base:])
     return chunks
 
   @property

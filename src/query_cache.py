@@ -17,3 +17,13 @@ class QueryCache(object):
   """Cached query execution results."""
   def __init__(self):
     self.searches = fixed_size_dict.FixedSizeDict(256)
+
+  def try_get(self, query):
+    qkey = query.text + "@%i" % query.max_hits
+    if qkey in self.searches:
+      return self.searches[qkey]
+    return None
+
+  def put(self, query, res):
+    qkey = query.text + "@%i" % query.max_hits
+    self.searches[qkey] = res

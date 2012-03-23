@@ -193,14 +193,12 @@ class Query(object):
 
     assert self.max_hits >= 0
 
-    qkey = self.text + "@%i" % self.max_hits
-    if qkey in query_cache.searches:
-      res = query_cache.searches[qkey]
-    else:
+    res = query_cache.try_get(self)
+    if not res:
       ranked_results = self.execute_nocache(shard_manager, query_cache)
       ranked_and_truncated_results = ranked_results.get_copy_with_max_hits(self.max_hits)
-      query_cache.searches[qkey] = ranked_and_truncated_results
       res = ranked_and_truncated_results
+      query_cache.put(self, res)
 
     if self.exact_match:
       return _filter_result_for_exact_matches(self.text, res)

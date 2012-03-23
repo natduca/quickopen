@@ -19,11 +19,19 @@ from trace_event import *
 
 class DBIndexShard(object):
   def __init__(self, basenames):
+    # The basenames come out of a hashtable so they are usually pretty badly
+    # shuffled around. Sort them here so that we get somewhat predictable results
+    # as a query is incrementally refined.
+    basenames.sort()
+
+    # Build the lower basenames list, removing dupes as needed.
     lower_basenames = set()
     for basename in basenames:
       lower_basename = basename.lower()
       lower_basenames.add(lower_basename)
 
+    # Build two giant strings that contain all the basenames [and lowercase basenames]
+    # concatenated together. This is what we will use to handle fuzzy queries.
     self.basenames_unsplit = ("\n" + "\n".join(basenames) + "\n").encode('utf8')
     self.lower_basenames_unsplit = ("\n" + "\n".join(lower_basenames) + "\n").encode('utf8')
     assert type(self.lower_basenames_unsplit) == str

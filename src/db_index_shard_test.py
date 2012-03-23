@@ -25,7 +25,7 @@ def _assertSetEquals(self, ref,src):
 
 class DBIndexShardTest(unittest.TestCase):
   def test_filters(self):
-    m = db_index_shard.DBIndexShard({})
+    m = db_index_shard.DBIndexShard([])
     camelcase = m.get_camelcase_wordstart_filter
     delimited = m.get_delimited_wordstart_filter
     substring = m.get_substring_filter

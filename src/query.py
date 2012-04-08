@@ -70,6 +70,11 @@ def _apply_global_rank_adjustment(base_result, indexed_dirs, query):
     return sys.maxint
 
   def hit_cmp(x,y):
+    # directory order trumps everything
+    h = get_order(x[0]) - get_order(y[0])
+    if h != 0:
+      return h
+
     # compare on the rank
     j = -cmp(x[1],y[1])
     if j != 0:
@@ -80,11 +85,6 @@ def _apply_global_rank_adjustment(base_result, indexed_dirs, query):
     x_base = os.path.basename(x[0])
     y_base = os.path.basename(y[0])
     j = cmp(x_base, y_base)
-    if j != 0:
-      return j
-
-    # break ties based on directory order
-    j = get_order(x[0]) - get_order(y[0])
     if j != 0:
       return j
 

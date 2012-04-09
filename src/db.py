@@ -76,6 +76,11 @@ class DB(object):
 
     self._on_settings_ignores_changed(None, self.settings.ignores)
 
+  def close(self):
+    if self._cur_shard_manager:
+      self._cur_shard_manager.close()
+      self._cur_shard_manager = None
+
   ###########################################################################
 
   def _on_settings_dirs_changed(self, old, new):

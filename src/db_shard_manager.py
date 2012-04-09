@@ -87,6 +87,9 @@ class DBShardManager(object):
         p.join()
       except:
         p.terminate()
+    # Actually "delete" the shards. Some multiprocessing.Pool implementations
+    # dont clean up their fd resources.
+    del self.shards
 
   def search_basenames(self, basename_query, max_hits_hint):
     """

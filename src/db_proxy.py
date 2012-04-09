@@ -77,6 +77,9 @@ class DBProxy(object):
       self.couldnt_start_daemon.fire()
       raise Exception("Daemon did not come up")
 
+  def close(self):
+    pass
+
   def _req(self, method, path, data = None):
     if data != None:
       data = json.dumps(data)

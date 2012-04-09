@@ -49,4 +49,5 @@ class DBTest(DBTestBase, unittest.TestCase):
 
   def tearDown(self):
     DBTestBase.tearDown(self)
+    self.db.close()
     self.settings_file.close()

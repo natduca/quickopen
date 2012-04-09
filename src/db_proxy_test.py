@@ -42,4 +42,5 @@ class DBProxyTest(db_test_base.DBTestBase, unittest.TestCase):
 
   def tearDown(self):
     self.daemon.close()
+    self.db.close()
     db_test_base.DBTestBase.tearDown(self)

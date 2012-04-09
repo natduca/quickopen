@@ -150,7 +150,7 @@ class QueryTest(unittest.TestCase):
                                        Query("rw", current_filename="/b/k/foobar.cpp"))
     rA = res.rank_of("/a/render_widget.cpp")
     rB = res.rank_of("/b/render_widget.cpp")
-    self.assertTrue(rA > rB, "Expected %s > %s" % (rA, rB))
+    self.assertTrue(rB > rA, "Expected %s > %s" % (rB, rA))
 
   def test_rerank(self):
     self.assertEquals([],
@@ -158,21 +158,20 @@ class QueryTest(unittest.TestCase):
     self.assertEquals([("a/b.txt", 10)],
                       query._rerank([("a/b.txt", 10)]))
     self.assertEquals([("a/b1.txt", 10),
-                       ("a/b2.txt", 10.1),
-                       ("a/c.txt", 11.1),
-                       ("a/c.txt", 13.1)],
+                       ("a/b2.txt", 9.9),
+                       ("a/c.txt", 8.9),
+                       ("a/c.txt", 6.9)],
                       query._rerank([("a/b1.txt", 10),
                                      ("a/b2.txt", 10),
-                                     ("a/c.txt", 11),
-                                     ("a/c.txt", 13)
+                                     ("a/c.txt", 9),
+                                     ("a/c.txt", 7)
                                      ]))
     self.assertEquals([("a/b.txt", 10),
-                       ("a/x.txt", 10.1),
-                       ("a/y.txt", 12.1)],
+                       ("a/x.txt", 9),
+                       ("a/y.txt", 8.9)],
                       query._rerank([("a/b.txt", 10),
                                      ("a/x.txt", 9),
                                      ("a/y.txt", 11)]))
-
 
   def test_cache_same_maxhits(self):
     q1 = MockQuery("a", 10)
@@ -269,3 +268,12 @@ class QueryTest(unittest.TestCase):
     self.assertEquals(set(["foo/bar.txt", "foo/rebar.txt"]), set(res.filenames))
     self.assertEquals([basename_ranker.rank_query("bar", os.path.basename(res.filenames[0])),
                        basename_ranker.rank_query("bar", os.path.basename(res.filenames[1]))], res.ranks)
+
+  def test_adjustment_creates_decreasing_hit_order(self):
+    initial_result = QueryResult.from_dict({'ranks': [12.0, 10.800000000000001, 9.3000000000000007, 9.3000000000000007, 8.5999999999999996, 7.5, 7.0, 9.3000000000000007, 9.3000000000000007, 10.0, 9.3000000000000007, 7.5, 7.5, 7.5, 7.0, 10.0, 10.0, 7.5, 7.5, 7.5, 7.0, 7.0, 7.5, 7.5, 7.0, 7.5, 7.5, 13.5, 10.5, 14.0, 14.0, 14.0, 7.0, 7.5, 7.5], 'truncated': True, 'filenames': ['/Users/nduca/Local/chrome/src/third_party/WebKit/LayoutTests/fast/js/script-tests/char-at.js', '/Users/nduca/home/quickopen/test_data/cr_files_basenames.json', '/Users/nduca/Local/chrome/src/chrome/browser/resources/options2/instant_confirm_overlay.js', '/Users/nduca/Local/chrome/src/chrome/browser/resources/options/instant_confirm_overlay.js', '/Users/nduca/Local/chrome/src/third_party/WebKit/LayoutTests/svg/dynamic-updates/script-tests/SVGCircleElement-dom-requiredFeatures.js', '/Users/nduca/Local/chrome/src/third_party/WebKit/LayoutTests/svg/dom/SVGScriptElement/resources/script-set-href-p9pass.js', '/Users/nduca/Local/chrome/src/third_party/WebKit/LayoutTests/dom/xhtml/level3/core/domconfigurationcansetparameter03.js', '/Users/nduca/Local/chrome/src/chrome/browser/resources/options2/chromeos/cellular_plan_element.js', '/Users/nduca/Local/chrome/src/chrome/browser/resources/options/chromeos/cellular_plan_element.js', '/Users/nduca/Local/chrome/src/third_party/WebKit/LayoutTests/dom/svg/level3/xpath/Conformance_Expressions.js', '/Users/nduca/Local/chrome/src/third_party/WebKit/Source/WebCore/inspector/front-end/ResourceResponseView.js', '/Users/nduca/home/trace_event_viewer/third_party/chrome/shared/js/cr/ui/focus_outline_manager.js', '/Users/nduca/Local/chrome/src/chrome/browser/resources/shared/js/cr/ui/focus_outline_manager.js', '/Users/nduca/Local/chrome/src/third_party/WebKit/LayoutTests/svg/dom/SVGScriptElement/resources/script-set-href-p2fail.js', '/Users/nduca/Local/chrome/src/third_party/WebKit/Source/WebCore/inspector/front-end/InspectorView.js', '/Users/nduca/Local/chrome/src/third_party/WebKit/LayoutTests/dom/xhtml/level1/core/hc_characterdatadeletedatamiddle.js', '/Users/nduca/Local/chrome/src/third_party/WebKit/LayoutTests/dom/html/level1/core/hc_characterdatadeletedatamiddle.js', '/Users/nduca/Local/chrome/src/third_party/WebKit/LayoutTests/http/tests/security/xssAuditor/resources/base-href/really-safe-script.js', '/Users/nduca/Local/chrome/src/third_party/WebKit/LayoutTests/dom/xhtml/level1/core/hc_attrreplacechild1.js', '/Users/nduca/Local/chrome/src/third_party/WebKit/LayoutTests/dom/html/level1/core/hc_attrreplacechild1.js', '/Users/nduca/Local/chrome/src/third_party/WebKit/LayoutTests/fast/dom/Geolocation/script-tests/timeout-clear-watch.js', '/Users/nduca/Local/chrome/src/chrome/test/data/extensions/api_test/history/search_after_add.js', '/Users/nduca/Local/chrome/src/third_party/WebKit/LayoutTests/svg/dom/SVGScriptElement/resources/script-set-href-p5fail.js', '/Users/nduca/Local/chrome/src/third_party/WebKit/LayoutTests/svg/dynamic-updates/script-tests/SVGRectElement-dom-y-attr.js', '/Users/nduca/Local/chrome/src/third_party/WebKit/LayoutTests/dom/xhtml/level3/core/documentrenamenode03.js', '/Users/nduca/Local/chrome/src/third_party/WebKit/LayoutTests/dom/xhtml/level1/core/hc_textsplittextfour.js', '/Users/nduca/Local/chrome/src/third_party/WebKit/LayoutTests/dom/html/level1/core/hc_textsplittextfour.js', '/Users/nduca/Local/chrome/src/third_party/WebKit/LayoutTests/fast/dom/Orientation/script-tests/create-event-orientationchange.js', '/Users/nduca/Local/chrome/src/chrome/browser/resources/connection_manager.js', '/Users/nduca/home/trace_event_viewer/third_party/chrome/shared/js/cr.js', '/Users/nduca/Local/chrome/src/chrome/common/extensions/docs/examples/extensions/plugin_settings/domui/js/cr.js', '/Users/nduca/Local/chrome/src/chrome/browser/resources/shared/js/cr.js', '/Users/nduca/Local/chrome/src/third_party/WebKit/LayoutTests/fast/js/mozilla/eval/script-tests/exhaustive-global-strictcaller-indirect-strictcode.js', '/Users/nduca/home/trace_event_viewer/third_party/chrome/shared/js/event_tracker.js', '/Users/nduca/Local/chrome/src/chrome/browser/resources/shared/js/event_tracker.js']})
+    dirs = ['/Users/nduca/Local/ndbg', '/Users/nduca/Local/quickopen', '/Users/nduca/home', '/Users/nduca/Local/chrome']
+    q = Query("cr.js")
+    res = query._apply_global_rank_adjustment(initial_result, dirs, q)
+    for i in range(1, len(res.ranks)):
+      self.assertTrue(res.ranks[i-1] > res.ranks[i])
+    self.assertEquals('/Users/nduca/Local/chrome/src/chrome/browser/resources/shared/js/cr.js', res.filenames[0])

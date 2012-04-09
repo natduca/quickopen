@@ -103,7 +103,7 @@ def _rerank(hits):
   """
   if len(hits) == 0:
     return []
-  # 10 10 10 11 12 -> 10 10.1 10.2 11.2 12.2
+  # 12 12 12 11 10 -> 12 11.9 11.8 10.8 9.8
   # so adjust accordingly
   deltas = [1 for x in range(len(hits))]
   deltas[0] = 0
@@ -112,8 +112,8 @@ def _rerank(hits):
   res = [hits[0]]
   for i in range(1, len(hits)):
     delta = deltas[i]
-    if delta <= 0:
-      delta = 0.1
+    if delta >= 0:
+      delta = -0.1
     res.append((hits[i][0], res[i-1][1] + delta))
   return res
 

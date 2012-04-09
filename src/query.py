@@ -222,7 +222,7 @@ class Query(object):
     # Get the files
     files = []
     if len(basename_query):
-      basename_hits, truncated = shard_manager.search_basenames(basename_query, self.max_hits)
+      basename_hits, truncated = shard_manager.search_basenames(basename_query)
       for hit in basename_hits:
         hit_files = shard_manager.files_by_lower_basename[hit]
         for f in hit_files:
@@ -235,8 +235,6 @@ class Query(object):
       for f in shard_manager.files:
         if _is_dirmatch(lower_dirpart_query, f):
           files.append(f)
-        if len(files) > self.max_hits:
-          break
         i += 1
         if i % 1000 == 0:
           if time.time() >= timeout:

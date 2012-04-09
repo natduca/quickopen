@@ -24,10 +24,10 @@ def ShardInit(basenames):
   global slave
   slave = db_index_shard.DBIndexShard(basenames)
 
-def ShardSearchBasenames(query, max_hits):
+def ShardSearchBasenames(basename_query):
   assert slave
   global slave_searchcount
-  ret = slave.search_basenames(query, max_hits)
+  ret = slave.search_basenames(basename_query)
   slave_searchcount += 1
   if trace_is_enabled() and slave_searchcount % 10 == 0:
     trace_flush()
@@ -91,26 +91,20 @@ class DBShardManager(object):
     # dont clean up their fd resources.
     del self.shards
 
-  def search_basenames(self, basename_query, max_hits_hint):
+  def search_basenames(self, basename_query):
     """
     Searches all controlled index shards for basenames matching the query.
 
     Returns (hits, truncated) where:
        hits is an array of basenames that matched.
        truncated is a bool indicated whether not all possible matches were found.
-
-    Note: max_hits_hint does not control the amount of hits created. Its rather just a way to
-    limit the work done per shard to a reasonable value. If you want an actual maximum result size,
-    enforce that in an upper layer.
     """
-    max_shard_hits_hint = max(10, max_hits_hint / len(self.shards))
-
     shard_result_handles = []
     # Run the search in parallel across the shards.
     trace_begin("issue_search")
     for i in range(len(self.shards)):
       shard = self.shards[i]
-      shard_result_handles.append(shard.apply_async(ShardSearchBasenames, (basename_query, max_shard_hits_hint)))
+      shard_result_handles.append(shard.apply_async(ShardSearchBasenames, (basename_query,)))
     trace_end("issue_search")
 
     # union the results

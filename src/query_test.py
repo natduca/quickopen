@@ -43,13 +43,13 @@ class FakeDBShardManager(object):
         self.files_by_lower_basename[bn] = []
       self.files_by_lower_basename[bn].append(f)
 
-  def search_basenames(self, basename_query, max_hits_hint):
+  def search_basenames(self, basename_query):
     res = []
     lower_basename_query = basename_query.lower()
     for bn in self.files_by_lower_basename.keys():
       if bn.find(lower_basename_query) != -1:
         res.append(bn)
-    return res, len(res) > max_hits_hint
+    return res, False
 
 class MockQuery(Query):
   def __init__(self, *args, **kwargs):

@@ -41,7 +41,7 @@ class DBShardManagerTest(unittest.TestCase):
     """
     Does a very simple smoketest on the shard search.
     """
-    res, truncated = self.shard_manager.search_basenames("sdf", 100)
+    res, truncated = self.shard_manager.search_basenames("sdf")
     self.assertEquals(set(["csdf.txt", "sdf.txt"]), set(res))
     self.assertFalse(truncated)
 

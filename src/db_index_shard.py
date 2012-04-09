@@ -57,21 +57,19 @@ class DBIndexShard(object):
       self.basenames_by_wordstarts[ws] = [i[0] for i in items]
 
   @traced
-  def search_basenames(self, query, max_hits_hint):
+  def search_basenames(self, query):
     """
     Searches index for basenames matching the query.
 
     Returns (hits, truncated) where:
        hits is an array of basenames that matched.
        truncated is a bool indicated whether not all possible matches were found.
-
-    Note: max_hits_hint does not control the amount of hits created. Its rather just a way to
-    limit the work done per shard to a reasonable value. If you want an actual maximum result size,
-    enforce that in an upper layer.
     """
     lower_query = query.lower()
 
     lower_hits = set()
+
+    max_hits_hint = 25
 
     # word starts first
     trace_begin("wordstarts")

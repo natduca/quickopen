@@ -12,16 +12,59 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import fcntl
 import logging
 import message_loop
 import optparse
 import os
 import platform
 import re
+import resource
 import sys
 import types
 import traceback
 import unittest
+
+def _get_open_fds():
+  fds = set()
+  for fd in range(3,resource.getrlimit(resource.RLIMIT_NOFILE)[0]):
+    try:
+      flags = fcntl.fcntl(fd, fcntl.F_GETFD)
+    except IOError:
+      continue
+    fds.add(fd)
+  return fds
+
+class IncrementalTestRunner(unittest.TextTestRunner):
+  def __init__(self, options):
+    unittest.TextTestRunner.__init__(self)
+    self.options = options
+
+  def run(self, test):
+    def run(result):
+      self._pre_run_hook()
+      test(result)
+      self._post_run_hook(result, test)
+    return unittest.TextTestRunner.run(self, run)
+
+  def _pre_run_hook(self):
+    if self.options.check_for_fd_leaks:
+      global _before
+      _before = _get_open_fds()
+
+  def _post_run_hook(self, result, test):
+    if self.options.check_for_fd_leaks:
+      import gc
+      gc.collect()
+
+      global _before
+      after = _get_open_fds()
+      dif = after.difference(_before)
+      if len(dif):
+        try:
+          raise Exception("FD leak: %s" % repr(dif))
+        except:
+          result.addError(test, sys.exc_info())
 
 def discover(filters, manual_handling_allowed):
   for f in filters:
@@ -98,6 +141,7 @@ def main(parser):
   parser.add_option('-i', '--incremental', dest='incremental', action='store_true', default=False, help='Run tests one at a time.')
   parser.add_option('-s', '--stop', dest='stop_on_error', action='store_true', default=False, help='Stop running tests on error.')
   parser.add_option('-m', '--manually-handled-tests', dest='manual_handling_allowed', action='store_true', default=False, help='Only run tests flagged with a \'requires_manual_handling\' attribute.')
+  parser.add_option('--check-for-fd-leaks', dest='check_for_fd_leaks', action='store_true', default=False, help='Checks for fd leaks after each test run.')
   (options, args) = parser.parse_args()
 
   # install hook on set_trace if --debug
@@ -126,6 +170,10 @@ def main(parser):
     except:
       pass
 
+  if options.check_for_fd_leaks and not options.incremental:
+    print "--check-for-fd-leaks forces --incremental."
+    options.incremental = True
+
   # make sure cwd is the base directory!
   os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
@@ -134,8 +182,8 @@ def main(parser):
   else:
     suites = discover(['.*'], options.manual_handling_allowed)
 
-  r = unittest.TextTestRunner()
   if not options.incremental:
+    r = unittest.TextTestRunner()
     message_loop.set_unittests_running(True)
     res = r.run(suites)
     message_loop.set_unittests_running(False)
@@ -143,6 +191,7 @@ def main(parser):
       return 0
     return 255
   else:
+    r = IncrementalTestRunner(options)
     message_loop.set_unittests_running(True)
     ok = True
     for s in suites:
@@ -151,6 +200,7 @@ def main(parser):
           print '----------------------------------------------------------------------'
           print 'Running %s' % str(t)
           res = r.run(t)
+
           if not res.wasSuccessful():
             ok = False
             if options.stop_on_error:

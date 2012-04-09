@@ -36,6 +36,12 @@ class DBTest(DBTestBase, unittest.TestCase):
     db2 = db.DB(settings2)
     self.assertEquals([d1], map(lambda d: d.path, db2.dirs))
 
+  def test_search_unsync(self):
+    self.db.add_dir(self.test_data_dir)
+    self.assertFalse(self.db.is_up_to_date)
+    self.assertFalse(self.db.has_index)
+    self.assertEquals([], self.db.search("foo").filenames)
+
   def test_change_while_syncing(self):
     d1 = os.path.join(self.test_data_dir, 'project1')
     d2 = os.path.join(self.test_data_dir, 'something')

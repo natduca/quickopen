@@ -221,12 +221,6 @@ class DBTestBase(object):
     self.assertTrue(self.db.has_index)
     self.assertTrue(self.db.is_up_to_date)
 
-  def test_search_unsync(self):
-    self.db.add_dir(self.test_data_dir)
-    self.assertFalse(self.db.is_up_to_date)
-    self.assertFalse(self.db.has_index)
-    self.assertEquals([], self.db.search("foo").filenames)
-
   def test_dup_ignore_ctl(self):
     self.db.add_dir(self.test_data_dir)
     seq = set(self.db.ignores)

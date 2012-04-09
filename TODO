@@ -1,6 +1,9 @@
 Bugs
 ---------------------------------------------------------------------------
 
+Rewrite to use multiprocessing.Proces instead of Pool to reduce
+fd-leak-until-GC during tests
+
 Emacs ff-find-*-file mode doesnt work in non-GUI environment
 [curses UI being async is the core issue]
 

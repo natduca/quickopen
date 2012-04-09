@@ -53,10 +53,10 @@ class IncrementalTestRunner(unittest.TextTestRunner):
       _before = _get_open_fds()
 
   def _post_run_hook(self, result, test):
-    if self.options.check_for_fd_leaks:
-      import gc
-      gc.collect()
+    import gc
+    gc.collect()
 
+    if self.options.check_for_fd_leaks:
       global _before
       after = _get_open_fds()
       dif = after.difference(_before)

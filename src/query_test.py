@@ -146,11 +146,50 @@ class QueryTest(unittest.TestCase):
     in_res = QueryResult(hits=[("/b/render_widget.cpp", 10),
                                ("/a/render_widget.cpp", 10)])
     res = query._apply_global_rank_adjustment(in_res,
-                                       ["/a/", "/b/"],
-                                       Query("rw", current_filename="/b/k/foobar.cpp"))
+                                              ["/a/", "/b/"],
+                                              Query("rw", current_filename="/b/k/foobar.cpp"))
     rA = res.rank_of("/a/render_widget.cpp")
     rB = res.rank_of("/b/render_widget.cpp")
     self.assertTrue(rB > rA, "Expected %s > %s" % (rB, rA))
+
+  def test_adjustment_puts_current_project_then_inactives_in_alphabetical(self):
+    in_res = QueryResult(hits=[("/c/render_widget.cpp", 10),
+                               ("/b/render_widget.cpp", 10),
+                               ("/a/render_widget.cpp", 10)])
+    # A is current, so it should go top, then b c
+    res = query._apply_global_rank_adjustment(in_res,
+                                              ["/a/", "/b/", "/c/"],
+                                              Query("rw", current_filename="/a/foobar.cpp"))
+    rA = res.rank_of("/a/render_widget.cpp")
+    rB = res.rank_of("/b/render_widget.cpp")
+    rC = res.rank_of("/c/render_widget.cpp")
+    self.assertTrue(rA > rB, "Expected %s > %s" % (rA, rB))
+    self.assertTrue(rB > rC, "Expected %s > %s" % (rB, rC))
+    self.assertTrue(rA > rC, "Expected %s > %s" % (rA, rC))
+
+  def test_adjustment_puts_different_files_in_different_base_directories_together(self):
+    in_res = QueryResult(hits=[("/a/render_widget.cpp", 10),
+                               ("/b/render_widget.cpp", 10),
+                               ("/a/render_view.cpp", 9),
+                               ("/b/render_view.cpp", 9)])
+    # Cwd is not an active dir.
+    res = query._apply_global_rank_adjustment(in_res,
+                                              ["/a", "/b"],
+                                              Query("render", current_filename="/x"))
+    self.assertEquals(["/a/render_widget.cpp",
+                       "/a/render_view.cpp",
+                       "/b/render_widget.cpp",
+                       "/b/render_view.cpp"], res.filenames)
+
+
+    # b is cwd.
+    res = query._apply_global_rank_adjustment(in_res,
+                                              ["/a", "/b"],
+                                              Query("render", current_filename="/b"))
+    self.assertEquals(["/b/render_widget.cpp",
+                       "/b/render_view.cpp",
+                       "/a/render_widget.cpp",
+                       "/a/render_view.cpp"], res.filenames)
 
   def test_rerank(self):
     self.assertEquals([],

@@ -55,12 +55,18 @@ def _apply_global_rank_adjustment(base_result, indexed_dirs, query):
   #
   # This is built as a dict, but then converted to a flat list because we iterate it
   # during execution.
+  inactive_dirs = set(indexed_dirs)
   active_dir_orders = {}
   for open_filename in all_open_filenames:
     for d in indexed_dirs:
       if open_filename.startswith(d):
         if d not in active_dir_orders:
           active_dir_orders[d] = len(active_dir_orders)
+          inactive_dirs.remove(d)
+  inactive_dirs = list(inactive_dirs)
+  inactive_dirs.sort()
+  for i in inactive_dirs:
+    active_dir_orders[i] = len(active_dir_orders)
   active_dir_orders = [(x,y) for x,y in active_dir_orders.items()]
 
   def get_order(f):

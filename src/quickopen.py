@@ -23,6 +23,7 @@ import sys
 
 from db_exception import DBException
 from db_status import DBStatus
+from query import Query
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../third_party/py_trace_event/"))
 try:
@@ -214,6 +215,7 @@ def CMDrawsearch(parser):
   parser.add_option('--show-rank', '-r', dest='show_rank', action='store_true', help='Show the ranking of results')
   parser.add_option('--current-filename', dest='current_filename', action='store', default=None, help="Hints quickopen about the current buffer to improve search relevance.")
   parser.add_option('--open-filenames', dest='open_filenames', action='store', default=[], help="Hints quickopen about the filenames currently open to improve search relevance.")
+  parser.add_option('--debug', dest='debug', action='store_true', default=False, help='Debug the query instead of executing it')
   (options, args) = parser.parse_args()
 
   db = open_db(options)
@@ -229,8 +231,13 @@ def CMDrawsearch(parser):
   if options.open_filenames:
     search_args["open_filenames"] = split_open_filenames(options.open_filenames)
 
-  res = db.search(args[0],**search_args)
-  if options.show_rank:
+  q = Query(args[0],**search_args)
+  if options.debug:
+    q.debug = True
+  res = db.search(q)
+  if options.debug:
+    print repr(res.as_dict())
+  elif options.show_rank:
     combined = res.hits()
     print "\n".join(["%i,%s" % (c[1],c[0]) for c in combined])
   else:

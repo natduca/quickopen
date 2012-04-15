@@ -157,6 +157,7 @@ class Query(object):
     self.current_filename = current_filename
     self.open_filenames = open_filenames
     self._dir_search_timeout = 0.2
+    self.debug = False
 
   @staticmethod
   def from_kargs(args = [], kwargs = {}):
@@ -171,11 +172,13 @@ class Query(object):
 
   @staticmethod
   def from_dict(d):
-    return Query(d["text"],
-                 d["max_hits"],
-                 d["exact_match"],
-                 d["current_filename"],
-                 d["open_filenames"])
+    q = Query(d["text"],
+              d["max_hits"],
+              d["exact_match"],
+              d["current_filename"],
+              d["open_filenames"])
+    q.debug = d["debug"]
+    return q
 
   def as_dict(self):
     return {
@@ -183,8 +186,8 @@ class Query(object):
       "max_hits": self.max_hits,
       "exact_match": self.exact_match,
       "current_filename": self.current_filename,
-      "open_filenames": self.open_filenames
-      }
+      "open_filenames": self.open_filenames,
+      "debug": self.debug}
 
 
   @tracedmethod

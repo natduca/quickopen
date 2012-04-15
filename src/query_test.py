@@ -67,9 +67,11 @@ class QueryTest(unittest.TestCase):
     Query("a", 10, True)
     Query("a", 10, True, "blahblah")
     Query("a", 10, True, "blahblah", ["bar"])
+    Query("a", 10, True, "blahblah", ["bar"])
 
   def test_to_and_from_dict(self):
     x = Query("a", 10, True, "blahblah", ["bar"])
+    x.debug = True
     y = x.as_dict()
     z = Query.from_dict(y)
 
@@ -78,6 +80,7 @@ class QueryTest(unittest.TestCase):
     self.assertEquals(x.exact_match, z.exact_match)
     self.assertEquals(x.current_filename, z.current_filename)
     self.assertEquals(x.open_filenames, z.open_filenames)
+    self.assertEquals(x.debug, z.debug)
 
   def test_is_exact_match_1(self):
     self.assertTrue(query._is_exact_match("a.txt", "a.txt"))

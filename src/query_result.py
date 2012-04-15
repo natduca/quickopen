@@ -54,10 +54,6 @@ class QueryResult(object):
     for i in range(len(self.filenames)):
       yield (self.filenames[i], self.ranks[i])
 
-  def set_hits(self, hits):
-    self.filenames = [x[0] for x in hits]
-    self.ranks = [x[1] for x in hits]
-
   def get_copy_with_max_hits(self, max_hits):
     return QueryResult(hits=list(self.hits)[:max_hits], truncated=self.truncated)
 

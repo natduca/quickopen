@@ -25,16 +25,15 @@ class QueryResult(object):
     self.debug_info = []
 
   def as_dict(self):
-    return {"filenames": self.filenames,
-            "ranks": self.ranks,
+    return {"hits": list(self.hits),
             "truncated": self.truncated,
             "debug_info": self.debug_info}
 
   @staticmethod
   def from_dict(d):
     r = QueryResult()
-    r._filenames = d["filenames"]
-    r._ranks = d["ranks"]
+    r._filenames = [x[0] for x in d["hits"]]
+    r._ranks = [x[1] for x in d["hits"]]
     r.truncated = d["truncated"]
     r.debug_info = d["debug_info"]
     return r

@@ -22,11 +22,13 @@ class QueryResult(object):
       self.filenames = []
       self.ranks = []
     self.truncated = truncated
+    self.debug_info = []
 
   def as_dict(self):
     return {"filenames": self.filenames,
             "ranks": self.ranks,
-            "truncated": self.truncated}
+            "truncated": self.truncated,
+            "debug_info": self.debug_info}
 
   @staticmethod
   def from_dict(d):
@@ -34,6 +36,7 @@ class QueryResult(object):
     r.filenames = d["filenames"]
     r.ranks = d["ranks"]
     r.truncated = d["truncated"]
+    r.debug_info = d["debug_info"]
     return r
 
   def is_empty(self):

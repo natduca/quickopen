@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import copy
 import fixed_size_dict
 import os
 import sys
@@ -100,7 +101,9 @@ def _apply_global_rank_adjustment(base_result, indexed_dirs, query):
   hits = list(base_result.hits())
   hits.sort(hit_cmp)
   new_hits = _rerank(hits)
-  return QueryResult(new_hits, base_result.truncated)
+  res = QueryResult(new_hits, base_result.truncated)
+  res.debug_info = copy.deepcopy(base_result.debug_info)
+  return res
 
 def _rerank(hits):
   """
@@ -129,6 +132,7 @@ def _filter_result_for_exact_matches(query_text, base_result):
   match the provided query.
   """
   res = QueryResult()
+  res.debug_info = copy.deepcopy(base_result.debug_info)
   res.truncated = base_result.truncated
 
   for hit,rank in base_result.hits():
@@ -204,16 +208,25 @@ class Query(object):
 
     res = query_cache.try_get(self)
     if not res:
+      res_was_cache_hit = False
       ranked_results = self.execute_nocache(shard_manager, query_cache)
       ranked_and_truncated_results = ranked_results.get_copy_with_max_hits(self.max_hits)
       res = ranked_and_truncated_results
       query_cache.put(self, res)
+    else:
+      res_was_cache_hit = True
 
     if self.exact_match:
-      return _filter_result_for_exact_matches(self.text, res)
+      final_res = _filter_result_for_exact_matches(self.text, res)
+    else:
+      final_res = _apply_global_rank_adjustment(res, shard_manager.dirs, self)
 
-    ranked_res = _apply_global_rank_adjustment(res, shard_manager.dirs, self)
-    return ranked_res
+    if self.debug:
+      final_res.debug_info.append({"res_was_cache_hit": res_was_cache_hit})
+      final_res.debug_info.append({"initial_res": res.as_dict(),
+                                    "dirs": shard_manager.dirs
+                                    })
+    return final_res
 
   def execute_nocache(self, shard_manager, query_cache):
     # What we'll actually return

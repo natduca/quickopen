@@ -236,7 +236,8 @@ def CMDrawsearch(parser):
     q.debug = True
   res = db.search(q)
   if options.debug:
-    print repr(res.as_dict())
+    import pprint
+    print pprint.pprint(res.as_dict())
   elif options.show_rank:
     combined = res.hits()
     print "\n".join(["%i,%s" % (c[1],c[0]) for c in combined])

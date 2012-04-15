@@ -98,7 +98,7 @@ def _apply_global_rank_adjustment(base_result, indexed_dirs, query):
     # last resort is to compare full names
     return cmp(x[0], y[0])
 
-  hits = list(base_result.hits())
+  hits = list(base_result.hits)
   hits.sort(hit_cmp)
   new_hits = _rerank(hits)
   res = QueryResult(new_hits, base_result.truncated)
@@ -135,7 +135,7 @@ def _filter_result_for_exact_matches(query_text, base_result):
   res.debug_info = copy.deepcopy(base_result.debug_info)
   res.truncated = base_result.truncated
 
-  for hit,rank in base_result.hits():
+  for hit,rank in base_result.hits:
     if _is_exact_match(query_text, hit):
       res.filenames.append(hit)
       res.ranks.append(rank)

@@ -16,11 +16,11 @@ import os
 class QueryResult(object):
   def __init__(self, hits=None, truncated=False):
     if hits:
-      self.filenames = [x[0] for x in hits]
-      self.ranks = [x[1] for x in hits]
+      self._filenames = [x[0] for x in hits]
+      self._ranks = [x[1] for x in hits]
     else:
-      self.filenames = []
-      self.ranks = []
+      self._filenames = []
+      self._ranks = []
     self.truncated = truncated
     self.debug_info = []
 
@@ -33,8 +33,8 @@ class QueryResult(object):
   @staticmethod
   def from_dict(d):
     r = QueryResult()
-    r.filenames = d["filenames"]
-    r.ranks = d["ranks"]
+    r._filenames = d["filenames"]
+    r._ranks = d["ranks"]
     r.truncated = d["truncated"]
     r.debug_info = d["debug_info"]
     return r
@@ -42,6 +42,15 @@ class QueryResult(object):
   def is_empty(self):
     return len(self.filenames) == 0
 
+  @property
+  def filenames(self):
+    return self._filenames
+
+  @property
+  def ranks(self):
+    return self._ranks
+
+  @property
   def hits(self):
     for i in range(len(self.filenames)):
       yield (self.filenames[i], self.ranks[i])
@@ -51,7 +60,7 @@ class QueryResult(object):
     self.ranks = [x[1] for x in hits]
 
   def get_copy_with_max_hits(self, max_hits):
-    return QueryResult(hits=list(self.hits())[:max_hits], truncated=self.truncated)
+    return QueryResult(hits=list(self.hits)[:max_hits], truncated=self.truncated)
 
   def rank_of(self, filename):
     for i in range(len(self.filenames)):

@@ -239,7 +239,7 @@ def CMDrawsearch(parser):
     import pprint
     print pprint.pprint(res.as_dict())
   elif options.show_rank:
-    combined = res.hits()
+    combined = res.hits
     print "\n".join(["%i,%s" % (c[1],c[0]) for c in combined])
   else:
     print "\n".join([x for x in res.filenames])

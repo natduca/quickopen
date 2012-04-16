@@ -1,9 +1,6 @@
 Bugs
 ---------------------------------------------------------------------------
 
-Figure out why basename_ranker_test's FAILS_test_separability and
-once fixed, allow Query.execute_nocache to reuse rankers across queries.
-
 Rewrite to use multiprocessing.Proces instead of Pool to reduce
 fd-leak-until-GC during tests
 

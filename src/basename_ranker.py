@@ -111,17 +111,24 @@ class BasenameRanker(object):
     if len(query) == 0:
       return (0, 0)
     subcandidate = candidate[candidate_index:]
+    if enclosing_run_length == 0:
+      erl_type = "a"
+    elif enclosing_run_length == 1:
+      erl_type = "b"
+    else:
+      erl_type = "c"
     if query in memoized_results:
       if subcandidate in memoized_results[query]:
-        if debug_data:
-          debug_data.append("")
-          debug_data[-1] = "_get_basic_rank_core(%s,%s) -> %3.1f via cache [%s][%s]" % (
-            query,
-            subcandidate,
-            memoized_results[query][subcandidate][0],
-            query, subcandidate
-            )
-        return memoized_results[query][subcandidate]
+        if erl_type in memoized_results[query][subcandidate]:
+          if debug_data:
+            debug_data.append("")
+            debug_data[-1] = "_get_basic_rank_core(%s,%s) -> %3.1f via cache [%s][%s]" % (
+              query,
+              subcandidate,
+              memoized_results[query][subcandidate][erl_type][0],
+              query, subcandidate
+              )
+          return memoized_results[query][subcandidate][erl_type]
 
     input_candidate_index = candidate_index
     if debug_data != None:
@@ -182,7 +189,9 @@ class BasenameRanker(object):
 
     if query not in memoized_results:
       memoized_results[query] = {}
-    memoized_results[query][subcandidate] = (best_rank, for_best_rank__num_word_hits)
+    if subcandidate not in memoized_results[query]:
+      memoized_results[query][subcandidate] = {}
+    memoized_results[query][subcandidate][erl_type] = (best_rank, for_best_rank__num_word_hits)
     if debug_data != None:
       if best_rank > 0:
         debug_data[debug_pos] = "_get_basic_rank_core(%s,%s) -> %3.1f via %s" % (

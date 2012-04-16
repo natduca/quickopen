@@ -266,9 +266,9 @@ class Query(object):
     # Rank the results
     trace_begin("rank_results")
     hits = []
-    basename_ranker = BasenameRanker()
     for f in files:
       basename = os.path.basename(f)
+      basename_ranker = BasenameRanker()
       rank = basename_ranker.rank_query(basename_query, basename)
       hits.append((f,rank))
     trace_end("rank_results")

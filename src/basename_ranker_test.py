@@ -223,3 +223,37 @@ class BasenameRankerTest(unittest.TestCase):
     a = self.ranker.rank_query('document.cpp', 'Document.cpp')
     b = self.ranker.rank_query('document.cpp', 'AccessibleDocument.cpp')
     self.assertTrue(a > b)
+
+  def FAILS_test_separability(self):
+    # This test content causes the memoizer to cache a particular a,b combination whose score
+    # in the cached context has a non-wordstart boost, but then in a subsequent query, asks for the 
+    # same value without the wordstart.
+    q = 'cclayertreehos.h'
+    items = ['CCLayerTreeHostImpl.h',
+             'CCLayerTreeHostCommon.h',
+             'AbstractCACFLayerTreeHost.h',
+             'CCLayerTreeHost.h',
+             'LegacyCACFLayerTreeHost.h',
+             'CACFLayerTreeHostClient.h',
+             'WKCACFViewLayerTreeHost.h',
+             'FakeCCLayerTreeHostClient.h',
+             'CACFLayerTreeHost.h']
+    for x in items:
+      stateless_ranker = BasenameRanker()
+      #print x
+      rStateless = stateless_ranker.rank_query(q, x, debug=True)
+      #print "stateful", x
+      rStateful = self.ranker.rank_query(q, x, debug=True)
+      self.assertEquals(rStateless, rStateful,"For %s, expected %f=%f" % (x, rStateless, rStateful))
+
+  def FAILS_test_persistence(self):
+    q1 = BasenameRanker().rank_query("bar", "bar.txt")
+    q2 = BasenameRanker().rank_query("bar", "rebar.txt")
+
+    r = BasenameRanker()
+    r1 = r.rank_query("bar", "bar.txt")
+    r2 = r.rank_query("bar", "rebar.txt")
+
+    self.assertEquals(q1, r1)
+    self.assertEquals(q2, r2)
+

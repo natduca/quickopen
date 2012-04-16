@@ -88,11 +88,17 @@ class BasenameRanker(object):
     return math.floor(rank*10) / 10;
 
   def _get_basic_rank(self, query, candidate, debug = False):
-#    print ""
-#    print "[%s] %30s BEGIN" % ("%20s" % query, candidate)
-    return self._get_basic_rank_core(debug, self._memoized_basic_ranks, 0, query.lower(), 0, candidate, candidate.lower())
+    if debug:
+      debug_data = []
+      ret = self._get_basic_rank_core(debug_data, self._memoized_basic_ranks, 0, query.lower(), 0, candidate, candidate.lower())
+      print "_get_basic_rank(%s, %s) -> (%s)" % (query, candidate, ret)
+      print "\n".join(debug_data)
+      return ret
+    else:
+      return self._get_basic_rank_core(None, self._memoized_basic_ranks, 0, query.lower(), 0, candidate, candidate.lower())
 
-  def _get_basic_rank_core(self, debug, memoized_results, enclosing_run_length, query, candidate_index, candidate, lower_candidate):
+
+  def _get_basic_rank_core(self, debug_data, memoized_results, enclosing_run_length, query, candidate_index, candidate, lower_candidate):
     """
     This function tries to find the best match of the given query to the candidate. For
     a given query xyz, it considers all possible order-preserving assignments of the leters .*x.*y.*z.* into candidate.
@@ -107,11 +113,21 @@ class BasenameRanker(object):
     subcandidate = candidate[candidate_index:]
     if query in memoized_results:
       if subcandidate in memoized_results[query]:
+        if debug_data:
+          debug_data.append("")
+          debug_data[-1] = "_get_basic_rank_core(%s,%s) -> %3.1f via cache [%s][%s]" % (
+            query,
+            subcandidate,
+            memoized_results[query][subcandidate][0],
+            query, subcandidate
+            )
         return memoized_results[query][subcandidate]
 
     input_candidate_index = candidate_index
-    if debug:
-      print "[%s] %30s" % ("%20s" % query, candidate[input_candidate_index:])
+    if debug_data != None:
+      debug_data.append("")
+      debug_pos = len(debug_data) - 1
+      #print "[%s] %30s" % ("%20s" % query, candidate[input_candidate_index:])
 
     # Find the best possible rank for this, memoizing results to keep
     # this from running forever.
@@ -149,16 +165,16 @@ class BasenameRanker(object):
         cur_num_word_hits = 0
 
       # consider all sub-interpretations...
-      best_remainder_rank, remainder_num_word_hits = self._get_basic_rank_core(debug, memoized_results, enclosing_run_length + cur_run_addition, query[1:], i + 1, candidate, lower_candidate)
+      best_remainder_rank, remainder_num_word_hits = self._get_basic_rank_core(debug_data, memoized_results, enclosing_run_length + cur_run_addition, query[1:], i + 1, candidate, lower_candidate)
 
       # Update best_rank. Use word hit count to break tie so 'wvi' prefers
       # (W)eb(V)iew(I)mpl instead of (W)eb(Vi)ewImpl
       rank = letter_rank + best_remainder_rank
       num_word_hits = remainder_num_word_hits + cur_num_word_hits
       if rank > best_rank or rank == best_rank and num_word_hits > for_best_rank__num_word_hits:
-        if debug:
+        if debug_data != None:
           xxx = candidate[:i] + '*' + candidate[i+1:]
-          best_debugstr = "%2i %s" % (best_remainder_rank, xxx)
+          best_debugstr = "%3.1f %s" % (best_remainder_rank, xxx)
         best_rank = rank
         for_best_rank__num_word_hits = num_word_hits
       # advance to next candidate
@@ -167,6 +183,12 @@ class BasenameRanker(object):
     if query not in memoized_results:
       memoized_results[query] = {}
     memoized_results[query][subcandidate] = (best_rank, for_best_rank__num_word_hits)
-    if debug and best_rank > 0:
-      print "[%s] %30s -> %2i via %s" % ("%20s" % query, candidate[input_candidate_index:], best_rank, best_debugstr)
+    if debug_data != None:
+      if best_rank > 0:
+        debug_data[debug_pos] = "_get_basic_rank_core(%s,%s) -> %3.1f via %s" % (
+          query, subcandidate, best_rank, best_debugstr)
+      else:
+        debug_data[debug_pos] = "_get_basic_rank_core(%s,%s) -> 0" % (
+          query,
+          subcandidate)
     return best_rank, for_best_rank__num_word_hits

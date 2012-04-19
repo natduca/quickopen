@@ -16,7 +16,23 @@ curses UI doesn't know when the terminal resized.
 Features
 ---------------------------------------------------------------------------
 
-- Dont use extensions in raw index; fix those up afterward.
+- Rank files "nearer" to the current file when there are multiple equivalent matches
+   e.g.
+      foo/tracing/overlay.js
+      foo/shared/cr/js/overlay.js
+   with cwd=foo/xxx.js
+      no boost
+
+   with cwd=foo/tracing/xxx.js
+      boost foo/tracing/overlay.js
+
+   with cwd=foo/shared/cr/xxx.js
+      boost foo/shared/cr/overlay.js
+
+  Possibly, ignore extension during this resolution step. E.g.
+      test_utils.js  from shared/tracing
+      typically hits ../../../...../test_utils.cc but
+      also there is a test_utils.js in the same folder.
 
 - Use current-buffer and active-buffer list in ranking
 
@@ -37,3 +53,6 @@ Features
 - emacs ffap-alist support
 
 - qo-modded ff-find-*-file should catch things like foo.cc -> foo_unittest.cc or foo_test.py
+
+- Dont use extensions in raw index; fix those up afterward.
+

@@ -139,7 +139,7 @@ class _Timeout(object):
   def __cmp__(self, that):
     return cmp(self.deadline, that.deadline)
 
-class DaemonService(BaseHTTPServer.HTTPServer):
+class Daemon(BaseHTTPServer.HTTPServer):
   def __init__(self, test_mode, *args):
     BaseHTTPServer.HTTPServer.__init__(self, *args)
     self.port_ = args[0][1]
@@ -151,8 +151,8 @@ class DaemonService(BaseHTTPServer.HTTPServer):
     self.add_json_route('/exit', self.on_exit, ['POST', 'GET'])
 
     if test_mode:
-      import daemon_service_test
-      daemon_service_test.add_test_handlers_to_daemon(self)
+      import daemon_test
+      daemon_test.add_test_handlers_to_daemon(self)
 
   def on_exit(self, m, verb, data):
     logging.info("Exiting upon request.")
@@ -211,7 +211,12 @@ class DaemonService(BaseHTTPServer.HTTPServer):
     return 1
 
   def run(self):
+    if self.test_mode:
+      logging.info('Starting quickopen daemon on port %d', self.port_)
+    else:
+      sys.stderr.write('Starting quickopen daemon on port %d\n' % self.port_)
     self.serve_forever()
+    logging.info('Shutting down quickopen daemon on port %d', self.port_)
 
 def create(host, port, test_mode):
-  return DaemonService(test_mode, (host,port), _RequestHandler)
+  return Daemon(test_mode, (host,port), _RequestHandler)

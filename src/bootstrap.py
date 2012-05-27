@@ -22,7 +22,8 @@ def run(prelaunch=False):
   main_name = sys.argv[2]
   del sys.argv[1:3] # remove the --main-name argument
 
-  tracedir = os.path.join(os.path.dirname(__file__), "../third_party/py_trace_event/")
+  thirdpartydir = os.path.join(os.path.dirname(__file__), "../third_party")
+  tracedir = os.path.join(thirdpartydir, "py_trace_event")
 
   # A recent change to py_trace_event leaves an old trace_event dir with .pyc files
   # hanging around. This prevents importing the new trace_event. Clobber it if it is found.
@@ -42,6 +43,9 @@ def run(prelaunch=False):
   except:
     print "Could not find py_trace_event. Did you forget 'git submodule update --init'"
     sys.exit(255)
+
+  # Add paths for other third party modules
+  sys.path.append(os.path.join(thirdpartydir, "python-daemon/daemon"))
 
   mod = __import__(main_name, {}, {}, True)
   import optparse

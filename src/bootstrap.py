@@ -36,14 +36,6 @@ def run(prelaunch=False):
         os.rmdir(os.path.join(root, d))
     os.rmdir(tracedir_old_style_traceevent)
 
-  # Remove .pyc that conflicts with python-daemon/daemon module
-  f = os.path.join(os.path.dirname(__file__), "daemon.pyc")
-  if (os.path.exists(f)):
-    try:
-      os.unlink(f)
-    except OSError:
-      pass
-
   # Import trace event as usual.
   sys.path.append(tracedir)
   try:

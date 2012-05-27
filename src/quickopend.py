@@ -20,7 +20,7 @@ import optparse
 import os
 import re
 import time
-import src.daemon
+import src.daemon_service
 import src.db_stub
 import src.settings
 import src.prelaunchd

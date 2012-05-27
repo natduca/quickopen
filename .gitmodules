@@ -1,3 +1,6 @@
 [submodule "third_party/py_trace_event"]
 	path = third_party/py_trace_event
 	url = https://github.com/natduca/py_trace_event.git
+[submodule "third_party/python-daemon"]
+	path = third_party/python-daemon
+	url = git@github.com:quisquous/python-daemon.git

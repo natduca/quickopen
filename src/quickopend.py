@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import daemon
 import default_port
 import httplib
 import json
@@ -26,6 +27,12 @@ import src.settings
 import src.prelaunchd
 
 from trace_event import *
+
+class ForegroundDaemonContext:
+  def __enter__(self):
+    pass
+  def __exit__(self, exec_type, exec_value, traceback):
+    pass
 
 def is_port_listening(host, port):
   import socket
@@ -48,17 +55,33 @@ def CMDrun(parser):
     print "%s:%s in use. Try 'quickopend stop' first?" % (options.host, options.port)
     return 255
   prelaunchdaemon = None
-  try:
-    daemon = src.daemon.create(options.host, options.port, options.test)
-    if trace_is_enabled():
-      daemon.add_delayed_task(flush_trace_event, 5, daemon)
-    db_stub = src.db_stub.DBStub(options.settings, daemon)
-    prelaunchd = src.prelaunchd.PrelaunchDaemon(daemon)
 
-    daemon.run()
+  if options.test:
+    logging.info('Starting quickopen daemon on port %d', options.port)
+  else:
+    print 'Starting quickopen daemon on port %d' % options.port
+
+  try:
+    # Tests assume that quickopend created in the foreground
+    if options.test or options.foreground:
+      context = ForegroundDaemonContext()
+    else:
+      context = daemon.DaemonContext()
+
+    with context:
+      service = src.daemon_service.create(options.host, options.port, options.test)
+      if trace_is_enabled():
+        service.add_delayed_task(flush_trace_event, 5, service)
+      db_stub = src.db_stub.DBStub(options.settings, service)
+      prelaunchd = src.prelaunchd.PrelaunchDaemon(service)
+
+      service.run()
   finally:
     if prelaunchdaemon:
       prelaunchdaemon.stop()
+
+  logging.info('Shutting down quickopen daemon on port %d', options.port)
+
   return 0
 
 
@@ -125,10 +148,7 @@ def CMDrestart(parser):
   if tries == 10:
     print "Previous quickopend did not stop."
     return 255
-  pid = os.fork()
-  if pid == 0:
-    CMDrun(parser)
-    return 0
+  CMDrun(parser)
   return 0
 
 # Subcommand addins to optparse, taken from git-cl.py,

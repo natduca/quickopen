@@ -11,8 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import daemon
-import default_port
+from __future__ import absolute_import
+
+import daemon as python_daemon
 import httplib
 import json
 import logging
@@ -22,6 +23,7 @@ import os
 import re
 import time
 import src.daemon
+import src.default_port
 import src.db_stub
 import src.settings
 import src.prelaunchd
@@ -66,10 +68,10 @@ def CMDrun(parser):
     if options.test or options.foreground:
       context = ForegroundDaemonContext()
     else:
-      context = daemon.DaemonContext()
+      context = python_daemon.DaemonContext()
 
     with context:
-      service = src.daemon_service.create(options.host, options.port, options.test)
+      service = src.daemon.create(options.host, options.port, options.test)
       if trace_is_enabled():
         service.add_delayed_task(flush_trace_event, 5, service)
       db_stub = src.db_stub.DBStub(options.settings, service)
@@ -209,7 +211,7 @@ def main(parser):
     settings_file = os.path.expanduser(options.settings)
     settings = src.settings.Settings(settings_file)
     settings.register('host', str, 'localhost')
-    settings.register('port', int, default_port.get())
+    settings.register('port', int, src.default_port.get())
     options.settings = settings
 
     if not options.port:

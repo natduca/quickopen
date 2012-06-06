@@ -36,16 +36,21 @@ def run(prelaunch=False):
         os.rmdir(os.path.join(root, d))
     os.rmdir(tracedir_old_style_traceevent)
 
-  # Import trace event as usual.
+  # Import trace event.
   sys.path.append(tracedir)
   try:
     __import__("trace_event")
   except:
-    print "Could not find py_trace_event. Did you forget 'git submodule update --init'"
+    print "Could not find py_trace_event. Did you forget 'git submodule update --init'?"
     sys.exit(255)
 
-  # Add paths for other third party modules
+  # Import python-daemon.
   sys.path.append(os.path.join(thirdpartydir, "python-daemon/daemon"))
+  try:
+    __import__("daemon")
+  except:
+    print "Could not find python-daemon. Did you forget 'git submodule update --init'?"
+    sys.exit(255)
 
   mod = __import__(main_name, {}, {}, True)
   import optparse

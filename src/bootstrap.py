@@ -106,7 +106,7 @@ def main(main_name):
     try:
       import wx
     except ImportError:
-      if str(sys.exc_value).find("no appropriate 64-bit"):
+      if str(sys.exc_value).find("no appropriate 64-bit") != -1:
         wx_found_but_failed = True
 
     if wx_found_but_failed:

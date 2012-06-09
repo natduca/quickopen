@@ -110,16 +110,27 @@ def main(main_name):
         wx_found_but_failed = True
 
     if wx_found_but_failed:
+      # Switch the executable to /usr/bin/python2.6 if we are implicitly running
+      # 2.6 via /usr/bin/python. For some reason, neither the arch trick nor the
+      # env trick work if you use /usr/bin/python
+      if sys.version.startswith("2.6") and sys.executable == '/usr/bin/python':
+        if os.path.exists('/usr/bin/python2.6'):
+          executable = '/usr/bin/python2.6'
+        else:
+          executable = sys.executable
+      else:
+        executable = sys.executable
+
       # try using the versioner trick
       if '--triedenv' not in sys.argv:
         os.putenv('VERSIONER_PYTHON_PREFER_32_BIT', 'yes')
-        args = [sys.executable, sys.argv[0], '--triedenv']
+        args = [executable, sys.argv[0], '--triedenv']
         args.extend(sys.argv[1:])
         os.execve(args[0], args, os.environ)
 
       # last chance...
       if '--triedarch' not in sys.argv:
-        args = ["/usr/bin/arch", "-i386", sys.executable, sys.argv[0], '--triedarch']
+        args = ["/usr/bin/arch", "-i386", executable, sys.argv[0], '--triedarch']
         args.extend(sys.argv[1:])
         os.execv(args[0], args)
 

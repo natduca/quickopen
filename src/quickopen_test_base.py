@@ -93,7 +93,8 @@ class QuickopenTestBase(object):
 
   def test_status(self):
     s = self.qo("status")
-    self.assertTrue(s.startswith("up-to-date: "))
+    self.assertTrue(s.startswith("up-to-date: ") or
+                    s.startswith("first-time sync:"))
 
   def test_status_nodaemon(self):
     self.turn_off_daemon()

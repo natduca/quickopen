@@ -31,7 +31,7 @@ def is_prelaunch_client(args):
       return True
   return False
 
-def run_command_in_existing(daemon_host, daemon_port, args):
+def run_command_in_existing(daemon_host, daemon_port, args, auto_start=True):
   # Prelaunched processes are DISPLAY-specific
   if sys.platform == 'darwin':
     if os.getenv('DISPLAY'):
@@ -57,6 +57,10 @@ def run_command_in_existing(daemon_host, daemon_port, args):
   try:
     port = existing_quickopen_port()
   except socket.error:
+    if not auto_start:
+      from db_status import DBStatus
+      return "%s.\n" % DBStatus.not_running_string()
+
     # quickopend not started; attempt once to start it automatically
     import StringIO
     try:

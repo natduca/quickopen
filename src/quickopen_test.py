@@ -30,7 +30,8 @@ class QuickopenTest(unittest.TestCase, QuickopenTestBase):
     full_args = [quickopen_script,
                  cmd,
                  "--host", self.daemon.host,
-                 "--port", str(self.daemon.port)]
+                 "--port", str(self.daemon.port),
+                 "--no_auto_start"]
     full_args.extend(args)
     proc = subprocess.Popen(full_args,
                             stdout=subprocess.PIPE,

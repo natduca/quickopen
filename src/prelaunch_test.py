@@ -26,7 +26,7 @@ class PrelaunchTest(unittest.TestCase, QuickopenTestBase):
   def qo(self, cmd, *args):
     full_args = [cmd]
     full_args.extend(args)
-    return prelaunch_client.run_command_in_existing(self.daemon.host, self.daemon.port, full_args)
+    return prelaunch_client.run_command_in_existing(self.daemon.host, self.daemon.port, full_args, auto_start=False)
 
   def turn_off_daemon(self):
     self.daemon.close()

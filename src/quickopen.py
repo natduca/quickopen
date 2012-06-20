@@ -263,7 +263,7 @@ def CMDprelaunch(parser):
 
 @traced
 def open_db(options):
-  return src.db_proxy.DBProxy(options.host, options.port, start_if_needed=True, port_for_autostart=options.port)
+  return src.db_proxy.DBProxy(options.host, options.port, start_if_needed=options.auto_start, port_for_autostart=options.port)
 
 # Subcommand addins to optparse, taken from git-cl.py, 
 # http://src.chromium.org/svn/trunk/tools/depot_tools/git_cl.py
@@ -311,6 +311,7 @@ def main(parser):
   parser.add_option('--host', dest='host', action='store', help='Hostname of quickopend server. Default is %i' % default_port.get())
   parser.add_option('--port', dest='port', action='store', help='Port for quickopend')
   parser.add_option('--trace', dest='trace', action='store_true', default=False, help='Records performance tracing information to quickopen.trace')
+  parser.add_option('--no_auto_start', dest='auto_start', action='store_false', default=True, help='Prevents quickopend from auto-launching if not started')
   old_parser_args = parser.parse_args
   def parse():
     options, args = old_parser_args()

@@ -44,18 +44,40 @@ def run_command_in_existing(daemon_host, daemon_port, args):
     else:
       display = 'terminal';
 
+  def existing_quickopen_port():
+      conn = httplib.HTTPConnection(daemon_host, daemon_port, True)
+      conn.request('GET', '/existing_quickopen/%s' % display)
+      res = conn.getresponse()
+      assert res.status == 200
+      port = int(res.read())
+      return port
+
   # Get the pid of an existing quickopen process via
   # quickopend. This routes through prelaunchd.py
-  conn = httplib.HTTPConnection(daemon_host, daemon_port, True)
   try:
-    conn.request('GET', '/existing_quickopen/%s' % display)
+    port = existing_quickopen_port()
   except socket.error:
-    from db_status import DBStatus
-    return "%s.\n" % DBStatus.not_running_string()
+    # quickopend not started; attempt once to start it automatically
+    import StringIO
+    try:
+      # Squelch any output from starting the db
+      orig_stdout = sys.stdout
+      orig_stderr = sys.stderr
+      sys.stdout = StringIO.StringIO()
+      sys.stderr = sys.stdout
 
-  res = conn.getresponse()
-  assert res.status == 200
-  port = int(res.read())
+      sys.path.append(os.path.join(os.path.dirname(__file__), "../third_party/py_trace_event/"))
+      import db_proxy
+      db = db_proxy.DBProxy(daemon_host, daemon_port, start_if_needed=True, port_for_autostart=daemon_port)
+      db.try_to_start_quickopend()
+      try:
+        port = existing_quickopen_port()
+      except socket.error:
+        from db_status import DBStatus
+        return "%s.\n" % DBStatus.not_running_string()
+    finally:
+      sys.stdout = orig_stdout
+      sys.stderr = orig_stderr
 
   # Get a connection to the prelaunched process.
   # We may have to try a few times --- it may be coming up still.

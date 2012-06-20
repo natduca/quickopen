@@ -32,16 +32,12 @@ OSX:
 
 Setting up the quickopen daemon
 ================================================================================
- 0. Start quickopend
-      nduca: ~/quickopen $ ./quickopend&
-      Starting quickopen daemon on port 10248
-
- 1. Tell quickopen to index some directories...
+ 0. Tell quickopen to index some directories...
       nduca: ~/quickopen $ ./quickopen add ~/chromium
       nduca: ~/quickopen $ ./quickopen add ~/quickopen
       nduca: ~/quickopen $ ./quickopen ignore \*LayoutTests\*
 
- 2. Check quickopen's status:
+ 1. Check quickopen's status:
       nduca: ~/quickopen $ ./quickopen rawsearch foo
       Database is not fully indexed. Wait a bit or try quickopen status
 
@@ -95,7 +91,7 @@ Usage
 
   1. VIM:     C-O                   (ctrl-shift-o)  to open
               gf   c-w                              to goto file
-              
+
      Emacs:   M-S-o                 (meta-shift-o)  to open
               C-Q                                   to open
 

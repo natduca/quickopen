@@ -85,15 +85,43 @@ results:
                                 (ff-find-other-file t)
                                 ))
 
+Visual SlickEdit Setup
+================================================================================
+
+ 1. Edit slickedit/QuickOpen.e
+   You will need to provide the path to the quickopen directory.
+
+ 2. Exid slickedit/start_quickopen.sh
+   This script is run when Visual SlickEdit is launched, you can add lines to
+   this file to get quickopen to index or ignore particular directories. See
+   the 'Setting up the quickopen daemon' section above for tips.
+
+ 2. Load the quickopen macro module by doing the following
+    Macro > Load Module...
+
+ 3. Now set up a key binding for quick open.
+    a) Click, Tools > Options...
+    b) Expand 'Keyboard and Mouse'
+    c) Select 'Key Bindings'
+    d) Type QuickOpen in the 'Search by command:' text box. If all geos well,
+       this command will exist and be found.
+    e) Then click the 'Add..' button and bind to whichever keys you please,
+       but I strongly recommend ctrl+shift+o for consistency with vi.
+
+Once you've followed these steps, you should find that the quickopen daemon
+starts when Visual SlickEdit launches and is ready when you use the key binding
+you've set earlier.
 
 Usage
 ================================================================================
 
-  1. VIM:     C-O                   (ctrl-shift-o)  to open
-              gf   c-w                              to goto file
+  1. VIM:              C-O                   (ctrl-shift-o)  to open
+                       gf   c-w                              to goto file
 
-     Emacs:   M-S-o                 (meta-shift-o)  to open
-              C-Q                                   to open
+     Emacs:            M-S-o                 (meta-shift-o)  to open
+                       C-Q                                   to open
+
+     Visual SlickEdit: C-O                   (ctrl-shift-o)  to open
 
   2. Command line
       nduca: ~/quickopen $ ./quickopen

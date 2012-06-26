@@ -88,16 +88,10 @@ results:
 Visual SlickEdit Setup
 ================================================================================
 
- 1. Edit slickedit/QuickOpen.e
-   You will need to provide the path to the quickopen directory.
+ 1. Ensure that the directory containing quickopend is in your path.
 
- 2. Exid slickedit/start_quickopen.sh
-   This script is run when Visual SlickEdit is launched, you can add lines to
-   this file to get quickopen to index or ignore particular directories. See
-   the 'Setting up the quickopen daemon' section above for tips.
-
- 2. Load the quickopen macro module by doing the following
-    Macro > Load Module...
+ 2. Load the quickopen macro module by clicking Macro > Load Module..., and
+    selecting slickedit/QuickOpen.e.
 
  3. Now set up a key binding for quick open.
     a) Click, Tools > Options...
@@ -106,11 +100,7 @@ Visual SlickEdit Setup
     d) Type QuickOpen in the 'Search by command:' text box. If all geos well,
        this command will exist and be found.
     e) Then click the 'Add..' button and bind to whichever keys you please,
-       but I strongly recommend ctrl+shift+o for consistency with vi.
-
-Once you've followed these steps, you should find that the quickopen daemon
-starts when Visual SlickEdit launches and is ready when you use the key binding
-you've set earlier.
+       but I strongly recommend ctrl+shift+o for consistency with vim.
 
 Usage
 ================================================================================

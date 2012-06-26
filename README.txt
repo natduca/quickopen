@@ -97,7 +97,7 @@ Visual SlickEdit Setup
     a) Click, Tools > Options...
     b) Expand 'Keyboard and Mouse'
     c) Select 'Key Bindings'
-    d) Type QuickOpen in the 'Search by command:' text box. If all geos well,
+    d) Type QuickOpen in the 'Search by command:' text box. If all goes well,
        this command will exist and be found.
     e) Then click the 'Add..' button and bind to whichever keys you please,
        but I strongly recommend ctrl+shift+o for consistency with vim.

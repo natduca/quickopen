@@ -43,6 +43,11 @@ class OpenDialogWx(wx.Dialog, OpenDialogBase):
 
     top_box.Add((10,0))
     top_box.Add(self.status_text_widget,1, wx.EXPAND | wx.ALL | wx.ALIGN_CENTER_VERTICAL)
+
+    badresult_bn = wx.Button(self, -1, "Bad result")
+    badresult_bn.Bind(wx.EVT_BUTTON, lambda *args: self.on_badresult_clicked())
+    top_box.Add(badresult_bn)
+
     reindex_bn = wx.Button(self, -1, "Reindex")
     reindex_bn.Bind(wx.EVT_BUTTON, lambda *args: self.on_reindex_clicked())
     top_box.Add(reindex_bn)

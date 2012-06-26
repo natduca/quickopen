@@ -175,6 +175,8 @@ class OpenDialogCurses(OpenDialogBase):
         self._update_filter_text()
     elif k == '^R':
       self.on_reindex_clicked()
+    elif k == '^P':
+      self.on_bad_result_clicked()
     elif k == '?':
       self._toggle_help()
     else:
@@ -213,7 +215,6 @@ class OpenDialogCurses(OpenDialogBase):
     filter_line_text = spad(t, filter_width) + right_text
 
     self._stdscr.addstr(h - 2, 0, filter_line_text)
-
 
     # Position input cursor
     if self._help_visible:
@@ -288,6 +289,8 @@ class OpenDialogCurses(OpenDialogBase):
                     C-r    Reindex
                     C-g    Quit
                 <enter>    Open selected item
+
+                    C-p    Report bad result
 
             Basic readline-style editing shortcuts should work:
                     C-a, C-e, C-f, C-b, C-k

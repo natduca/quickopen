@@ -53,6 +53,10 @@ class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
     self.connect('destroy', self.on_destroy)
 
     truncated_bar = InfoBarGtk()
+
+    badresult_button = gtk.Button("Bad result")
+    badresult_button.connect('clicked', lambda *args: self.on_badresult_clicked())
+
     reindex_button = gtk.Button("_Reindex")
     reindex_button.connect('clicked', lambda *args: self.on_reindex_clicked())
 
@@ -76,6 +80,7 @@ class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
     vbox.pack_start(table_vbox,True,True,1)
     table_vbox.pack_start(table_options_hbox,False,False,0)
     table_options_hbox.pack_start(status_label,False,False,10)
+    table_options_hbox.pack_end(bad_result_button,False,False,0)
     table_options_hbox.pack_end(reindex_button,False,False,0)
     table_vbox.pack_start(treeview_scroll_window,True,True,0)
     table_vbox.pack_start(truncated_bar,False,True,0)

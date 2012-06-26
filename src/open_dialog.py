@@ -17,6 +17,7 @@ import logging
 import message_loop
 import re
 import os
+import query
 import sys
 import time
 
@@ -101,19 +102,23 @@ class OpenDialogBase(object):
     else:
       return "%s" % self._backend_status.status
 
+  def _create_query(self):
+    q = query.Query(self._filter_text)
+    if self._options.current_filename:
+      q.current_filename = self._options.current_filename
+    if self._options.open_filenames:
+      q.open_filenames = self._options.open_filenames
+    return q
+
   @tracedmethod
   def on_tick(self,*args):
     @traced
     def begin_search():
       self.frontend_status = "searching"
-      self._last_search_query = self._filter_text
 
-      search_args = {}
-      if self._options.current_filename:
-        search_args["current_filename"] = self._options.current_filename
-      if self._options.open_filenames:
-        search_args["open_filenames"] = self._options.open_filenames
-      self._pending_search = self._db.search_async(self._last_search_query, **search_args)
+      q = self._create_query()
+      self._pending_search = self._db.search_async(q)
+      self._last_search_query = q
 
     @traced
     def on_ready():
@@ -142,7 +147,11 @@ class OpenDialogBase(object):
     # re-check the self._pending_search since we might have cleared it
     if not self._pending_search:
       # kick off a query
-      need_to_begin_search = self._filter_text != self._last_search_query
+      if self._last_search_query:
+        need_to_begin_search = self._filter_text != self._last_search_query.text
+      else:
+        need_to_begin_search = True
+
       if need_to_begin_search and self._can_process_queries:
         begin_search()
       else:

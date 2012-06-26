@@ -261,6 +261,26 @@ def CMDprelaunch(parser):
   options.control_port = int(options.control_port)
   prelaunch.wait_for_command(options.control_port)
 
+def CMDoauth(parser):
+  """Requests GitHub Oauth credentials for adding bug reports"""
+  import oauth
+
+  (options, args) = parser.parse_args()
+  db = open_db(options)
+  token = db.get_oauth()
+  if token:
+    print "Oauth token already cached"
+    return 0
+
+  token = oauth.request_oauth_token()
+  if not token:
+    print "Failed to request Oauth token from GitHub"
+    return 255
+
+  db.set_oauth(token)
+  print "Cached Oauth token"
+  return 0
+
 @traced
 def open_db(options):
   return src.db_proxy.DBProxy(options.host, options.port, start_if_needed=options.auto_start, port_for_autostart=options.port)

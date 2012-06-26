@@ -39,6 +39,8 @@ class DBStub(object):
     server.add_json_route('/sync', self.sync, ['POST'])
     server.add_json_route('/status', self.status, ['GET'])
     server.add_json_route('/search(.*)', self.search, ['POST'])
+    server.add_json_route('/get_oauth', self.get_oauth, ['GET'])
+    server.add_json_route('/set_oauth', self.set_oauth, ['POST'])
     if not self.db.is_up_to_date:
       self.on_db_needs_indexing()
 
@@ -105,3 +107,15 @@ class DBStub(object):
   def begin_reindex(self, m, verb, data):
     self.db.begin_reindex()
     return {"status": "OK"}
+
+  def set_oauth(self, m, verb, data):
+    if not 'token' in data:
+      raise daemon.SilentException()
+    self.db.token = str(data['token'])
+    return {"status": "OK"}
+
+  def get_oauth(self, m, verb, data):
+    token = self.db.token
+    if not token:
+      return {}
+    return {'token': token}

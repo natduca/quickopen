@@ -13,6 +13,7 @@
 # limitations under the License.
 import hashlib
 import logging
+import oauth
 import os
 
 from db_exception import DBException
@@ -72,9 +73,12 @@ class DB(object):
 
     self.settings.register('ignores', list, [], self._on_settings_ignores_changed)
     if self.settings.ignores == []:
-	self.settings.ignores = DEFAULT_IGNORES;
+      self.settings.ignores = DEFAULT_IGNORES;
 
     self._on_settings_ignores_changed(None, self.settings.ignores)
+
+    self.settings.register('token', str, "", self._on_settings_token_changed)
+    self._on_settings_token_changed(None, self.settings.token)
 
   def close(self):
     if self._cur_shard_manager:
@@ -132,6 +136,19 @@ class DB(object):
     i = list(self.settings.ignores)
     i.remove(pattern)
     self.settings.ignores = i
+
+  ###########################################################################
+
+  def _on_settings_token_changed(self, old, new):
+    self._set_dirty()
+
+  @property
+  def token(self):
+    return self.settings.token
+
+  @token.setter
+  def token(self, token):
+    self.settings.token = token
 
   ###########################################################################
 

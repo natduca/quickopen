@@ -149,6 +149,16 @@ class DBProxy(object):
     except:
       raise "Pattern not found"
 
+  def get_oauth(self):
+    ret = self._req('GET', '/get_oauth')
+    if not 'token' in ret:
+      return None
+    return ret['token']
+
+  def set_oauth(self, token):
+    ret = self._req('POST', '/set_oauth', {"token": token})
+    assert ret["status"] == 'OK'
+
   @tracedmethod
   def search(self, *args, **kwargs):
     """

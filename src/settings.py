@@ -94,15 +94,18 @@ class Settings(object):
 
   def _do_save(self):
     logging.info("Settings: saving to %s", self._settings_file)
-    f = file(self._settings_file,"w")
-    # only dump the ones that arent in used_default
-    vals = {}
-    for k in self._values.keys():
-      if k not in self._used_default:
-        vals[k] = self._values[k]
-    s = pson.dumps(vals,pretty=True)
-    f.write(s)
-    f.close()
+    if os.path.exists(self._settings_file):
+      import stat
+      os.chmod(self._settings_file, stat.S_IREAD | stat.S_IWRITE)
+    flags = os.O_WRONLY | os.O_CREAT
+    with os.fdopen(os.open(self._settings_file, flags, 0600), "w") as f:
+      # only dump the ones that arent in used_default
+      vals = {}
+      for k in self._values.keys():
+        if k not in self._used_default:
+          vals[k] = self._values[k]
+      s = pson.dumps(vals,pretty=True)
+      f.write(s)
 
   def has_setting(self, k):
     return self._types.has_key(k)

@@ -52,6 +52,7 @@ class OpenDialogCurses(OpenDialogBase):
     message_loop_curses.on_terminal_readable.add_listener(self._on_readable)
     self._stdscr = message_loop_curses.get_stdscr()
 
+    self._help_visible = False
     self._refresh_pending = False
     self._invalidate()
 
@@ -95,6 +96,16 @@ class OpenDialogCurses(OpenDialogBase):
 
     if hasattr(self, '_keylog'):
       self._keylog.write('k=[%10s] kcode=[%s]\n' % (k, kcode))
+
+    if self._help_visible:
+      if k == '^G':
+        self._toggle_help()
+      elif kcode == ascii.NL:
+        self.on_done(False)
+      elif k == '?':
+        self._toggle_help()
+
+      return
 
     if k == 'KEY_UP' or k == '^P':
       self._selected_index -= 1
@@ -164,6 +175,8 @@ class OpenDialogCurses(OpenDialogBase):
         self._update_filter_text()
     elif k == '^R':
       self.on_reindex_clicked()
+    elif k == '?':
+      self._toggle_help()
     else:
       if not (k.startswith('^') or k.startswith('KEY_') or k.startswith('M-')):
         before = self._filter_text[0:self._filter_text_point]
@@ -188,11 +201,32 @@ class OpenDialogCurses(OpenDialogBase):
   def _refresh(self):
     self._refresh_pending = False
     tstart = "Filter: "
-    t = tstart + self._filter_text
+    if self._help_visible:
+      t = ''
+    else:
+      t = tstart + self._filter_text
+
     h,w = self._stdscr.getmaxyx()
-    self._stdscr.addstr(h - 2, 0, spad(t, w - 2))
+    right_text = ' | ? - help'
+    filter_width = w - len(right_text)
+
+    filter_line_text = spad(t, filter_width) + right_text
+
+    self._stdscr.addstr(h - 2, 0, filter_line_text)
+
+
+    # Position input cursor
+    if self._help_visible:
+      curses.curs_set(0)
+    else:
+      curses.curs_set(1)
+
     self._stdscr.move(h - 2, len(tstart) + self._filter_text_point)
     self._stdscr.refresh()
+
+  def _toggle_help(self):
+    self._help_visible = not self._help_visible
+    self._update_results()
 
   def set_results_enabled(self, en):
     pass
@@ -221,9 +255,14 @@ class OpenDialogCurses(OpenDialogBase):
     P_W = w - (R_W + 1 + BN_W + 1)
     ROW_FORMAT = "%%%is %%-%is %%s" % (R_W, BN_W)
 
-    # update the screen
-    for i in range(h):
-      if i < len(self._result_files):
+    if not self._help_visible:
+      # update the screen
+      for i in range(h):
+        if i >= len(self._result_files):
+          t = spad('', w)
+          self._stdscr.addstr(y + i, x, t, )
+          continue
+
         f = self._result_files[i]
         r = ("%4.1f" % (self._result_ranks[i]))[:R_W]
         bn = elide(os.path.basename(f), BN_W)
@@ -236,10 +275,26 @@ class OpenDialogCurses(OpenDialogBase):
         else:
           a = 0
         self._stdscr.addstr(y + i, x, t, a)
-      else:
-        t = spad('', w)
-        self._stdscr.addstr(y + i, x, t, )
+      self._invalidate()
+      return
 
+    for i in range(h):
+      t = spad('', w)
+      self._stdscr.addstr(y + i, x, t, )
+    help_text = """
+
+            Keyboard Reference
+            ---------------------------------------------------
+                    C-r    Reindex
+                    C-g    Quit
+                <enter>    Open selected item
+
+            Basic readline-style editing shortcuts should work:
+                    C-a, C-e, C-f, C-b, C-k
+"""
+    help_lines = help_text.split("\n")
+    for i in range(len(help_lines)):
+      self._stdscr.addstr(y + i, x, help_lines[i], 0)
     self._invalidate()
 
   def _update_filter_text(self):

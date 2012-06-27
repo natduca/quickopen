@@ -12,11 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import base64
 import getpass
-import httplib2
-import json
-import urllib
+import Github
+import GithubException
 
 def request_oauth_token():
   """ Prompts user for credentials and returns Oauth token from GitHub """
@@ -24,36 +22,13 @@ def request_oauth_token():
   print "Requesting an oauth token from GitHub."
   print "Your username and password will not be stored."
 
-  # Deliberately don't use httplib2.add_credentials, as httplib2 does a
-  # request without them first and expects to get a 401 back.  github
-  # instead throws a 404 if there's no user/pass attached to the request.
-  # This confuses httplib2, which thinks there's an error, and aborts
-  # after the first request without using the set credentials.
   username = raw_input("GitHub Username: ")
   password = getpass.getpass("GitHub Password: ")
-  auth = base64.encodestring(username + ':' + password)
 
-  http = httplib2.Http()
-  headers = {'Content-type': 'application/x-www-form-urlencoded',
-             'Accept': 'application/json',
-             'Authorization': 'Basic ' + auth}
-  params = {"scopes": ["public_repo"], "note_url": "quickopen"}
-  # Don't urlencode the json delimiters.
-  body = json.dumps(params, separators=(',',':'))
-  response, content = http.request('https://api.github.com/authorizations',
-                                   'POST',
-                                   headers=headers,
-                                   body=body)
   try:
-    content = json.loads(content)
-  except(ValueError):
-    print "Error, unable to parse response. Dumping raw response"
-    print response, content
+    g = Github.Github(username, password)
+    user = g.get_user()
+    auth = user.create_authorization(scopes=["public_repo"],note="quickopen")
+    return auth.token
+  except GithubException:
     return None
-
-  if response.status != 201:
-    print content['message']
-    return None
-
-  token = content['token']
-  return token

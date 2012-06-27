@@ -13,7 +13,6 @@
 # limitations under the License.
 import hashlib
 import logging
-import oauth
 import os
 
 from db_exception import DBException

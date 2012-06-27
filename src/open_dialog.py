@@ -76,6 +76,11 @@ class OpenDialogBase(object):
     self._db.begin_reindex()
 
   def on_badresult_clicked(self):
+    token = self._db.get_oauth()
+    if not token:
+      self._frontend_status = "Error: run 'quickopen oauth' first"
+      return
+
     # get a debug version of the query
     q = self._create_query()
     q.debug = True
@@ -84,7 +89,18 @@ class OpenDialogBase(object):
                  "result": result.as_dict()}
     import json
     badresult_text = json.dumps(badresult, indent=2)
-    # TODO(enne): file a bug using badreuslt_text
+
+    import Github
+    import GithubException
+    try:
+      g = Github.Github(token)
+      quickopen = g.get_user("natduca").get_repo("quickopen")
+      title = "BadResult: " + self._filter_text
+      body = "```json\n" + badresult_text + "\n```"
+      issue = quickopen.create_issue(title, body)
+      self._frontend_status = "Created issue #" + str(issue.number)
+    except GithubException as e:
+      self._frontend_status = "Error: " + e
 
   @property
   def frontend_status(self):

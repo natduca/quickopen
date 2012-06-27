@@ -54,8 +54,8 @@ class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
 
     truncated_bar = InfoBarGtk()
 
-    badresult_button = gtk.Button("Bad result")
-    badresult_button.connect('clicked', lambda *args: self.on_badresult_clicked())
+    bad_result_button = gtk.Button("Bad result")
+    bad_result_button.connect('clicked', lambda *args: self.on_badresult_clicked())
 
     reindex_button = gtk.Button("_Reindex")
     reindex_button.connect('clicked', lambda *args: self.on_reindex_clicked())

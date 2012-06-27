@@ -4,3 +4,6 @@
 [submodule "third_party/python-daemon"]
 	path = third_party/python-daemon
 	url = https://github.com/quisquous/python-daemon.git
+[submodule "third_party/PyGithub"]
+	path = third_party/PyGithub
+	url = https://github.com/jacquev6/PyGithub.git

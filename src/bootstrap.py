@@ -52,6 +52,14 @@ def run(prelaunch=False):
     print "Could not find python-daemon. Did you forget 'git submodule update --init'?"
     sys.exit(255)
 
+  # Import PyGithub.
+  sys.path.append(os.path.join(thirdpartydir, "PyGithub/github"))
+  try:
+    __import__("Github")
+  except:
+    print "Could not find PyGithub. Did you forget 'git submodule update --init'?"
+    sys.exit(255)
+
   mod = __import__(main_name, {}, {}, True)
   import optparse
   parser = optparse.OptionParser(usage=mod.main_usage())

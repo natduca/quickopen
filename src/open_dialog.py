@@ -99,8 +99,8 @@ class OpenDialogBase(object):
       body = "```json\n" + badresult_text + "\n```"
       issue = quickopen.create_issue(title, body)
       self._frontend_status = "Created issue #" + str(issue.number)
-    except GithubException as e:
-      self._frontend_status = "Error: " + e
+    except GithubException.GithubException as e:
+      self._frontend_status = "Error: " + str(e)
 
   @property
   def frontend_status(self):

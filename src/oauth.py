@@ -30,5 +30,6 @@ def request_oauth_token():
     user = g.get_user()
     auth = user.create_authorization(scopes=["public_repo"],note="quickopen")
     return auth.token
-  except GithubException:
+  except GithubException.GithubException as e:
+    print "Error: " + str(e)
     return None

@@ -59,12 +59,15 @@ class DBProxy(object):
 
     sys.stderr.write('Making sure it came up on port %i\n' % self._port_for_autostart)
     ok = False
-    for i in range(10):
+
+    per_iter_delay = 0.1
+    timeout = 10
+    for i in range(timeout / per_iter_delay):
       try:
         conn = httplib.HTTPConnection('localhost', self._port_for_autostart, True)
         conn.request('GET', '/ping')
-      except:
-        time.sleep(0.05)
+      except Exception, ex:
+        time.sleep(per_iter_delay)
         continue
 
       res = conn.getresponse()

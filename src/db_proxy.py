@@ -50,7 +50,10 @@ class DBProxy(object):
     self._dir_lut = {}
 
   def try_to_start_quickopend(self):
-    args = ['./quickopend', 'run']
+    basepath = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    quickopend_path = os.path.join(basepath, "quickopend")
+    assert os.path.exists(quickopend_path)
+    args = [quickopend_path, 'run']
     sys.stderr.write('No quickopend running. Launching it...\n')
     self.proc = subprocess.Popen(args)
 

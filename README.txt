@@ -105,7 +105,7 @@ Visual SlickEdit Setup
 Usage
 ================================================================================
 
-  1. VIM:              C-O                   (ctrl-shift-o)  to open
+  1. VIM:              :O   :O somefile                      to open
                        gf   c-w                              to goto file
 
      Emacs:            M-S-o                 (meta-shift-o)  to open

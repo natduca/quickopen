@@ -75,10 +75,7 @@ function! QuickFind(cmd, query)
   endfor
 endfunction
 
-" Ugh, someone with a clue about Vim, help me, what're good key bindings?
-noremap <silent> <C-O> <Esc>:call QuickFind(':find', "")<CR>
-
-noremap <silent> <D-O> <Esc>:call QuickFind(':find', "")<CR>
+com! -nargs=* O call QuickFind(":find", <q-args>)
 
 nnoremap <silent> gf :call <sid>QuickOpenSingle(':find', expand('<cfile>'))<cr>
 nnoremap <silent> <c-w>gf :call <sid>QuickOpenSingle(':sp', expand('<cfile>'))<cr>

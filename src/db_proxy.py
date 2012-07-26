@@ -62,7 +62,8 @@ class DBProxy(object):
 
     per_iter_delay = 0.1
     timeout = 10
-    for i in range(timeout / per_iter_delay):
+    num_tries = int(timeout / per_iter_delay)
+    for i in range(num_tries):
       try:
         conn = httplib.HTTPConnection('localhost', self._port_for_autostart, True)
         conn.request('GET', '/ping')

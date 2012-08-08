@@ -217,10 +217,13 @@ class OpenDialogCurses(OpenDialogBase):
     self._stdscr.addstr(h - 2, 0, filter_line_text)
 
     # Position input cursor
-    if self._help_visible:
-      curses.curs_set(0)
-    else:
-      curses.curs_set(1)
+    try:
+      if self._help_visible:
+        curses.curs_set(0)
+      else:
+        curses.curs_set(1)
+    except:
+      pass
 
     self._stdscr.move(h - 2, len(tstart) + self._filter_text_point)
     self._stdscr.refresh()

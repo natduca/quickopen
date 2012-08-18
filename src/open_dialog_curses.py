@@ -175,7 +175,7 @@ class OpenDialogCurses(OpenDialogBase):
         self._update_filter_text()
     elif k == '^R':
       self.on_reindex_clicked()
-    elif k == '^P':
+    elif k == '^T':
       self.on_bad_result_clicked()
     elif k == '?':
       self._toggle_help()
@@ -293,7 +293,7 @@ class OpenDialogCurses(OpenDialogBase):
                     C-g    Quit
                 <enter>    Open selected item
 
-                    C-p    Report bad result
+                    C-t    Report bad result
 
             Basic readline-style editing shortcuts should work:
                     C-a, C-e, C-f, C-b, C-k

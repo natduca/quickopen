@@ -176,7 +176,7 @@ class OpenDialogCurses(OpenDialogBase):
     elif k == '^R':
       self.on_reindex_clicked()
     elif k == '^T':
-      self.on_bad_result_clicked()
+      self.on_badresult_clicked()
     elif k == '?':
       self._toggle_help()
     else:

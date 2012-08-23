@@ -13,12 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import fcntl
+import fnmatch
 import logging
 import message_loop
 import optparse
 import os
 import platform
-import re
 import resource
 import sys
 import types
@@ -66,24 +66,44 @@ class IncrementalTestRunner(unittest.TextTestRunner):
         except:
           result.addError(test, sys.exc_info())
 
-def discover(filters, manual_handling_allowed):
-  for f in filters:
-    try:
-      re.compile(f)
-    except:
-      print "%s is not a valid regex" % f
-      sys.exit(255)
+def filter_suite(suite, predicate):
+  new_suite = unittest.TestSuite()
+  for x in suite:
+    if isinstance(x, unittest.TestSuite):
+      subsuite = filter_suite(x, predicate)
+      if subsuite.countTestCases() == 0:
+        continue
 
-  # poor mans unittest.discover, but that ignores classes
-  # that start with _
-  loader = unittest.TestLoader()
-  subsuites = []
+      new_suite.addTest(subsuite)
+      continue
 
-  for (dirpath, dirnames, filenames) in os.walk('src'):
-    for filename in [x for x in filenames if re.match('.*_test\.py$', x)]:
+    assert isinstance(x, unittest.TestCase)
+    if predicate(x):
+      new_suite.addTest(x)
+
+  return new_suite
+
+
+def discover(start_dir, pattern = "test*.py", top_level_dir = None):
+  # TODO(nduca): Do something with top_level_dir non-None
+  assert top_level_dir == None
+
+  # if hasattr(unittest.defaultTestLoader, 'discover'):
+  #  return unittest.defaultTestLoader.discover()
+
+  modules = []
+  for (dirpath, dirnames, filenames) in os.walk(start_dir):
+    for filename in filenames:
+      if not filename.endswith(".py"):
+        continue
+
+      if not fnmatch.fnmatch(filename, pattern):
+        continue
+
       if filename.startswith('.') or filename.startswith('_'):
         continue
-      fqn = dirpath.replace('/', '.') + '.' + re.match('(.+)\.py$', filename).group(1)
+      name,ext = os.path.splitext(filename)
+      fqn = dirpath.replace('/', '.') + '.' + name
 
       # load the module
       try:
@@ -92,49 +112,32 @@ def discover(filters, manual_handling_allowed):
         print "While importing [%s]\n" % fqn
         traceback.print_exc()
         continue
+      modules.append(module)
+  return modules
 
-      def test_is_selected(name):
-        for f in filters:
-          if re.search(f,name):
-            return True
-        return False
-
-      if hasattr(module, 'requires_manual_handling'):
-        requires_manual_handling = module.requires_manual_handling
-      else:
-        requires_manual_handling = False
-
-      if requires_manual_handling and not manual_handling_allowed:
-        continue
-      if not requires_manual_handling and manual_handling_allowed:
-        continue
-
-      if hasattr(module, 'suite'):
-        base_suite = module.suite()
-      else:
-        base_suite = loader.loadTestsFromModule(module)
-      new_suite = unittest.TestSuite()
-      for t in base_suite:
-        if isinstance(t, unittest.TestSuite):
-          for i in t:
-            # skip test classes that start with an underscore
-            if i.__class__.__name__.startswith("_"):
-              continue
-            if test_is_selected(i.id()):
-              new_suite.addTest(i)
-        elif isinstance(t, unittest.TestCase):
-          if test_is_selected(t.id()):
-            new_suite.addTest(t)
-        else:
-          raise Exception("Wtf, expected TestSuite or TestCase, got %s" % t)
-
-      if new_suite.countTestCases():
-        subsuites.append(new_suite)
-
+def load_suites_from_modules(modules):
+  loader = unittest.defaultTestLoader
+  subsuites = []
+  for module in modules:
+    if hasattr(module, 'suite'):
+      new_suite = module.suite()
+    else:
+      new_suite = loader.loadTestsFromModule(module)
+    if new_suite.countTestCases():
+      subsuites.append(new_suite)
   return unittest.TestSuite(subsuites)
 
+def get_tests_from_suite(suite):
+  tests = []
+  for x in suite:
+    if isinstance(x, unittest.TestSuite):
+      tests.extend(get_tests_from_suite(x))
+      continue
+    tests.append(x)
+  return tests
+
 def main_usage():
-  return "Usage: run_tests [options] [regexp of tests to run]"
+  return "Usage: run_tests [options] [names of tests to run]"
 
 def main(parser):
   parser.add_option('--debug', dest='debug', action='store_true', default=False, help='Break into pdb when an assertion fails')
@@ -177,15 +180,53 @@ def main(parser):
   # make sure cwd is the base directory!
   os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
-  if len(args) > 0:
-    suites = discover(args, options.manual_handling_allowed)
-  else:
-    suites = discover(['.*'], options.manual_handling_allowed)
+  def args_filter(test):
+    if len(args) == 0:
+      return True
+
+    for x in args:
+      if str(test).find(x) != -1:
+        return True
+    return False
+
+  def manual_test_filter(test):
+    module_name = test.__class__.__module__
+    module = sys.modules[module_name]
+
+    requires_manual_handling = False
+    if hasattr(module, 'requires_manual_handling'):
+      requires_manual_handling = module.requires_manual_handling
+    if requires_manual_handling != options.manual_handling_allowed:
+      return False
+    return True
+
+  def module_filename_filter(test):
+    if test.__class__.__name__.startswith("_"):
+      return False
+
+    module_name = test.__class__.__module__
+    module = sys.modules[module_name]
+    if module.__file__.startswith("."):
+      return False
+    return True
+
+  def test_filter(test):
+    if not module_filename_filter(test):
+      return False
+    if not manual_test_filter(test):
+      return False
+    if not args_filter(test):
+      return False
+    return True
+
+  modules = discover("src", "*_test.py")
+  all_tests_suite = load_suites_from_modules(modules)
+  selected_tests_suite = filter_suite(all_tests_suite, test_filter)
 
   if not options.incremental:
     r = unittest.TextTestRunner()
     message_loop.set_unittests_running(True)
-    res = r.run(suites)
+    res = r.run(selected_tests_suite)
     message_loop.set_unittests_running(False)
     if res.wasSuccessful():
       return 0
@@ -194,25 +235,16 @@ def main(parser):
     r = IncrementalTestRunner(options)
     message_loop.set_unittests_running(True)
     ok = True
-    for s in suites:
-      if isinstance(s, unittest.TestSuite):
-        for t in s:
-          print '----------------------------------------------------------------------'
-          print 'Running %s' % str(t)
-          res = r.run(t)
+    for t in get_tests_from_suite(selected_tests_suite):
+      assert isinstance(t, unittest.TestCase)
+      print '----------------------------------------------------------------------'
+      print 'Running %s' % str(t)
 
-          if not res.wasSuccessful():
-            ok = False
-            if options.stop_on_error:
-              break
-        if ok == False and options.stop_on_error:
+      res = r.run(t)
+      if not res.wasSuccessful():
+        ok = False
+        if options.stop_on_error:
           break
-      else:
-        res = r.run(s)
-        if not res.wasSuccessful():
-          ok = False
-          if options.stop_on_error:
-            break
     message_loop.set_unittests_running(False)
     if ok:
       return 0

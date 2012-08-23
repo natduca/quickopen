@@ -20,7 +20,7 @@ import time
 import os
 import basename_ranker
 
-from open_dialog import OpenDialogBase
+from open_dialog_base import OpenDialogBase
 
 def spad(s, w):
   if len(s) > w:

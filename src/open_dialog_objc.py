@@ -21,7 +21,7 @@ import objc
 from AppKit import *
 from Foundation import *
 
-from open_dialog import OpenDialogBase
+from open_dialog_base import OpenDialogBase
 
 class OpenDialogObjcRaw(NSObject, OpenDialogBase):
   def initWithSettings(self, settings, options, db, initial_filter):

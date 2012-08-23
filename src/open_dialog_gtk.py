@@ -19,7 +19,7 @@ import os
 
 from info_bar_gtk import *
 
-from open_dialog import OpenDialogBase
+from open_dialog_base import OpenDialogBase
 
 class OpenDialogGtk(gtk.Dialog, OpenDialogBase):
   def __init__(self, options, db, initial_filter):

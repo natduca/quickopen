@@ -19,7 +19,7 @@ import wx.lib.mixins.listctrl  as  listmix
 import wx.lib.evtmgr as evtmgr
 import sys
 
-from open_dialog import OpenDialogBase
+from open_dialog_base import OpenDialogBase
 
 class TestListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin):
     def __init__(self, parent, ID, pos=wx.DefaultPosition,

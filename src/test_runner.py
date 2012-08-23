@@ -85,12 +85,10 @@ def filter_suite(suite, predicate):
 
 
 def discover(start_dir, pattern = "test*.py", top_level_dir = None):
+  if hasattr(unittest.defaultTestLoader, 'discover'):
+    return unittest.defaultTestLoader.discover(start_dir, pattern, top_level_dir)
+
   # TODO(nduca): Do something with top_level_dir non-None
-  assert top_level_dir == None
-
-  # if hasattr(unittest.defaultTestLoader, 'discover'):
-  #  return unittest.defaultTestLoader.discover()
-
   modules = []
   for (dirpath, dirnames, filenames) in os.walk(start_dir):
     for filename in filenames:
@@ -113,9 +111,7 @@ def discover(start_dir, pattern = "test*.py", top_level_dir = None):
         traceback.print_exc()
         continue
       modules.append(module)
-  return modules
 
-def load_suites_from_modules(modules):
   loader = unittest.defaultTestLoader
   subsuites = []
   for module in modules:
@@ -219,8 +215,7 @@ def main(parser):
       return False
     return True
 
-  modules = discover("src", "*_test.py")
-  all_tests_suite = load_suites_from_modules(modules)
+  all_tests_suite = discover("src", "*_test.py", ".")
   selected_tests_suite = filter_suite(all_tests_suite, test_filter)
 
   if not options.incremental:

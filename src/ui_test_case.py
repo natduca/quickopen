@@ -54,7 +54,7 @@ class UITestCase(unittest.TestCase):
     except KeyboardInterrupt:
       raise
     except:
-      result.addError(self, self._exc_info())
+      result.addError(self, sys.exc_info())
       self.async_teardown_and_stop_test(result,tearDown=False)
       return
 
@@ -63,13 +63,13 @@ class UITestCase(unittest.TestCase):
       testMethod()
       ok = True
     except self.failureException:
-      result.addFailure(self, self._exc_info())
+      result.addFailure(self, sys.exc_info())
       self.async_teardown_and_stop_test(result)
     except KeyboardInterrupt:
       self.async_teardown_and_stop_test(result)
       raise
     except:
-      result.addError(self, self._exc_info())
+      result.addError(self, sys.exc_info())
       self.async_teardown_and_stop_test(result)
 
     def do_async_teardown_and_stop_test():
@@ -88,7 +88,7 @@ class UITestCase(unittest.TestCase):
         except KeyboardInterrupt:
           raise
         except:
-          result.addError(self, self._exc_info())
+          result.addError(self, sys.exc_info())
           ok = False
           if ok: result.addSuccess(self)
     finally:

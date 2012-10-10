@@ -133,7 +133,7 @@ class DBProxy(object):
     return map(lambda x: self._get_dir(x["id"], x["path"]), ret)
 
   def add_dir(self, d):
-    ret = self._req('POST', '/dirs/add', {"path": d})
+    ret = self._req('POST', '/dirs/add', {"path": os.path.abspath(d)})
     assert ret["status"] == 'OK'
     return self._get_dir(ret["id"], d)
 

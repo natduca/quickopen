@@ -11,11 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import db_shard_manager
-import db_indexer
 import sys
 import unittest
 import time
+
+from src import db_shard_manager
+from src import mock_db_indexer
 
 from query import Query
 from query_cache import QueryCache
@@ -29,7 +30,7 @@ class DBShardManagerTest(unittest.TestCase):
         "k/dsfsfd.txt",
         "k/sdf.txt",
         ]
-    mock_indexer = db_indexer.MockIndexer(["a/", "k/"], self.files)
+    mock_indexer = mock_db_indexer.MockDBIndexer(["a/", "k/"], self.files)
     self.shard_manager = db_shard_manager.DBShardManager(mock_indexer)
 
   def test_props(self):
@@ -66,7 +67,7 @@ class DBShardManagerTest(unittest.TestCase):
 class DBShardManagerPerfTest():
   def __init__(self, testfile):
     files_by_basename = json.load(open(filename))
-    mock_indexer = db_indexer.MockIndexer(files_by_basename = files_by_basename)
+    mock_indexer = mock_db_indexer.MockDBIndexer(files_by_basename = files_by_basename)
     self.shard_manager = db_shard_manager.DBShardManager(mock_indexer)
 
   def test_matcher_perf(self,max_hits):

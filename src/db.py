@@ -18,13 +18,13 @@ import os
 from db_exception import DBException
 from db_shard_manager import DBShardManager
 from db_status import DBStatus
-from db_indexer import DBIndexer
 from dir_cache import DirCache
 from event import Event
 from trace_event import *
 from query import Query
 from query_cache import QueryCache
 from query_result import QueryResult
+from src import db_indexer
 
 DEFAULT_IGNORES=[
   ".*",
@@ -203,7 +203,8 @@ class DB(object):
   @traced
   def status(self):
     if self._pending_indexer:
-      if isinstance(self._pending_indexer, DBIndexer): # is an integer briefly between _set_dirty and first step_indexer
+      # Is an integer briefly between _set_dirty and first step_indexer
+      if not isinstance(self._pending_indexer, int): 
         if self._cur_shard_manager:
           status = "syncing: %s, %s" % (self._pending_indexer.progress, self._cur_shard_manager.status)
         else:
@@ -227,9 +228,10 @@ class DB(object):
     if not self._pending_indexer:
       return
 
-    if not isinstance(self._pending_indexer, DBIndexer):
+    # _pending_indexer is an integer if recreation should be triggered.
+    if isinstance(self._pending_indexer, int):
       self._dir_cache.set_ignores(self.settings.ignores)
-      self._pending_indexer = DBIndexer(self.settings.dirs, self._dir_cache)
+      self._pending_indexer = db_indexer.Create(self.settings.dirs, self._dir_cache)
 
     if self._pending_indexer.complete:
       self._cur_shard_manager = DBShardManager(self._pending_indexer)

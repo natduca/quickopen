@@ -11,14 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import collections
 import os
-import time
-import json
-
-import listdir_based_db_indexer
-
-def Create(dirs, dir_cache):
-  return listdir_based_db_indexer.ListdirBasedDBIndexer(dirs, dir_cache)
-
+class MockDBIndexer(object):
+  def __init__(self, dirs, files = [], files_by_basename = {}):
+    self.dirs = dirs
+    self.files_by_basename = files_by_basename
+    for f in files:
+      bn = os.path.basename(f)
+      if bn not in self.files_by_basename:
+        self.files_by_basename[bn] = []
+      self.files_by_basename[bn].append(f)
 

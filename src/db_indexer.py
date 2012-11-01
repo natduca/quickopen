@@ -19,6 +19,6 @@ import json
 import listdir_based_db_indexer
 
 def Create(dirs, dir_cache):
-  return listdir_based_db_indexer.ListdirBasedDBIndexer(dirs, dir_cache)
+  return listdir_based_db_indexer.ListdirDBIndexer(dirs, dir_cache)
 
 

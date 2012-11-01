@@ -34,8 +34,6 @@ Features
       typically hits ../../../...../test_utils.cc but
       also there is a test_utils.js in the same folder.
 
-- Use current-buffer and active-buffer list in ranking
-
 - Try out Goog codesearch-style trigraph-based indexes for fuzzy matching
 
 - rwh::ddu -> use ctags to do fuzzy search for ddu on the files matching rwh

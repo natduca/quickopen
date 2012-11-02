@@ -14,6 +14,7 @@
 import hashlib
 import logging
 import os
+import time
 
 from db_exception import DBException
 from db_shard_manager import DBShardManager
@@ -62,10 +63,6 @@ class DB(object):
     self._cur_query_cache = None
 
     self._dir_cache = DirCache() # thread only state
-
-    # if we are currently looking for changed dirs, this is the iterator
-    # directories remaining to be checked
-    self._pending_up_to_date_generator = None
 
     self.settings.register('dirs', list, [], self._on_settings_dirs_changed)
     self._on_settings_dirs_changed(None, self.settings.dirs)
@@ -159,36 +156,6 @@ class DB(object):
   def is_up_to_date(self):
     return self._pending_indexer == None
 
-  def check_up_to_date(self):
-    if not self.is_up_to_date:
-      return False
-    import time
-    self.check_up_to_date_a_bit_more()
-    while self._pending_up_to_date_generator:
-      self.check_up_to_date_a_bit_more()
-
-  @traced
-  def check_up_to_date_a_bit_more(self):
-    if not self.is_up_to_date:
-      return
-
-    if self._pending_up_to_date_generator == None:
-      logging.debug("Starting to check for changed directories.")
-      self._pending_up_to_date_generator = self._dir_cache.iterdirnames().__iter__()
-
-    for i in range(10):
-      try:
-        d = self._pending_up_to_date_generator.next()
-      except StopIteration:
-        self._pending_up_to_date_generator = None
-        logging.debug("Done checking for changed directories.")
-        break
-      if self._dir_cache.listdir_with_changed_status(d)[1]:
-        logging.debug("Change detected in %s!", d)
-        self._pending_up_to_date_generator = None
-        self._set_dirty()
-        break
-
   def begin_reindex(self):
     self._set_dirty()
 
@@ -232,18 +199,25 @@ class DB(object):
     if isinstance(self._pending_indexer, int):
       self._dir_cache.set_ignores(self.settings.ignores)
       self._pending_indexer = db_indexer.Create(self.settings.dirs, self._dir_cache)
+      self._pending_indexer_start_time = time.time()
 
     if self._pending_indexer.complete:
+      elapsed = time.time() - self._pending_indexer_start_time
+      logging.debug("Indexing with %s took %s seconds",
+                    type(self._pending_indexer),
+                    elapsed)
       self._cur_shard_manager = DBShardManager(self._pending_indexer)
       self._cur_query_cache = QueryCache()
       self._pending_indexer = None
+
+
     else:
       self._pending_indexer.index_a_bit_more()
 
   def sync(self):
     """Ensures database index is up-to-date"""
-    self.check_up_to_date()
-    while self._pending_indexer:
+    self.begin_reindex()
+    while not self.is_up_to_date:
       self.step_indexer()
 
   ###########################################################################

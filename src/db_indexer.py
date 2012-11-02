@@ -16,9 +16,20 @@ import os
 import time
 import json
 
-import listdir_based_db_indexer
+class DBIndexer(object):
+  def __init__(self, dirs):
+    self.dirs = dirs
+    self.complete = False
+    self.files_by_basename = dict()
+
+  def progress(self):
+    raise NotImplementedException()
 
 def Create(dirs, dir_cache):
-  return listdir_based_db_indexer.ListdirDBIndexer(dirs, dir_cache)
+  import find_based_db_indexer
+  if find_based_db_indexer.Supported():
+    return find_based_db_indexer.FindBasedDBIndexer(
+      dirs, dir_cache.ignores)
 
-
+  import listdir_based_db_indexer
+  return listdir_based_db_indexer.ListdirBasedDBIndexer(dirs, dir_cache)

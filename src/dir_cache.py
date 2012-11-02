@@ -13,7 +13,6 @@
 # limitations under the License.
 import os
 import fnmatch
-import logging
 
 class DirEnt(object):
   def __init__(self, st_mtime, ents):
@@ -76,7 +75,6 @@ class DirCache(object):
       except OSError:
         st_mtime = 0
         del self.dirs[d]
-        logging.debug("directory %s gone", d)
         return ([], True)
 
       if st_mtime == de.st_mtime:
@@ -86,10 +84,6 @@ class DirCache(object):
         del self.dirs[d]
         new_ents = self.listdir_with_changed_status(d)[0]
         changed = set(new_ents) != set(cur_ents)
-        if changed:
-          logging.debug("directory %s really changed", d)
-        else:
-          logging.debug("directory %s contents not changed", d)
         return (new_ents, changed)
     else:
       # directory is not in cache...
@@ -100,7 +94,6 @@ class DirCache(object):
       except OSError:
         return ([], False)
 
-      logging.debug("found directory %s mt=%s", d, st_mtime)
       ents = [e for e in ents if not self.is_ignored(e, os.path.join(d, e))]
       de = DirEnt(st_mtime, ents)
       self.dirs[d] = de

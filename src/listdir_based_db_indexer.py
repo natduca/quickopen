@@ -16,11 +16,14 @@ import os
 import time
 import json
 
-class ListdirBasedDBIndexer(object):
+from src import db_indexer
+
+class ListdirBasedDBIndexer(db_indexer.DBIndexer):
   def __init__(self, dirs, dir_cache):
-    self.dir_cache = dir_cache
-    self.dir_cache.reset_realpath_cache()
-    self.dirs = [self.dir_cache.realpath(d) for d in dirs]
+    super(ListdirBasedDBIndexer, self).__init__(dirs)
+
+    self._dir_cache = dir_cache
+    self._dir_cache.reset_realpath_cache()
 
     self._basename_slots = dict()
 
@@ -31,7 +34,7 @@ class ListdirBasedDBIndexer(object):
     self.pending = collections.deque()
     self.visited = set()
     self.complete = False
-    self.num_files_found = 0 # stats only
+    self._num_files_found = 0 # stats only
 
     # enqueue start points in reverse because the whole search is DFS
     reverse_dirs = list(dirs)
@@ -41,7 +44,14 @@ class ListdirBasedDBIndexer(object):
 
   @property
   def progress(self):
-    return "%i files found, %i dirs pending" % (self.num_files_found, len(self.pending))
+    return "%i files found, %i dirs pending" % (self._num_files_found, len(self.pending))
+
+  def _enqueue_dir(self, d):
+    dr = self._dir_cache.realpath(d)
+    if dr in self.visited:
+      return
+    self.visited.add(dr)
+    self.pending.appendleft(dr)
 
   def index_a_bit_more(self):
     start = time.time()
@@ -55,24 +65,19 @@ class ListdirBasedDBIndexer(object):
           n += 1
     except IndexError:
       pass
-    if not len(self.pending):
-      self.complete = True
-
-  def _enqueue_dir(self, d):
-    dr = self.dir_cache.realpath(d)
-    if dr in self.visited:
-      return
-    self.visited.add(dr)
-    self.pending.appendleft(dr)
 
   def _step_one(self):
     d = self.pending.popleft()
-    for basename in self.dir_cache.listdir(d):
-      path = self.dir_cache.realpath(os.path.join(d, basename))
+    for basename in self._dir_cache.listdir(d):
+      path = self._dir_cache.realpath(os.path.join(d, basename))
       if os.path.isdir(path):
         self._enqueue_dir(path)
       else:
         if basename not in self.files_by_basename:
           self.files_by_basename[basename] = []
         self.files_by_basename[basename].append(path)
-        self.num_files_found += 1
+        self._num_files_found += 1
+
+    if not len(self.pending):
+      self.complete = True
+

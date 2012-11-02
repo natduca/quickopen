@@ -26,7 +26,7 @@ class QuickopenTest(unittest.TestCase, QuickopenTestBase):
   def qo(self, cmd, *args):
     quickopen_script = os.path.join(os.path.dirname(__file__), "../quickopen")
     assert os.path.exists(quickopen_script)
-    
+
     full_args = [quickopen_script,
                  cmd,
                  "--host", self.daemon.host,
@@ -40,7 +40,7 @@ class QuickopenTest(unittest.TestCase, QuickopenTestBase):
     if len(stderr):
       print "Error during %s:\n%s\n\n" % (args, stderr)
     return stdout
-    
+
   def turn_off_daemon(self):
     self.daemon.close()
 

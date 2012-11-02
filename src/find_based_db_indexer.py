@@ -13,6 +13,7 @@
 # limitations under the License.
 import fnmatch
 import logging
+import math
 import os
 import re
 import select
@@ -148,7 +149,15 @@ class FindBasedDBIndexer(db_indexer.DBIndexer):
 
   @property
   def progress(self):
-    return '%i files found; %i toplevel dirs remaining' % (self._num_files_found, len(self._remaining_dirs))
+    notes = ['%i files found' % self._num_files_found]
+    if self._find_results_tempfile:
+      st = os.stat(self._find_results_tempfile.name)
+      size_in_kb = st.st_size / 1000.0
+      rounded_size_in_kb = math.floor(size_in_kb * 100) / 100.0
+      notes.append("%i kb of directories pending" % rounded_size_in_kb)
+    notes.append(
+      '%i toplevel dirs still to be indexed' % len(self._remaining_dirs))
+    return '; '.join(notes)
 
   def index_a_bit_more(self):
     if not self._current_find_subprocess:

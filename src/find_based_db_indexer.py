@@ -136,7 +136,7 @@ class FindBasedDBIndexer(db_indexer.DBIndexer):
     self._current_devnull = None
     self._current_find_dir = None
     self._current_find_subprocess = None
-
+    self._lines_needing_processing = None
     self._find_results_tempfile = None
 
   def _init_ignores(self, ignores):
@@ -161,7 +161,12 @@ class FindBasedDBIndexer(db_indexer.DBIndexer):
     return '; '.join(notes)
 
   def index_a_bit_more(self):
+    if self._lines_needing_processing:
+      self._process_a_few_more_lines()
+      return
+
     if not self._current_find_subprocess:
+      logging.debug('Finding another dir to search.')
       self._begin_searching_next_dir()
 
     if self._current_find_subprocess:
@@ -172,19 +177,23 @@ class FindBasedDBIndexer(db_indexer.DBIndexer):
         if time.time() - start >= 0.20:
           break
         done = self._current_find_subprocess.poll() != None
-      if done:
-        logging.debug('Find finished.')
-        current_find_dir = self._current_find_dir
-        trace_begin("read")
-        with open(self._find_results_tempfile.name, 'r') as f:
-          lines = f.readlines()
-        trace_end("read")
-        self._did_finish_searching_dir()
-        self._process_lines(current_find_dir, lines)
+      if not done:
+        return
 
+      logging.debug('Find finished.')
+      trace_begin("read")
+      with open(self._find_results_tempfile.name, 'r') as f:
+        lines = f.readlines()
+      trace_end("read")
+      self._did_finish_searching_dir()
+      if len(lines) > 0:
+        logging.debug('Beginning to process lines.')
+        self._lines_needing_processing = lines
 
     if (not self._current_find_subprocess and
+        self._lines_needing_processing == None and
         len(self._remaining_dirs) == 0):
+      logging.debug('Done.')
       self.complete = True
 
   @tracedmethod
@@ -214,10 +223,23 @@ class FindBasedDBIndexer(db_indexer.DBIndexer):
 
     self._current_find_subprocess.wait()
     self._current_find_subprocess = None
-    self._current_find_dir = None
 
     self._current_devnull.close()
     self._current_devnull = None
+
+  def _process_a_few_more_lines(self):
+    assert self._current_find_dir != None
+    NUM_LINES_PER_STEP = 5000
+
+    lines = self._lines_needing_processing[:NUM_LINES_PER_STEP]
+    self._lines_needing_processing = self._lines_needing_processing[NUM_LINES_PER_STEP:]
+
+    self._process_lines(self._current_find_dir, lines)
+
+    if len(self._lines_needing_processing) == 0:
+      logging.debug('Done processing lines.')
+      self._current_find_dir = None
+      self._lines_needing_processing = None
 
   @tracedmethod
   def _process_lines(self, current_find_dir, lines):

@@ -143,6 +143,9 @@ class QuickopenTestBase(object):
     self.assertEquals("", x)
     self._wait_for_up_to_date()
 
+    from src import message_loop
+    if message_loop.is_curses:
+      return
     r = self.qo_and_split("search", "--skip-ui-if-exact-match", "MyClass.c")
     self.assertEquals(1, len(r))
     self.assertEquals(r[0], self.test_data.path_to("project1/MyClass.c"))

@@ -137,6 +137,7 @@ class FindBasedDBIndexer(db_indexer.DBIndexer):
     self._current_find_dir = None
     self._current_find_subprocess = None
 
+    self._find_results_tempfile = None
 
   def _init_ignores(self, ignores):
     self._dirname_ignores = []

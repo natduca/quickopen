@@ -40,6 +40,10 @@
   :type 'boolean
   :group 'quickopen)
 
+(defcustom quickopen-curses-fullscreen t
+  "If non-nil, quickopen will open in a fullscreen window"
+  :type 'boolean
+  :group 'quickopen)
 
 (defun quickopen-has-gui ()
   (when (fboundp 'window-system)
@@ -177,7 +181,9 @@
           (current-buffer-filename (buffer-file-name (current-buffer)))
           )
       (setq quickopen-old-window-configuration (current-window-configuration))
-      (delete-other-windows)
+      (when quickopen-curses-fullscreen
+        (delete-other-windows)
+        )
       (when (get-buffer "*quickopen*")
         (with-current-buffer "*quickopen*"
           (delete-region (point-min) (point-max))

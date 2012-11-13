@@ -44,7 +44,7 @@ function! s:QuickOpenPrompt(query)
     setlocal noswapfile
     setlocal buflisted
 
-    exec("silent! !" . s:QuickOpenApp . " search --curses --results-file=" . resultsfile . " " . a:query)
+    exec("silent! !" . s:QuickOpenApp . " search --curses --results-file=" . resultsfile . " --current-file=" . expand("%:p") . " " . a:query)
     exe "bdel"
 
     exec(":redraw!")

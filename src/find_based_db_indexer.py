@@ -110,7 +110,7 @@ def _get_filename_relative_to_find_dir(current_find_dir, filename):
 def _IsProcessRunnable(name):
   try:
     with open(os.devnull, 'w') as devnull:
-      found = subprocess.call(['which', name],
+      found = subprocess.call(['/usr/bin/which', name],
                               stdout=devnull, stderr=devnull) == 0
       return True
   except OSError:

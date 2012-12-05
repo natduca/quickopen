@@ -57,7 +57,7 @@ class _RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
       raise Exception('Unrecognized output type: ' + route.output)
 
   def log_message(self, format, *args):
-    logging.info(format, args)
+    logging.info(format, *args)
 
   def handleRequest(self, verb):
     s = urlparse.urlsplit(self.path)

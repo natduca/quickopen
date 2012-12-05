@@ -69,6 +69,9 @@ def CMDrun(parser):
       context = ForegroundDaemonContext()
     else:
       context = python_daemon.DaemonContext()
+      if options.preserve_stdout:
+        context.stdout = sys.stdout
+        context.stderr = sys.stderr
 
     with context:
       service = src.daemon.create(options.host, options.port, options.test)
@@ -203,6 +206,7 @@ def main(parser):
   parser.add_option('--test', dest='test', action='store_true', default=False, help='Adds test hooks')
   parser.add_option('--trace', dest='trace', action='store_true', default=False, help='Records performance tracing information to quickopen.trace')
   parser.add_option('--foreground', dest='foreground', action='store_true', default=False, help='Starts quickopend in the foreground instead of forking')
+  parser.add_option('--preserve-stdout', dest='preserve_stdout', action='store_true', default=False, help='Keeps the stdout of the daemon')
   old_parser_args = parser.parse_args
   def parse():
     options, args = old_parser_args()

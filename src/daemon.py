@@ -211,12 +211,7 @@ class Daemon(BaseHTTPServer.HTTPServer):
     return 1
 
   def run(self):
-    if self.test_mode:
-      logging.info('Starting quickopen daemon on port %d', self.port_)
-    else:
-      sys.stderr.write('Starting quickopen daemon on port %d\n' % self.port_)
     self.serve_forever()
-    logging.info('Shutting down quickopen daemon on port %d', self.port_)
 
 def create(host, port, test_mode):
   return Daemon(test_mode, (host,port), _RequestHandler)

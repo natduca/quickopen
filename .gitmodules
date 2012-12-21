@@ -7,3 +7,6 @@
 [submodule "third_party/PyGithub"]
 	path = third_party/PyGithub
 	url = https://github.com/jacquev6/PyGithub.git
+[submodule "third_party/py-chrome-app"]
+	path = third_party/py-chrome-app
+	url = https://github.com/natduca/py-chrome-app.git

@@ -49,15 +49,16 @@ class DBProxy(object):
     self.conn = httplib.HTTPConnection(host, port, True)
     self._dir_lut = {}
 
-  def try_to_start_quickopend(self):
+  @staticmethod
+  def try_to_start_quickopend(port_for_autostart):
     basepath = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     quickopend_path = os.path.join(basepath, "quickopend")
     assert os.path.exists(quickopend_path)
     args = [quickopend_path, 'run']
     sys.stderr.write('No quickopend running. Launching it...\n')
-    self.proc = subprocess.Popen(args)
+    proc = subprocess.Popen(args)
 
-    sys.stderr.write('Making sure it came up on port %i\n' % self._port_for_autostart)
+    sys.stderr.write('Making sure it came up on port %i\n' % port_for_autostart)
     ok = False
 
     per_iter_delay = 0.1
@@ -65,7 +66,7 @@ class DBProxy(object):
     num_tries = int(timeout / per_iter_delay)
     for i in range(num_tries):
       try:
-        conn = httplib.HTTPConnection('localhost', self._port_for_autostart, True)
+        conn = httplib.HTTPConnection('localhost', port_for_autostart, True)
         conn.request('GET', '/ping')
       except Exception, ex:
         time.sleep(per_iter_delay)
@@ -80,9 +81,7 @@ class DBProxy(object):
         break
       ok = True
       break
-    if not ok:
-      self.couldnt_start_daemon.fire()
-      raise Exception("Daemon did not come up")
+    return ok
 
   def close(self):
     pass
@@ -98,7 +97,10 @@ class DBProxy(object):
       self.conn = None
     if not self.conn:
       if self._start_if_needed:
-        self.try_to_start_quickopend()
+        ok = DBProxy.try_to_start_quickopend(self._port_for_autostart)
+        if not ok:
+          self.couldnt_start_daemon.fire()
+          raise Exception("Daemon did not come up")
         self._start_if_needed = False # dont try to autostart again
       self.conn = httplib.HTTPConnection(self.host, self.port, True)
       self.conn.request(method, path, data)

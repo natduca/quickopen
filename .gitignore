@@ -4,3 +4,4 @@
 *.swp
 *.trace
 build/*
+src/chrome_app/chromeapp.js

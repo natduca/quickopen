@@ -151,10 +151,12 @@ def _is_dirmatch(lower_dirpart_query, filename):
     return True
   return False
 
+DEFAULT_MAX_HITS = 100
+
 class Query(object):
   """Encapsulates all the options to Quickopen search system."""
 
-  def __init__(self, text, max_hits = 100, exact_match = False, current_filename = None, open_filenames = []):
+  def __init__(self, text, max_hits = DEFAULT_MAX_HITS, exact_match = False, current_filename = None, open_filenames = []):
     self.text = text
     self.max_hits = max_hits
     self.exact_match = exact_match
@@ -177,10 +179,10 @@ class Query(object):
   @staticmethod
   def from_dict(d):
     q = Query(d["text"],
-              d["max_hits"],
-              d["exact_match"],
-              d["current_filename"],
-              d["open_filenames"])
+              d.get("max_hits", DEFAULT_MAX_HITS),
+              d.get("exact_match", False),
+              d.get("current_filename", None),
+              d.get("open_filenames", []))
     q.debug = d["debug"]
     return q
 

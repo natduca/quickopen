@@ -22,6 +22,8 @@ def _pick_open_dialog():
     return __import__("src.open_dialog_curses", {}, {}, True).OpenDialogCurses
   elif message_loop.is_objc:
     return __import__("src.open_dialog_objc", {}, {}, True).OpenDialogObjc
+  elif message_loop.is_chrome:
+    return __import__("src.open_dialog_chrome", {}, {}, True).OpenDialogChrome
   else:
     raise Exception("Unrecognized message loop type.")
 OpenDialog = _pick_open_dialog()

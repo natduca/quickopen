@@ -1,0 +1,63 @@
+/* Copyright (c) 2012 The Chromium Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+html {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+
+body {
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    font-family: Arial, Helvetica, sans-serif, Tahoma, Verdana, sans-serif;
+    font-size: 12pt;
+    background: #ededed;
+}
+
+body {
+  // Flexbox TRis busted with overflows:
+  //  display: -webkit-flex;
+  //  -webkit-flex-direction: column;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+}
+
+#input {
+  width: 100%;
+}
+
+#status-row {
+  display: -webkit-flex;
+}
+
+#status-row {
+  display: -webkit-flex;
+}
+
+#status-text {
+  -webkit-flex-grow: 1;
+}
+
+#results {
+  -webkit-box-flex: 1;
+  -webkit-flex-grow: 1;
+  overflow: auto;
+}
+
+#controls {
+  display: -webkit-flex;
+  -webkit-flex-direction: row-reverse;
+}
+
+#ok-button {
+  -webkit-flex-order: 1;
+}
+
+#cancel-button {
+  -webkit-flex-order: 2;
+}

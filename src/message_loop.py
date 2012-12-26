@@ -24,7 +24,11 @@ import sys
 def detect_toolkit():
   # use curses if its specified
   if '--curses' in sys.argv:
-    return (False, False, False, True)
+    return (False, False, False, True, False)
+
+  # use chrome if specified
+  if '--chrome' in sys.argv:
+    return (False, False, False, False, True)
 
   # check whether we even have X
   if os.getenv('DISPLAY'):
@@ -39,7 +43,7 @@ def detect_toolkit():
     if '--objc' in sys.argv:
       try:
         import objc
-        return (False, False, True, False)
+        return (False, False, True, False, False)
       except ImportError:
         pass
 
@@ -48,7 +52,7 @@ def detect_toolkit():
     try:
       import pygtk
       pygtk.require('2.0')
-      return (True, False, False, False)
+      return (True, False, False, False, False)
     except ImportError:
       pass
 
@@ -56,19 +60,19 @@ def detect_toolkit():
   if can_have_gui:
     try:
       import wx
-      return (False, True, False, False)
+      return (False, True, False, False, False)
     except ImportError:
       pass
 
   # use curses as a last resort
   if '--curses' in sys.argv or not can_have_gui:
-    return (False, False, False, True)
+    return (False, False, False, True, False)
 
-  return (False, False, False, False)
+  return (False, False, False, False, False)
 
-is_gtk, is_wx, is_objc, is_curses = detect_toolkit()
+is_gtk, is_wx, is_objc, is_curses, is_chrome = detect_toolkit()
 
-has_toolkit = is_gtk or is_wx or is_objc or is_curses
+has_toolkit = is_gtk or is_wx or is_objc or is_curses or is_chrome
 
 if is_gtk:
   import message_loop_gtk as platform_message_loop
@@ -78,6 +82,8 @@ elif is_objc:
   import message_loop_objc as platform_message_loop
 elif is_curses:
   import message_loop_curses as platform_message_loop
+elif is_chrome:
+  import message_loop_chrome as platform_message_loop
 
 
 def post_task(cb, *args):

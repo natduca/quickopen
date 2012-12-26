@@ -132,8 +132,9 @@ def split_open_filenames(open_filenames):
 @traced
 def CMDsearch(parser):
   """Search for a file"""
-  if prelaunch.is_prelaunched_process() and message_loop.is_curses:
-    print "Prelaunching not available for curses UI."
+  if prelaunch.is_prelaunched_process() and (
+    message_loop.is_curses or message_loop.is_chrome):
+    print "Prelaunching not available for current UI."
     return 255
 
   parser.add_option('--ok', dest='ok', action='store_true', default=False, help='Output "OK" before results')
@@ -144,7 +145,9 @@ def CMDsearch(parser):
   parser.add_option('--current-filename', dest='current_filename', action='store', default=None, help="Hints quickopen about the current buffer to improve search relevance.")
   parser.add_option('--open-filenames', dest='open_filenames', action='store', default=[], help="Hints quickopen about the filenames currently open to improve search relevance.")
   (options, args) = parser.parse_args()
+
   message_loop.ensure_has_message_loop()
+
   if not trace_is_enabled() and options.trace:
     trace_enable("%s.trace" % sys.argv[0])
   db = open_db(options)

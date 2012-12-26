@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<!--
+Copyright (c) 2012 The Chromium Authors. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file.
+-->
+<html>
+<head>
+    <title>QuickOpen</title>
+    <script src="chromeapp.js"></script><!-- created by chromeapp at launch time -->
+    <script src="results_table.js"></script>
+    <link href="results_table.css" type="text/css" rel="stylesheet">
+    <script src="open_dialog.js"></script>
+    <link href="open_dialog.css" type="text/css" rel="stylesheet">
+</head>
+<body>
+  <div id="status-row">
+    <span id="status-text"></span>
+    <button id="bad-result-button">Bad result</button>
+    <button id="refresh-button">Refresh</button>
+  </div>
+  <div id="results">
+  </div>
+  <input id="input">
+  </div>
+  <div id="controls">
+    <button id="cancel-button">Cancel</button>
+    <button id="ok-button">OK</button>
+  </div>
+</body>
+</html>

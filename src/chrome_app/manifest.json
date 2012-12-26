@@ -1,0 +1,14 @@
+{
+  "manifest_version": 2,
+  "name": "Quickopen",
+  "version": "1",
+  "minimum_chrome_version": "23",
+  "app": {
+    "background": {
+      "scripts": ["quickopen.js"]
+    }
+  },
+  "permissions": [
+    "http://localhost:*/"
+  ]
+}

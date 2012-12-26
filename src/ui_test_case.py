@@ -26,7 +26,7 @@ class UITestCase(unittest.TestCase):
     unittest.TestCase.__init__(self, method_name)
     self._method_name = method_name
     self._is_in_slave = is_in_slave
-    
+
   def run(self, result):
     if sys.platform == 'darwin' and '--objc' in sys.argv:
       if not self._is_in_slave:
@@ -42,7 +42,7 @@ class UITestCase(unittest.TestCase):
       message_loop.set_active_test(self, result)
       message_loop.run_main_loop()
       message_loop.set_active_test(None, None)
-      
+
   def async_run_testcase(self, result):
     result.startTest(self)
     testMethod = getattr(self, self._method_name)
@@ -81,7 +81,7 @@ class UITestCase(unittest.TestCase):
     try:
       if len(result.failures) == self._num_failures_at_start and len(result.errors) == self._num_errors_at_start:
         result.addSuccess(self)
-      
+
       if tearDown:
         try:
           self.tearDown()

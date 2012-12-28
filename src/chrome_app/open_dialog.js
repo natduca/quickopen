@@ -150,7 +150,6 @@
 
   function updateResults(results) {
     $('#results').results = results;
-    console.log(results);
   }
 
   var searchPending = false;
@@ -173,7 +172,7 @@
       }
     }, function() {
       searchPending = false;
-      updateResults([]);
+      updateResults(undefined);
       if (searchPendingCallback) {
         searchPendingCallback();
         searchPendingCallback = undefined;

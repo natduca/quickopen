@@ -62,13 +62,15 @@ def init_main_loop():
   return
 
 def run_main_loop():
+  global _pending_tasks
+  global _is_main_loop_running
+  global _quit_handlers
+
   if _unittests_running and not _active_test:
     _current_main_loop_instance += 1 # kill any enqueued tasks
     del _quit_handlers[:]
     raise Exception("UITestCase must be used for tests that use the message_loop.")
 
-  global _pending_tasks
-  global _is_main_loop_running
   _is_main_loop_running = True
   while len(_pending_tasks):
     t = _pending_tasks[0]
@@ -93,10 +95,9 @@ def run_main_loop():
 
   _is_main_loop_running = False
 
-  global _quit_handlers
   for cb in _quit_handlers:
     cb()
-  _quit_handlers = []
+  del _quit_handlers[:]
 
 def add_quit_handler(cb):
   _quit_handlers.append(cb)

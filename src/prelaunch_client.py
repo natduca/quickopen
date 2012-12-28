@@ -26,7 +26,7 @@ import time
 def is_prelaunch_client(args):
   if 'prelaunch' in args[1:]:
     index_of_prelaunch = args.index('prelaunch')
-    after_args = args[index_of_prelaunch+1]
+    after_args = args[index_of_prelaunch + 1:]
     return '--wait' not in after_args
   return False
 

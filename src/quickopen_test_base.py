@@ -144,7 +144,7 @@ class QuickopenTestBase(object):
     self._wait_for_up_to_date()
 
     from src import message_loop
-    if message_loop.is_curses:
+    if message_loop.get_toolkit() == message_loop.TOOLKIT_CURSES:
       return
     r = self.qo_and_split("search", "--skip-ui-if-exact-match", "MyClass.c")
     self.assertEquals(1, len(r))

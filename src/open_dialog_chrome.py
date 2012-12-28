@@ -14,14 +14,6 @@
 import os
 import sys
 import message_loop
-
-def _setupPath():
-  path = os.path.join(
-    os.path.dirname(__file__),
-    "..", "third_party", "py-chrome-app")
-  if path not in sys.path:
-    sys.path.append(path)
-_setupPath()
 import chromeapp
 
 class OpenDialogChrome():

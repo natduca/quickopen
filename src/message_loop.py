@@ -38,6 +38,12 @@ def detect_toolkit():
   else:
     can_have_gui = False
 
+  # Try using chrome.
+  if can_have_gui:
+    import message_loop_chrome
+    if message_loop_chrome.supported():
+      return (False, False, False, False, True)
+
   # try using PyObjC on mac
   if sys.platform == 'darwin':
     if '--objc' in sys.argv:

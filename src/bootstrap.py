@@ -111,6 +111,13 @@ def main(main_name):
       import bootstrap_objc
       bootstrap_objc.try_to_exec_stub(main_name)
 
+    # Try using chrome.
+    import message_loop_chrome
+    if message_loop_chrome.supported():
+      sys.argv.insert(1, '--main-name')
+      sys.argv.insert(2, main_name)
+      sys.exit(run())
+
     # To use wx-widgets on darwin, we need to be in 32 bit mode. Import of wx
     # will fail if you run python in 64 bit mode, which is default in 10.6+. :'(
     # It is depressingly hard to force python into 32 bit mode reliably across

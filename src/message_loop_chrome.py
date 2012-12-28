@@ -12,8 +12,33 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
+import sys
+
+def _setupPath():
+  path = os.path.join(
+    os.path.dirname(__file__),
+    "..", "third_party", "py-chrome-app")
+  if path not in sys.path:
+    sys.path.append(path)
+_setupPath()
+import chromeapp
+
 _pending_tasks = []
 _quit_handlers = []
+
+def supported():
+  # OSX only for now, since GTK is solid elsewhere.
+  if sys.platform != 'darwin':
+    return False
+
+  if not chromeapp.IsChromeInstalled():
+    return False
+
+  # 10.7+ only.
+  import platform
+  mv = platform.mac_ver()[0]
+  return mv.startswith('10.7') or mv.startswith('10.8')
 
 def post_task(cb, *args):
   _pending_tasks.append({

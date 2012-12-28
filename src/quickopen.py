@@ -133,7 +133,7 @@ def split_open_filenames(open_filenames):
 def CMDsearch(parser):
   """Search for a file"""
   if prelaunch.is_prelaunched_process() and (
-    message_loop.get_toolkit() in (message_loop.TOOLKIT_CURSES, message_loop.TOOLKIT_CHROME)):
+    not message_loop.supports_prelaunch()):
     print "Prelaunching not available for current UI."
     return 255
 

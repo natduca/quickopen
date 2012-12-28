@@ -30,6 +30,11 @@ def is_prelaunch_client(args):
     return '--wait' not in after_args
   return False
 
+def remove_prelaunch_from_sys_argv():
+  index_of_prelaunch = sys.argv.index('prelaunch')
+  assert index_of_prelaunch != -1
+  del sys.argv[index_of_prelaunch]
+
 def run_command_in_existing(daemon_host, daemon_port, args, auto_start=True):
   # Prelaunched processes are DISPLAY-specific
   if sys.platform == 'darwin':
@@ -88,7 +93,7 @@ def run_command_in_existing(daemon_host, daemon_port, args, auto_start=True):
   for i in range(20): # 5 seconds
     try:
       s = socket.socket()
-      s.connect(("localhost", port))
+      s.connect((daemon_host, port))
       break
     except:
       time.sleep(0.25)
@@ -101,8 +106,8 @@ def run_command_in_existing(daemon_host, daemon_port, args, auto_start=True):
     # daemon_host and daemon_port so that it tries talking to the same quickopend
     # instance as us.
     full_args = list(args)
-    full_args.extend(["--host", daemon_host])
-    full_args.extend(["--port", str(daemon_port)])
+    full_args.extend(["--host=%s" % daemon_host])
+    full_args.extend(["--port=%s" % str(daemon_port)])
     f.write(repr(full_args))
     f.write("\n")
     f.flush()
@@ -123,14 +128,14 @@ def main(in_args):
   after_args = None
   i = 1
   while i < len(in_args):
-    if in_args[i] == '--host':
-      host = in_args[i+1]
-      i += 2
+    if in_args[i].startswith('--host='):
+      host = in_args[i][7:]
+      i += 1
       continue
 
-    if in_args[i] == '--port':
-      port = in_args[i+1]
-      i += 2
+    if in_args[i].startswith('--port='):
+      port = in_args[i][7:]
+      i += 1
       continue
 
     if in_args[i] == '--no_auto_start':

@@ -22,3 +22,4 @@ class TestPrelaunchClient(unittest.TestCase):
     self.assertEquals(True, prelaunch_client.is_prelaunch_client(["", "prelaunch"]))
     self.assertEquals(True, prelaunch_client.is_prelaunch_client(["", "prelaunch", "search"]))
 
+    self.assertEquals(True, prelaunch_client.is_prelaunch_client(['', '--host=localhost', '--port=12345', '--no_auto_start', 'prelaunch', 'add']))

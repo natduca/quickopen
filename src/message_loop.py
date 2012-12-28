@@ -99,6 +99,31 @@ def _detect_toolkit():
 
   _toolkit = None
 
+def supports_prelaunch():
+  # This function is called on the prelaunch hotpath. Thus, it needs to avoid importing things like gtk or wx,
+  # which are what necessitate prelaunching in the first place.
+  if '--curses' in sys.argv:
+    return False
+
+  # use chrome if specified
+  if '--chrome' in sys.argv:
+    return False
+
+  # check whether we even have X
+  if os.getenv('DISPLAY'):
+    pass
+  elif sys.platform == 'darwin':
+    pass
+  else:
+    return False
+
+  # Try using chrome.
+  import message_loop_chrome
+  if message_loop_chrome.supported():
+    return False
+
+  return True
+
 def get_toolkit():
   _initialize_if_needed()
   return _toolkit

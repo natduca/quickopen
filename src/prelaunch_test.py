@@ -16,6 +16,7 @@ import os
 import subprocess
 import temporary_daemon
 import unittest
+import message_loop
 from quickopen_test_base import QuickopenTestBase
 
 class PrelaunchTest(unittest.TestCase, QuickopenTestBase):
@@ -29,8 +30,8 @@ class PrelaunchTest(unittest.TestCase, QuickopenTestBase):
     assert os.path.exists(quickopen_script)
 
     full_args = [quickopen_script,
-                 "--host", self.daemon.host,
-                 "--port", str(self.daemon.port),
+                 "--host=%s" % self.daemon.host,
+                 "--port=%s" % str(self.daemon.port),
                  "--no_auto_start",
                  'prelaunch',
                  cmd]

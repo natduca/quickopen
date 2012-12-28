@@ -93,8 +93,13 @@ def main(main_name):
   use as your main app."""
   # prelaunch should bypass full bootstrap
   if prelaunch_client.is_prelaunch_client(sys.argv):
-    sys.exit(prelaunch_client.main(sys.argv))
+    # This is a lightweight import due to lazy initialization of the message loop.
+    import message_loop
+    if message_loop.supports_prelaunch():
+      return sys.exit(prelaunch_client.main(sys.argv))
 
+    # Remove the prelaunch command from the argv and proceed as normal.
+    prelaunch_client.remove_prelaunch_from_sys_argv()
 
   if sys.platform == 'darwin':
     if ('--chrome' in sys.argv):

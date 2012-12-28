@@ -24,11 +24,10 @@ import time
 # as we can manage.
 
 def is_prelaunch_client(args):
-  if len(args) >= 2 and args[1] == "prelaunch":
-    if len(args) >= 3:
-      return args[2] != "--wait"
-    else:
-      return True
+  if 'prelaunch' in args[1:]:
+    index_of_prelaunch = args.index('prelaunch')
+    after_args = args[index_of_prelaunch+1]
+    return '--wait' not in after_args
   return False
 
 def run_command_in_existing(daemon_host, daemon_port, args, auto_start=True):
@@ -72,8 +71,7 @@ def run_command_in_existing(daemon_host, daemon_port, args, auto_start=True):
 
       sys.path.append(os.path.join(os.path.dirname(__file__), "../third_party/py_trace_event/"))
       import db_proxy
-      db = db_proxy.DBProxy(daemon_host, daemon_port, start_if_needed=True, port_for_autostart=daemon_port)
-      db.try_to_start_quickopend()
+      db_proxy.DBProxy.try_to_start_quickopend(daemon_port)
       try:
         port = existing_quickopen_port()
       except socket.error:
@@ -120,17 +118,23 @@ def main(in_args):
   # poor mans host and port processing to avoid importing OptParse
   port = default_port.get()
   host = 'localhost'
+  auto_start = True
   before_args = [] # remaining after poor-mans parse but befor 'prelaunch' command
   after_args = None
   i = 1
   while i < len(in_args):
     if in_args[i] == '--host':
       host = in_args[i+1]
-      i += 1
+      i += 2
       continue
 
     if in_args[i] == '--port':
       port = in_args[i+1]
+      i += 2
+      continue
+
+    if in_args[i] == '--no_auto_start':
+      auto_start = False
       i += 1
       continue
 
@@ -148,7 +152,7 @@ def main(in_args):
     after_args.append("search")
 
   try:
-    sys.stdout.write(run_command_in_existing(host, port, after_args))
+    sys.stdout.write(run_command_in_existing(host, port, after_args, auto_start))
     return 0
   except Exception as e:
     sys.stdout.write(str(e) + "\n")

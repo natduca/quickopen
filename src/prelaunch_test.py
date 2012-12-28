@@ -13,6 +13,7 @@
 # limitations under the License.
 import prelaunch_client
 import os
+import subprocess
 import temporary_daemon
 import unittest
 from quickopen_test_base import QuickopenTestBase
@@ -24,9 +25,23 @@ class PrelaunchTest(unittest.TestCase, QuickopenTestBase):
     self.daemon = temporary_daemon.TemporaryDaemon()
 
   def qo(self, cmd, *args):
-    full_args = [cmd]
+    quickopen_script = os.path.join(os.path.dirname(__file__), "../quickopen")
+    assert os.path.exists(quickopen_script)
+
+    full_args = [quickopen_script,
+                 "--host", self.daemon.host,
+                 "--port", str(self.daemon.port),
+                 "--no_auto_start",
+                 'prelaunch',
+                 cmd]
     full_args.extend(args)
-    return prelaunch_client.run_command_in_existing(self.daemon.host, self.daemon.port, full_args, auto_start=False)
+    proc = subprocess.Popen(full_args,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+    (stdout, stderr) = proc.communicate()
+    if len(stderr):
+      print "Error during %s:\n%s\n\n" % (args, stderr)
+    return stdout
 
   def turn_off_daemon(self):
     self.daemon.close()

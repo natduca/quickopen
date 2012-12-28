@@ -14,21 +14,39 @@
 import os
 import sys
 
-# Two big TODOs for this system:
-#  1. rename it to be an application, not a message loop. Sadly,
-#     PyObjC is too constrained to support a real message loop abstraction,
-#     so its better to just not provide such a mechanism in the first place.
-#
-#  2. refactor to be class based. Right now, its function based and fugly.
+_toolkit = None
+_initialized = False
+_platform_message_loop = None
 
-def detect_toolkit():
+TOOLKIT_GTK = 'gtk'
+TOOLKIT_WX = 'wx'
+TOOLKIT_OBJC = 'objc'
+TOOLKIT_CURSES = 'curses'
+TOOLKIT_CHROME = 'chrome'
+
+def _initialize_if_needed():
+  global _initialized
+  if _initialized:
+    return
+  _initialized = True
+
+  _detect_toolkit()
+
+  global _platform_message_loop
+  module_name = 'src.message_loop_%s' % _toolkit
+  _platform_message_loop = __import__(module_name, {}, {}, True)
+
+def _detect_toolkit():
+  global _toolkit
   # use curses if its specified
   if '--curses' in sys.argv:
-    return (False, False, False, True, False)
+    _toolkit = TOOLKIT_CURSES
+    return
 
   # use chrome if specified
   if '--chrome' in sys.argv:
-    return (False, False, False, False, True)
+    _toolkit = TOOLKIT_CHROME
+    return
 
   # check whether we even have X
   if os.getenv('DISPLAY'):
@@ -42,14 +60,16 @@ def detect_toolkit():
   if can_have_gui:
     import message_loop_chrome
     if message_loop_chrome.supported():
-      return (False, False, False, False, True)
+      _toolkit = TOOLKIT_CHROME
+      return
 
   # try using PyObjC on mac
   if sys.platform == 'darwin':
     if '--objc' in sys.argv:
       try:
         import objc
-        return (False, False, True, False, False)
+        _toolkit = TOOLKIT_OBJC
+        return
       except ImportError:
         pass
 
@@ -58,7 +78,8 @@ def detect_toolkit():
     try:
       import pygtk
       pygtk.require('2.0')
-      return (True, False, False, False, False)
+      _toolkit = TOOLKIT_GTK
+      return
     except ImportError:
       pass
 
@@ -66,43 +87,41 @@ def detect_toolkit():
   if can_have_gui:
     try:
       import wx
-      return (False, True, False, False, False)
+      _toolkit = TOOLKIT_WX
+      return
     except ImportError:
       pass
 
   # use curses as a last resort
   if '--curses' in sys.argv or not can_have_gui:
-    return (False, False, False, True, False)
+    _toolkit = TOOLKIT_CURSES
+    return
 
-  return (False, False, False, False, False)
+  _toolkit = None
 
-is_gtk, is_wx, is_objc, is_curses, is_chrome = detect_toolkit()
+def get_toolkit():
+  _initialize_if_needed()
+  return _toolkit
 
-has_toolkit = is_gtk or is_wx or is_objc or is_curses or is_chrome
-
-if is_gtk:
-  import message_loop_gtk as platform_message_loop
-elif is_wx:
-  import message_loop_wx as platform_message_loop
-elif is_objc:
-  import message_loop_objc as platform_message_loop
-elif is_curses:
-  import message_loop_curses as platform_message_loop
-elif is_chrome:
-  import message_loop_chrome as platform_message_loop
-
+def get_toolkit_class_suffix():
+  _initialize_if_needed()
+  return _toolkit[0].upper() + _toolkit[1:]
 
 def post_task(cb, *args):
-  platform_message_loop.post_task(cb, *args)
+  _initialize_if_needed()
+  _platform_message_loop.post_task(cb, *args)
 
 def post_delayed_task(cb, delay, *args):
-  platform_message_loop.post_delayed_task(cb, delay, *args)
+  _initialize_if_needed()
+  _platform_message_loop.post_delayed_task(cb, delay, *args)
 
 def is_main_loop_running():
-  return platform_message_loop.is_main_loop_running()
+  _initialize_if_needed()
+  return _platform_message_loop.is_main_loop_running()
 
 def init_main_loop():
-  platform_message_loop.init_main_loop()
+  _initialize_if_needed()
+  _platform_message_loop.init_main_loop()
 
 def run_main_loop():
   """
@@ -111,10 +130,12 @@ def run_main_loop():
   UI or that wants to do asynchronous tests, derive from UITestcase which will
   call this for you.
   """
-  platform_message_loop.run_main_loop()
+  _initialize_if_needed()
+  _platform_message_loop.run_main_loop()
 
 def add_quit_handler(cb):
-  platform_message_loop.add_quit_handler(cb)
+  _initialize_if_needed()
+  _platform_message_loop.add_quit_handler(cb)
 
 def quit_main_loop():
   """
@@ -122,17 +143,20 @@ def quit_main_loop():
   not quitting the loop and returning to the run_main_loop caller. This is how a
   sane operating system works. However, this code works on OSX.
   """
-  platform_message_loop.quit_main_loop()
+  _initialize_if_needed()
+  _platform_message_loop.quit_main_loop()
 
 def set_unittests_running(running):
-  platform_message_loop.set_unittests_running(running)
+  _initialize_if_needed()
+  _platform_message_loop.set_unittests_running(running)
 
 def set_active_test(test, result):
-  platform_message_loop.set_active_test(test, result)
-
+  _initialize_if_needed()
+  _platform_message_loop.set_active_test(test, result)
 
 def ensure_has_message_loop():
-  if not has_toolkit:
+  _initialize_if_needed()
+  if not _toolkit:
     supports = ['PyGtk', 'WxPython', 'Curses']
     if '--objc' in sys.argv:
       supports.append('PyObjC')

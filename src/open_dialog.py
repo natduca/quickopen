@@ -14,18 +14,12 @@
 import message_loop
 
 def _pick_open_dialog():
-  if message_loop.is_gtk:
-    return __import__("src.open_dialog_gtk", {}, {}, True).OpenDialogGtk
-  elif message_loop.is_wx:
-    return __import__("src.open_dialog_wx", {}, {}, True).OpenDialogWx
-  elif message_loop.is_curses:
-    return __import__("src.open_dialog_curses", {}, {}, True).OpenDialogCurses
-  elif message_loop.is_objc:
-    return __import__("src.open_dialog_objc", {}, {}, True).OpenDialogObjc
-  elif message_loop.is_chrome:
-    return __import__("src.open_dialog_chrome", {}, {}, True).OpenDialogChrome
-  else:
-    raise Exception("Unrecognized message loop type.")
+  assert message_loop.get_toolkit() != None
+  module_name = 'src.open_dialog_%s' % message_loop.get_toolkit()
+  class_name = 'OpenDialog%s' % message_loop.get_toolkit_class_suffix()
+  module = __import__(module_name, {}, {}, True)
+  return getattr(module, class_name)
+
 OpenDialog = _pick_open_dialog()
 
 def run(options, db, initial_filter, print_results_cb = None):

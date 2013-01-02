@@ -139,12 +139,12 @@
       return;
     }
 
-    chromeapp.sendEvent('results', [$('#results').selected_hit], false);
+    chromeapp.sendEvent('results', [[$('#results').selected_hit], false]);
     chromeapp.exit(0);
   }
 
   function onCancelClicked() {
-    chromeapp.sendEvent('results', [], true);
+    chromeapp.sendEvent('results', [[], true]);
     chromeapp.exit(1);
   }
 

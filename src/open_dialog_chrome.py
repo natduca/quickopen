@@ -34,7 +34,8 @@ class OpenDialogChrome():
     args = ['--host', db.host,
             '--port', db.port,
             initial_filter]
-    def OnResults(hits, canceled):
+    def OnResults(args):
+      hits, canceled = args
       if self.print_results_cb:
         self.print_results_cb(
           hits,

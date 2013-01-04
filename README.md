@@ -3,13 +3,13 @@ UI, even for directory-trees containing hundreds of thousands of files. Its UI w
 
 Fuzzy? When you enter "rwh", quickopen finds files like
 
-- **R**ender**W**idget**H**ost.cpp
-- **r**ender-**w**idget-**h**ost.h
-- th**r**eaded\_**w**indow\_**h**andler.h
+- `RenderWidgetHost.cpp`
+- `render-widget-host.h`
+- `threaded_window_handler.h`
 
 The results are ranked by relevance. In mere milliseconds. So you get new results
-as you type. Thus, you might refine 'rwh' to 'rwhcpp' to get
-**r**ender\_**w**idget\_**h**ost.**cpp**
+as you type. Thus, you might refine `rwh` to `rwhcpp` to get
+`render_widget_host.cpp`
 
 Key features:
 
@@ -23,7 +23,9 @@ Key features:
 Dependencies
 ================================================================================
 - Linux: python-gtk2
-- OSX or Windows: chrome. Yes, chrome. `quickopen` uses [Chrome Apps v2](http://developer.chrome.com/trunk/apps/about_apps.html) for its UI.
+- OSX or Windows: chrome.
+
+  Yes, chrome. quickopen uses [Chrome Apps v2](http://developer.chrome.com/trunk/apps/about_apps.html) for its UI.
 
 Getting started
 ================================================================================
@@ -54,11 +56,6 @@ Check quickopen's status:
 VIM Setup
 ================================================================================
 
-```
-              :O   :O somefile                      to open
-                       gf   c-w                              to goto file
-```
-
 Using pathogen:
 
 1. [http://github.com/tpope/vim-pathogen](http://github.com/tpope/vim-pathogen)
@@ -67,6 +64,12 @@ Using pathogen:
 Or, by hand in your `.vimrc`:
 
 1. `source quickopen/plugin/quickopen.vim`
+
+You're done! To open things, you've got a few options:
+
+*  `:O` for the quickopen dialog
+*  `:O somefile` to open the best match if its obviosu, or the dialog if not.
+*  `gf` or `c-w` to goto file
 
 Emacs Setup
 ================================================================================

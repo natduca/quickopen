@@ -14,7 +14,9 @@
 import os
 import sys
 import message_loop
+
 import chromeapp
+import db_proxy
 
 class OpenDialogChrome():
   def __init__(self, options, db, initial_filter):
@@ -33,7 +35,9 @@ class OpenDialogChrome():
       initial_filter = ""
     args = ['--host', db.host,
             '--port', db.port,
+            '--start-if-needed', db.start_if_needed,
             initial_filter]
+
     def OnResults(args):
       hits, canceled = args
       if self.print_results_cb:
@@ -41,6 +45,13 @@ class OpenDialogChrome():
           hits,
           canceled)
 
+    def OnRequestAutostart(args):
+      ok = db_proxy.DBProxy.try_to_start_quickopend(db.port_for_autostart)
+      if not ok:
+        db.couldnt_start_daemon.fire()
+        raise Exception('Daemon did not come up');
+
     with chromeapp.AppInstance(self.app, args) as app_instance:
       app_instance.AddListener('results', OnResults)
+      app_instance.AddListener('request_autostart', OnRequestAutostart)
       return app_instance.Run()

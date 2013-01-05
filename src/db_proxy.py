@@ -43,11 +43,18 @@ class DBProxy(object):
     self.host = host
     self.port = port
     self._start_if_needed = start_if_needed
-    if self._start_if_needed:
-      self._port_for_autostart = port_for_autostart
-      self.couldnt_start_daemon = Event()
+    self._port_for_autostart = port_for_autostart
+    self.couldnt_start_daemon = Event()
     self.conn = httplib.HTTPConnection(host, port, True)
     self._dir_lut = {}
+
+  @property
+  def start_if_needed(self):
+    return self._start_if_needed
+
+  @property
+  def port_for_autostart(self):
+    return self._port_for_autostart
 
   @staticmethod
   def try_to_start_quickopend(port_for_autostart):
@@ -58,7 +65,7 @@ class DBProxy(object):
     sys.stderr.write('No quickopend running. Launching it...\n')
     proc = subprocess.Popen(args)
 
-    sys.stderr.write('Making sure it came up on port %i\n' % port_for_autostart)
+    sys.stderr.write('Waiting for it to come up on port %i\n' % port_for_autostart)
     ok = False
 
     per_iter_delay = 0.1
@@ -81,6 +88,8 @@ class DBProxy(object):
         break
       ok = True
       break
+    if ok:
+      sys.stderr.write('Daemon is up\n')
     return ok
 
   def close(self):
@@ -105,6 +114,7 @@ class DBProxy(object):
       self.conn = httplib.HTTPConnection(self.host, self.port, True)
       self.conn.request(method, path, data)
     else:
+      self._should_try_autostart = False
       self._start_if_needed = False # if a request succeds, dont trigger autostart
     res = self.conn.getresponse()
     if res.status == 500:

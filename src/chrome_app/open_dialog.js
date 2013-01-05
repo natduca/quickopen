@@ -7,6 +7,7 @@
 (function() {
   var db_host;
   var db_port;
+  var db_start_if_needed;
 
   function Query(text) {
     this.text = text,
@@ -16,6 +17,18 @@
     this.open_filenames = [];
     this.debug = false;
   }
+
+  var autostarter = {
+    dbFailedToReply: function() {
+      if (!db_start_if_needed)
+        return;
+      chromeapp.sendEvent('request_autostart', []);
+      db_start_if_needed = false;
+    },
+    dbReplied: function() {
+      db_start_if_needed = false;
+    }
+  };
 
   function reqAsync(method, path, data, response_cb, opt_err_cb) {
     var url = 'http://' + db_host + ':' + db_port + path;
@@ -28,12 +41,14 @@
         opt_err_cb();
       else
         console.log('reqAsync ' + url, req);
+      autostarter.dbReplied();
     });
     req.addEventListener('error', function() {
       if (opt_err_cb)
         opt_err_cb();
       else
         console.log('reqAsync ' + url, req);
+      autostarter.dbFailedToReply();
     });
     if (data)
       req.send(JSON.stringify(data));
@@ -53,7 +68,9 @@
     db_host = launch_event.args[1];
     assert(launch_event.args[2] == '--port');
     db_port = launch_event.args[3];
-    var initial_filter = launch_event.args[4];
+    assert(launch_event.args[4] == '--start-if-needed');
+    db_start_if_needed = launch_event.args[5];
+    var initial_filter = launch_event.args[6];
 
     $('#input').tabIndex = 1;
     $('#ok-button').tabIndex = 2;

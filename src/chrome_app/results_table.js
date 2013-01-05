@@ -41,7 +41,7 @@
     },
 
     get selected_hit() {
-      if (this.selected_index_ <= this.hits.length)
+      if (this.selected_index_ < this.hits.length)
         return this.hits[this.selected_index_][0];
       return undefined;
     },

@@ -20,11 +20,8 @@ body {
 }
 
 body {
-  // Flexbox TRis busted with overflows:
-  //  display: -webkit-flex;
-  //  -webkit-flex-direction: column;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
+  display: -webkit-flex;
+  -webkit-flex-direction: column;
 }
 
 #input {
@@ -44,8 +41,8 @@ body {
 }
 
 #results {
-  -webkit-box-flex: 1;
-  -webkit-flex-grow: 1;
+  -webkit-flex: 1 1 auto;
+  min-height: 0;
   overflow: auto;
 }
 

@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import imp
 import os
 import sys
 
@@ -39,10 +40,15 @@ def supported():
   if not chromeapp.IsChromeInstalled():
     return False
 
-  # 10.7+ only.
-  import platform
-  mv = platform.mac_ver()[0]
-  return mv.startswith('10.7') or mv.startswith('10.8')
+  try:
+    imp.find_module('wx')
+    has_wx = True
+  except ImportError:
+    has_wx = False
+
+  if has_wx:
+    return False
+  return True
 
 def post_task(cb, *args):
   _pending_tasks.append({

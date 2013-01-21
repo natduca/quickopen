@@ -107,6 +107,7 @@
 
     chrome.app.window.current().onClosed.addListener(onCancelClicked);
     chrome.app.window.current().focus();
+    $('#input').focus();
 
     document.addEventListener('focusin', function() {
       if (document.activeElement == document.body) {

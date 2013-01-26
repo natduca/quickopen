@@ -148,6 +148,8 @@
                   )
 
                 ;; Some toolkits dont politely restore the old app when they close.
+                (sleep-for 0 100)
+                (raise-frame previously-selected-frame)
                 (focus-frame previously-selected-frame)
 
                 ;; There is a delay between call-process and the external UI

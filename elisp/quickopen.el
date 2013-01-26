@@ -127,6 +127,7 @@
   (interactive "")
   (let (res
         (current-buffer-filename (buffer-file-name (current-buffer)))
+        (previously-selected-frame (selected-frame))
         )
     (setq res (with-temp-buffer
                 (let ((open-buffers (quickopen-get-open-filenames-string))
@@ -145,9 +146,14 @@
                     )
                   (apply 'call-process  args)
                   )
+
+                ;; Some toolkits dont politely restore the old app when they close.
+                (focus-frame previously-selected-frame)
+
                 ;; There is a delay between call-process and the external UI
                 ;; taking over input. Discard any buffered characters that happened during this time.
                 (discard-input)
+
 
                 (condition-case ex
                     (quickopen-get-results-from-current-buffer)

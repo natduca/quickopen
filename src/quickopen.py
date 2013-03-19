@@ -19,6 +19,8 @@ import os
 import platform
 import prelaunch
 import re
+import shlex
+import subprocess
 import sys
 
 from db_exception import DBException
@@ -250,6 +252,54 @@ def CMDrawsearch(parser):
   if len(res.filenames) > 0:
     return 0
   return 255
+
+def CMDedit(parser):
+  """Searches for <query> then opens it in $EDITOR"""
+  parser.add_option('--current-filename', dest='current_filename', action='store', default=None, help="Hints quickopen about the current buffer to improve search relevance.")
+  parser.add_option('--open-filenames', dest='open_filenames', action='store', default=[], help="Hints quickopen about the filenames currently open to improve search relevance.")
+  (options, args) = parser.parse_args()
+
+  if len(args) > 1:
+    parser.error('Expected: <query> or nothing')
+
+  if not os.getenv('EDITOR'):
+    parser.error('$EDITOR must be set in environment')
+
+  db = open_db(options)
+  if not db.has_index:
+    print "Database is not fully indexed. Wait a bit or try quickopen status"
+    return 255
+
+  def edit(filenames, canceled):
+    if canceled:
+      return 255
+    args = shlex.split(os.getenv('EDITOR'))
+    args.extend(filenames)
+    proc = subprocess.Popen(args, shell=False)
+    try:
+      return proc.wait()
+    except KeyboardInterrupt:
+      proc.kill()
+      return 255
+
+  search_args = {}
+  if options.current_filename:
+    search_args["current_filename"] = options.current_filename
+  if options.open_filenames:
+    search_args["open_filenames"] = split_open_filenames(options.open_filenames)
+
+  if len(args):
+    initial_filter = args[0]
+  else:
+    initial_filter = None
+
+  import src.open_dialog as open_dialog
+  import src.message_loop as message_loop
+  def edit_at_quit(filenames, canceled):
+    def do_edit():
+      edit(filenames, canceled)
+    message_loop.add_quit_handler(do_edit)
+  open_dialog.run(options, db, initial_filter, edit_at_quit) # will not return on osx.
 
 def CMDprelaunch(parser):
   """Performs a quickopen command in a prelaunched instance. Reduces delay in seeing the initial search dialog."""

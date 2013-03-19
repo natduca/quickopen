@@ -132,10 +132,10 @@ You're done. Use `C-O (ctrl-shift-o)` open things.
 Command Line Usage
 ================================================================================
 
-      nduca: ~/quickopen $ ./quickopen
+      nduca: ~/quickopen $ ./quickedit
          <brings up a GUI for a picking a file,
-          prints file picked to stdout once done>
+          opens the picked file in $EDITOR>
 
-If you want to do hook into your favorite editor:
+If you want to hook into your favorite editor:
 
       nduca: ~/quickopen $ ./quickopen search --help

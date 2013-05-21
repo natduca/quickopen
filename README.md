@@ -126,7 +126,7 @@ Visual SlickEdit Setup
     - Then click the 'Add..' button and bind to whichever keys you please,
        but I strongly recommend ctrl+shift+o for consistency with vim.
 
-You're done. Use `C-O (ctrl-shift-o)` open things.
+You're done. Use `C-O (ctrl-shift-o)` to open things.
 
 
 Command Line Usage

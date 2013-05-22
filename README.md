@@ -68,7 +68,7 @@ Or, by hand in your `.vimrc`:
 You're done! To open things, you've got a few options:
 
 *  `:O` for the quickopen dialog
-*  `:O somefile` to open the best match if its obviosu, or the dialog if not.
+*  `:O somefile` to open the best match if its obvious, or the dialog if not.
 *  `gf` or `c-w` to goto file
 
 Emacs Setup

@@ -104,7 +104,7 @@
 
 (defun quickopen-get-open-filenames-string()
   (mapconcat 'identity
-             (mapcar (lambda (x) 
+             (mapcar (lambda (x)
                        (with-temp-buffer
                          (insert (buffer-file-name x))
                          (goto-char 0)
@@ -176,15 +176,28 @@
     )
   )
 
+(defvar quickopen-current-frame nil)
 (defvar quickopen-current-buffer nil)
 (defvar quickopen-current-buffer-open-result-in-other-window nil)
 (defvar quickopen-old-window-configuration nil)
 
 (defun quickopen-find-file-using-curses (&optional query skip-ui-if-exact-match other-window)
-  (if quickopen-current-buffer
-      (progn
-        (message "Already open, cannot continue.")
-        )
+  (when quickopen-current-buffer
+    (if (and (quickopen-has-gui)
+             quickopen-current-frame
+             (null (frame-live-p quickopen-current-frame))
+             )
+        (progn
+          (when (process-live-p (get-buffer-process quickopen-current-buffer))
+            (kill-process (get-buffer-process quickopen-current-buffer))
+            )
+          (setq quickopen-current-frame)
+          (setq quickopen-current-buffer)
+          )
+      (error "Already open, cannot continue.")
+      )
+    )
+  (when t
     (let ((program (format "%s/%s" quickopen-dir-base "quickopen"))
           (current-buffer-filename (buffer-file-name (current-buffer)))
           )
@@ -192,12 +205,19 @@
       (when quickopen-curses-fullscreen
         (delete-other-windows)
         )
+      (when (quickopen-has-gui)
+        (setq quickopen-current-frame
+              (make-frame '((width . 80)
+                            (height. 1))
+                          )
+              )
+        )
       (when (get-buffer "*quickopen*")
         (with-current-buffer "*quickopen*"
           (delete-region (point-min) (point-max))
           )
         )
-      (setq quickopen-current-buffer 
+      (setq quickopen-current-buffer
             (let ((open-buffers (quickopen-get-open-filenames-string))
                   (args (list "quickopen" program nil "search" "--curses" "--ok" "--lisp-results")))
               (when (> (length open-buffers) 0)
@@ -216,6 +236,9 @@
               )
             )
       (setq quickopen-current-buffer-open-result-in-other-window other-window)
+      (when quickopen-current-frame
+        (select-frame quickopen-current-frame)
+        )
       (set-buffer quickopen-current-buffer)
       (term-mode)
       (term-char-mode)
@@ -279,6 +302,12 @@
         ;; that it can create a new buffer.
         (setq quickopen-current-buffer nil)
 
+        ;; Close the old frame.
+        (when quickopen-current-frame
+          (delete-frame quickopen-current-frame)
+          (setq quickopen-current-frame nil)
+          )
+
         ;; restore window config
         (set-window-configuration quickopen-old-window-configuration)
         (setq quickopen-old-window-configuration nil)
@@ -325,7 +354,7 @@
 (when (and quickopen-override-ff-find (quickopen-has-gui))
   (defadvice ff-get-file (around quickopen-ff-get-file (search-dirs filename-template &optional suffix-list other-window))
     (message "ff-get-file-quickopen-wrapper")
-    (setq ad-return-value 
+    (setq ad-return-value
           (let ((filename (ff-get-file-name search-dirs filename-template suffix-list)))
             (cond
              ((not filename)

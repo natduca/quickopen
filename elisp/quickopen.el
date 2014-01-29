@@ -46,9 +46,11 @@
   :group 'quickopen)
 
 (defun quickopen-has-gui ()
-  (when (fboundp 'window-system)
-    (when window-system
-      1)))
+  (if (eq system-type 'darwin)
+      nil
+    (fboundp 'window-system)
+    )
+  )
 
 ;; Default keybindings... these may smell bad. Patches welcome!
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

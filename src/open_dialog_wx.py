@@ -82,11 +82,10 @@ class OpenDialogWx(wx.Dialog, OpenDialogBase):
     outer_sizer.Add(sizer, 1, wx.ALL | wx.EXPAND, 8)
     self.SetSizer(outer_sizer)
 
-    self._filter_ctrl.SetFocus()
-
-
     self.CenterOnScreen()
     self.Show()
+
+    self._filter_ctrl.SetFocus()
 
     ok = self.FindWindowById(wx.ID_OK)
     cancel = self.FindWindowById(wx.ID_CANCEL)

@@ -20,7 +20,6 @@ _platform_message_loop = None
 
 TOOLKIT_GTK = 'gtk'
 TOOLKIT_WX = 'wx'
-TOOLKIT_OBJC = 'objc'
 TOOLKIT_CURSES = 'curses'
 TOOLKIT_CHROME = 'chrome'
 
@@ -62,16 +61,6 @@ def _detect_toolkit():
     if message_loop_chrome.supported():
       _toolkit = TOOLKIT_CHROME
       return
-
-  # try using PyObjC on mac
-  if sys.platform == 'darwin':
-    if '--objc' in sys.argv:
-      try:
-        import objc
-        _toolkit = TOOLKIT_OBJC
-        return
-      except ImportError:
-        pass
 
   # try using gtk
   if can_have_gui:
@@ -191,7 +180,5 @@ def ensure_has_message_loop():
   _initialize_if_needed()
   if not _toolkit:
     supports = ['PyGtk', 'WxPython', 'Curses']
-    if '--objc' in sys.argv:
-      supports.append('PyObjC')
     print """No supported GUI toolkit found. Trace_event_viewer supports %s.""" % ", ".join(supports)
     sys.exit(255)

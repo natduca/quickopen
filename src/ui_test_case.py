@@ -28,20 +28,12 @@ class UITestCase(unittest.TestCase):
     self._is_in_slave = is_in_slave
 
   def run(self, result):
-    if sys.platform == 'darwin' and '--objc' in sys.argv:
-      if not self._is_in_slave:
-        return self.run_darwin(result)
-      else:
-        assert message_loop.is_main_loop_running()
-        message_loop.set_active_test(self, result)
-        self.async_run_testcase(result)
-    else:
-      def do_test():
-        self.async_run_testcase(result)
-      message_loop.post_task(do_test)
-      message_loop.set_active_test(self, result)
-      message_loop.run_main_loop()
-      message_loop.set_active_test(None, None)
+    def do_test():
+      self.async_run_testcase(result)
+    message_loop.post_task(do_test)
+    message_loop.set_active_test(self, result)
+    message_loop.run_main_loop()
+    message_loop.set_active_test(None, None)
 
   def async_run_testcase(self, result):
     result.startTest(self)
@@ -100,7 +92,7 @@ class UITestCase(unittest.TestCase):
     mod = __import__(self.__class__.__module__, {},{},fromlist=[True])
     # if this pops, then your test class wasn't on the module, which is required for this test system
     try:
-      cls = getattr(mod, self.__class__.__name__) 
+      cls = getattr(mod, self.__class__.__name__)
     except AttributeError:
       raise AttributeError("Your class must be a member of the enclosing module %s." % self.__class__.__module__)
     assert cls == self.__class__
@@ -114,8 +106,6 @@ class UITestCase(unittest.TestCase):
             "--class", self.__class__.__name__,
             "--method", self._method_name,
             "--result", result.name]
-    if '--objc' in sys.argv:
-      args.append('--objc')
     self._slave_proc = subprocess.Popen(args, cwd=basedir)
 
     # todo, add timeout...
@@ -160,7 +150,7 @@ class UITestCase(unittest.TestCase):
     if childTestResult["shouldStop"]:
       testResult.stop()
     testResult.stopTest(self)
-    
+
 def main_usage():
   return "Usage: %prog"
 
@@ -170,7 +160,7 @@ def main(parser):
   parser.add_option("--method", dest="method")
   parser.add_option("--result", dest="result")
   (options, args) = parser.parse_args()
-  
+
   mod = __import__(options.module, {},{},fromlist=[True])
   cls = getattr(mod, options.cls)
   test = cls(options.method, is_in_slave = True)

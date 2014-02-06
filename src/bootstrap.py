@@ -65,7 +65,6 @@ def run(prelaunch=False):
   parser = optparse.OptionParser(usage=mod.main_usage())
   parser.add_option('--chrome', action="store_true", dest="chrome", help="Use chrome app UI")
   parser.add_option('--curses', action="store_true", dest="curses", help="Use curses UI")
-  parser.add_option('--objc', action="store_true", dest="objc", help="Enable objc support")
   parser.add_option(
       '-v', '--verbose', action='count', default=0,
       help='Increase verbosity level (repeat as needed)')
@@ -111,10 +110,6 @@ def main(main_name):
       sys.argv.insert(1, '--main-name')
       sys.argv.insert(2, main_name)
       sys.exit(run())
-
-    if ('--objc' in sys.argv) and ('--triedenv' not in sys.argv) and ('--triedarch' not in sys.argv):
-      import bootstrap_objc
-      bootstrap_objc.try_to_exec_stub(main_name)
 
     # Try using chrome.
     import message_loop_chrome

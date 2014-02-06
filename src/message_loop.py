@@ -90,7 +90,15 @@ def _detect_toolkit():
       _toolkit = TOOLKIT_WX
       return
     except ImportError:
-      pass
+      if sys.platform == 'darwin':
+        sys.stderr.write("""You could have a nice pretty WxWidgets-based UI!
+
+1. Download wxpython 2.9 Cocoa for python 2.7: http://downloads.sourceforge.net/wxpython/wxPython2.9-osx-2.9.5.0-cocoa-py2.7.dmg
+2. Mount the image (double click the downloaded .dmg file)
+3. Open a Terminal window, and run the following:
+   sudo installer -pkg /Volumes/wxPython2.9-osx-2.9.5.0-cocoa-py2.7/wxPython2.9-osx-cocoa-py2.7.pkg  -target /
+
+""")
 
   # use curses as a last resort
   if '--curses' in sys.argv or not can_have_gui:

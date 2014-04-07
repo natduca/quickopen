@@ -55,13 +55,6 @@ def _detect_toolkit():
   else:
     can_have_gui = False
 
-  # Try using chrome.
-  if can_have_gui:
-    import message_loop_chrome
-    if message_loop_chrome.supported():
-      _toolkit = TOOLKIT_CHROME
-      return
-
   # try using gtk
   if can_have_gui:
     try:

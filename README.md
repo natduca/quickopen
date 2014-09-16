@@ -77,7 +77,7 @@ Emacs Setup
 
 By hand, in your `.emacs`:
 
-    (load quickopen/elisp/quickopen.el)
+    (load "quickopen/elisp/quickopen.el")
 
 Using site-lisp:
 
@@ -106,7 +106,7 @@ results:
                                   ))
 
 
-You're done! To use quickopen, use `M-S-o (meta-shift-o)` or `C-q`. 
+You're done! To use quickopen, use `M-S-o (meta-shift-o)` or `C-q`.
 
 
 Visual SlickEdit Setup

@@ -29,7 +29,7 @@ TICK_RATE_WHEN_UP_TO_DATE = 0.025
 TICK_RATE_WHEN_NOT_UP_TO_DATE = 0.2
 
 class OpenDialogBase(object):
-  @tracedmethod
+  @traced
   def __init__(self, options, db, initial_filter = None):
     self._filter_text = ""
     if initial_filter:
@@ -68,7 +68,7 @@ class OpenDialogBase(object):
 
     self.set_results_enabled(can_process)
 
-  @tracedmethod
+  @traced
   def set_filter_text(self, text):
     self._filter_text = text
 
@@ -137,7 +137,7 @@ class OpenDialogBase(object):
       q.open_filenames = self._options.open_filenames
     return q
 
-  @tracedmethod
+  @traced
   def on_tick(self,*args):
     @traced
     def begin_search():

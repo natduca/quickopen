@@ -90,17 +90,17 @@ class DBStub(object):
       raise daemon.SilentException()
     return {"status": "OK"}
 
-  @tracedmethod
+  @traced
   def search(self, m, verb, data):
     query = Query.from_dict(data)
     return self.db.search(query).as_dict()
 
-  @tracedmethod
+  @traced
   def sync(self, m, verb, data):
     self.db.sync()
     return {"status": "OK"}
 
-  @tracedmethod
+  @traced
   def status(self, m, verb, data):
     return self.db.status().as_dict()
 

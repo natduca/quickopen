@@ -196,7 +196,7 @@ class Query(object):
       "debug": self.debug}
 
 
-  @tracedmethod
+  @traced
   def execute(self, shard_manager, query_cache):
     """
     Searches the index given the provided query.

@@ -69,7 +69,7 @@ class PrelaunchDaemon(object):
       return self._next_control_port
     raise Exception("Could not find open control port")
 
-  @tracedmethod
+  @traced
   def _launch_new_quickopen(self, display):
     if display in self._quickopen:
       return
@@ -92,7 +92,7 @@ class PrelaunchDaemon(object):
                              env=env)
     self._quickopen[display] = PrelaunchedProcess(proc, control_port)
 
-  @tracedmethod
+  @traced
   def get_existing_quickopen(self, m, verb, data):
     display = m.group(1)
     if display not in self._quickopen:
@@ -115,7 +115,7 @@ class PrelaunchDaemon(object):
   def _on_exit(self):
     self.stop()
 
-  @tracedmethod
+  @traced
   def _join_in_use_processes(self):
     procs = list(self._in_use_processes)
     del self._in_use_processes[:]

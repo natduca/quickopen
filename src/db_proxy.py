@@ -178,7 +178,7 @@ class DBProxy(object):
     ret = self._req('POST', '/set_oauth', {"token": token})
     assert ret["status"] == 'OK'
 
-  @tracedmethod
+  @traced
   def search(self, *args, **kwargs):
     """
     Searches the database.
@@ -200,11 +200,11 @@ class DBProxy(object):
   def has_index(self):
     return self.status().has_index
 
-  @tracedmethod
+  @traced
   def sync(self):
     ret = self._req('POST', '/sync')
 
-  @tracedmethod
+  @traced
   def status(self):
     try:
       d = self._req('GET', '/status')

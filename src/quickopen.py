@@ -196,7 +196,7 @@ def CMDsearch(parser):
   else:
     initial_filter = None
 
-  import src.open_dialog as open_dialog
+  from src import open_dialog
   open_dialog.run(options, db, initial_filter, print_results) # will not return on osx.
 
 def CMDstatus(parser):
@@ -293,8 +293,8 @@ def CMDedit(parser):
   else:
     initial_filter = None
 
-  import src.open_dialog as open_dialog
-  import src.message_loop as message_loop
+  from src import open_dialog
+  from src import message_loop
   def edit_at_quit(filenames, canceled):
     def do_edit():
       edit(filenames, canceled)

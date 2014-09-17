@@ -16,7 +16,7 @@ import logging
 import os
 import wx
 import wx.lib.mixins.listctrl  as  listmix
-import wx.lib.evtmgr as evtmgr
+from wx.lib import evtmgr
 import sys
 
 from open_dialog_base import OpenDialogBase

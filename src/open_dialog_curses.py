@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import curses
-import curses.ascii as ascii
+from curses import ascii
 import math
 import message_loop
 import message_loop_curses

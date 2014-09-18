@@ -14,6 +14,6 @@
 # limitations under the License.
 if __name__ == '__main__':
   import sys
-  import src.bootstrap as bootstrap
+  from src import bootstrap
   sys.argv.insert(1, 'edit')
   sys.exit(bootstrap.main('src.quickopen'))

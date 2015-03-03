@@ -92,7 +92,7 @@ def CMDrmdir(parser):
   return 255
 
 def CMDignore(parser):
-  """Ignores files matching the given regexp"""
+  """Ignores files matching the given fnmatch glob pattern"""
   (options, args) = parser.parse_args()
   db = open_db(options)
   if len(args) == 0:

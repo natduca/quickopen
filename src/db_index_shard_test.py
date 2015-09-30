@@ -26,6 +26,7 @@ def _assertSetEquals(self, ref,src):
 class DBIndexShardTest(unittest.TestCase):
   def test_filters(self):
     m = db_index_shard.DBIndexShard([])
+    exact = m.get_exact_match_filter
     camelcase = m.get_camelcase_wordstart_filter
     delimited = m.get_delimited_wordstart_filter
     substring = m.get_substring_filter
@@ -43,6 +44,12 @@ class DBIndexShardTest(unittest.TestCase):
       check_match(getflt, example, query, True)
     def ensure_nonmatch(getflt, example, query):
       check_match(getflt, example, query, False)
+
+    # exact match tests
+    ensure_matches (exact, "foo", "foo")
+    ensure_matches (exact, "foo.cpp", "foo")
+    ensure_nonmatch(exact, "foobar", "foo")
+    ensure_nonmatch(exact, "barfoo", "foo")
 
     # delimited tests
     ensure_matches (delimited, "render_widget_host", "rwh")

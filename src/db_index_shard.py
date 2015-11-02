@@ -71,7 +71,12 @@ class DBIndexShard(object):
 
     max_hits_hint = 25
 
-    # word starts first
+    # add exact matches first
+    trace_begin("exact")
+    self.add_all_matching( lower_hits, query, self.get_exact_match_filter(lower_query), max_hits_hint )
+    trace_end("exact")
+
+    # add in word starts
     trace_begin("wordstarts")
     self.add_all_wordstarts_matching( lower_hits, query, max_hits_hint )
     trace_end("wordstarts")
@@ -103,6 +108,12 @@ class DBIndexShard(object):
         if len(lower_hits) >= max_hits_hint:
           return
 
+
+  def get_exact_match_filter(self, query):
+    query = re.escape(query.lower())
+    # abc -> abc(\..*)?
+    flt = "\n%s(?:\\..*)?\n" % query
+    return (flt, False)
 
   def get_delimited_wordstart_filter(self, query):
     query = [re.escape(query[i]) for i in range(len(query))]

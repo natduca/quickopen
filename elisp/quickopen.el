@@ -46,7 +46,7 @@
   :group 'quickopen)
 
 (defun quickopen-has-gui ()
-  (fboundp 'window-system)
+  (display-graphic-p)
   )
 
 ;; Default keybindings... these may smell bad. Patches welcome!

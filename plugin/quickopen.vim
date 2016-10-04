@@ -21,8 +21,27 @@ let s:QuickOpenFile = resolve(expand("<sfile>"))
 let s:QuickOpenDir = strpart(s:QuickOpenFile, 0, strridx(s:QuickOpenFile,"/plugin"))
 let s:QuickOpenApp = s:QuickOpenDir . "/quickopen"
 
+function! s:GetDefaultBasePath()
+    let cwd = getcwd()
+
+    let dirs = split(cwd, "/")
+    let ix = index(dirs, "src")
+    if ix < 0
+      return ""
+    endif
+
+    return join(dirs[0:ix-1], "/")
+endfunction
+
 function! s:RunQuickOpen(args)
   let res = system(s:QuickOpenApp . " " . a:args)
+  let source_path = s:GetDefaultBasePath()
+  let base_path_arg = ""
+  if source_path != ""
+    let base_path_arg = " --base-path=" . source_path
+  endif
+
+  let res = system(s:QuickOpenApp . " " . a:args . " --current-file=" . expand("%:p") . base_path_arg)
   if v:shell_error
     echohl ErrorMsg
     echo substitute(escape(res, "\""), "\n$", "", "g")
@@ -66,8 +85,13 @@ function! s:QuickOpenPrompt(cmd, query)
   setlocal bufhidden=hide
   setlocal noswapfile
   setlocal buflisted
+  let source_path = s:GetDefaultBasePath()
+  let base_path_arg = ""
+  if source_path != ""
+    let base_path_arg = " --base-path=" . source_path
+  endif
 
-  let quickOpenCmd = s:QuickOpenApp . " search --curses --results-file=" . resultsfile . " --current-file=" . expand("%:p") . " " . a:query
+  let quickOpenCmd = s:QuickOpenApp . " search --curses --results-file=" . resultsfile . " --current-file=" . expand("%:p") . base_path_arg . " " . a:query
   if !has("nvim")
     exec("silent! !" . l:quickOpenCmd)
     exe "bdel"

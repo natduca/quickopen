@@ -52,7 +52,8 @@ endfunction
 
 function! s:QuickOpenPrompt(query)
   if has("gui_running")
-    return s:RunQuickOpen("prelaunch search " . a:query)
+    " Prelaunch doesn't work for some reason, it doesn't seem to be able to pass the arguments to the daemon.
+    return s:RunQuickOpen("search " . a:query)
   else
     let resultsfile = tempname()
 

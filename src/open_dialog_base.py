@@ -135,6 +135,8 @@ class OpenDialogBase(object):
       q.current_filename = self._options.current_filename
     if self._options.open_filenames:
       q.open_filenames = self._options.open_filenames
+    if self._options.base_path:
+      q.base_path = self._options.base_path
     return q
 
   @traced

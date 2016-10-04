@@ -21,6 +21,13 @@ from basename_ranker import BasenameRanker
 from query_result import QueryResult
 from trace_event import *
 
+def _is_in_base_path(filename, base_path):
+  expanded_base_path = os.path.expandvars(os.path.expanduser(base_path))
+  normalized_base_path = os.path.abspath(os.path.realpath(expanded_base_path))
+  normalized_filename = os.path.abspath(filename)
+  common = os.path.commonprefix([normalized_base_path, normalized_filename])
+  return common == normalized_base_path
+
 def _is_exact_match(query_text, hit):
   # Endswith is a quick way to discard most non-exact matches.
   # e.g. a/b.txt matched by b.txt simply ending with b.txt
@@ -43,6 +50,17 @@ class DirPriority(object):
   def __init__(self, dir, priority):
     self.dir = dir
     self.priority = priority
+
+def _filter_for_base_path(base_result, query):
+    res = QueryResult()
+    res.debug_info = copy.deepcopy(base_result.debug_info)
+    res.truncated = base_result.truncated
+
+    for hit,rank in base_result.hits:
+      if _is_in_base_path(hit, query.base_path):
+        res.filenames.append(hit)
+        res.ranks.append(rank)
+    return res
 
 def _apply_global_rank_adjustment(base_result, indexed_dirs, query):
   all_open_filenames = []
@@ -156,12 +174,13 @@ DEFAULT_MAX_HITS = 100
 class Query(object):
   """Encapsulates all the options to Quickopen search system."""
 
-  def __init__(self, text, max_hits = DEFAULT_MAX_HITS, exact_match = False, current_filename = None, open_filenames = []):
+  def __init__(self, text, max_hits = DEFAULT_MAX_HITS, exact_match = False, current_filename = None, open_filenames = [], base_path = None):
     self.text = text
     self.max_hits = max_hits
     self.exact_match = exact_match
     self.current_filename = current_filename
     self.open_filenames = open_filenames
+    self.base_path = base_path
     self._dir_search_timeout = 0.2
     self.debug = False
 
@@ -182,7 +201,8 @@ class Query(object):
               d.get("max_hits", DEFAULT_MAX_HITS),
               d.get("exact_match", False),
               d.get("current_filename", None),
-              d.get("open_filenames", []))
+              d.get("open_filenames", []),
+              d.get("base_path", None))
     q.debug = d["debug"]
     return q
 
@@ -193,6 +213,7 @@ class Query(object):
       "exact_match": self.exact_match,
       "current_filename": self.current_filename,
       "open_filenames": self.open_filenames,
+      "base_path": self.base_path,
       "debug": self.debug}
 
 
@@ -217,6 +238,9 @@ class Query(object):
       query_cache.put(self, res)
     else:
       res_was_cache_hit = True
+
+    if self.base_path:
+      res = _filter_for_base_path(res, self)
 
     if self.exact_match:
       final_res = _filter_result_for_exact_matches(self.text, res)

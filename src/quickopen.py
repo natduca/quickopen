@@ -146,6 +146,7 @@ def CMDsearch(parser):
   parser.add_option('--only-if-exact-match', dest='only_if_exact', action='store_true', default=False, help="Print only if there is an exact match, nothing otherwise")
   parser.add_option('--current-filename', dest='current_filename', action='store', default=None, help="Hints quickopen about the current buffer to improve search relevance.")
   parser.add_option('--open-filenames', dest='open_filenames', action='store', default=[], help="Hints quickopen about the filenames currently open to improve search relevance.")
+  parser.add_option('--base-path', dest='base_path', action='store', default=None, help="Show only results under the provided base path.")
   (options, args) = parser.parse_args()
 
   message_loop.ensure_has_message_loop()
@@ -175,6 +176,8 @@ def CMDsearch(parser):
   search_args = {}
   if options.current_filename:
     search_args["current_filename"] = options.current_filename
+  if options.base_path:
+    search_args["base_path"] = options.base_path
   if options.open_filenames:
     # Switch the options to the parsed form so the open dialog can use it directly.
     options.open_filenames = split_open_filenames(options.open_filenames)

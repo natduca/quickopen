@@ -63,7 +63,11 @@ function! s:QuickOpenPrompt(query)
     setlocal buflisted
 
     let source_path = s:GetDefaultBasePath()
-    exec("silent! !" . s:QuickOpenApp . " search --curses --results-file=" . resultsfile . " --current-file=" . expand("%:p") . " --base-path=" . source_path . " " . a:query)
+    let base_path_arg = ""
+    if source_path != ""
+      let base_path_arg = " --base-path=" . source_path
+    endif
+    exec("silent! !" . s:QuickOpenApp . " search --curses --results-file=" . resultsfile . " --current-file=" . expand("%:p") . base_path_arg . " " . a:query)
     exe "bdel"
 
     exec(":redraw!")

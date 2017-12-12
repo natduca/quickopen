@@ -90,7 +90,7 @@ class DirCache(object):
       try:
         st = os.stat(d)
         st_mtime = st.st_mtime
-        ents = os.listdir(d)
+        ents = [e.decode('utf8') for e in os.listdir(d)]
       except OSError:
         return ([], False)
 

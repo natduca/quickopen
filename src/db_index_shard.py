@@ -32,9 +32,9 @@ class DBIndexShard(object):
 
     # Build two giant strings that contain all the basenames [and lowercase basenames]
     # concatenated together. This is what we will use to handle fuzzy queries.
-    self.basenames_unsplit = ("\n" + "\n".join(basenames) + "\n").encode('utf8')
-    self.lower_basenames_unsplit = ("\n" + "\n".join(lower_basenames) + "\n").encode('utf8')
-    assert type(self.lower_basenames_unsplit) == str
+    self.basenames_unsplit = (u"\n" + u"\n".join(basenames) + u"\n")
+    self.lower_basenames_unsplit = (u"\n" + u"\n".join(lower_basenames) + u"\n")
+    assert type(self.lower_basenames_unsplit) == unicode
 
     self._basename_ranker = BasenameRanker()
     wordstarts = {}

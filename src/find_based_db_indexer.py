@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import codecs
 import fnmatch
 import logging
 import math
@@ -182,7 +183,8 @@ class FindBasedDBIndexer(db_indexer.DBIndexer):
 
       logging.debug('Find finished.')
       trace_begin("read")
-      with open(self._find_results_tempfile.name, 'r') as f:
+      with codecs.open(
+              self._find_results_tempfile.name, 'r', encoding='utf8') as f:
         lines = f.readlines()
       trace_end("read")
       self._did_finish_searching_dir()

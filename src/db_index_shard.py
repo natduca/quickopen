@@ -13,12 +13,16 @@
 # limitations under the License.
 import fnmatch
 import re
+import sys
 
 from basename_ranker import BasenameRanker
 from trace_event import *
 
 class DBIndexShard(object):
   def __init__(self, basenames):
+    reload(sys)
+    sys.setdefaultencoding('utf8')
+
     # The basenames come out of a hashtable so they are usually pretty badly
     # shuffled around. Sort them here so that we get somewhat predictable results
     # as a query is incrementally refined.

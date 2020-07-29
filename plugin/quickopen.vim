@@ -22,41 +22,41 @@ let s:QuickOpenDir = strpart(s:QuickOpenFile, 0, strridx(s:QuickOpenFile,"/plugi
 let s:QuickOpenApp = s:QuickOpenDir . "/quickopen"
 
 function! s:RunQuickOpen(args)
-    let res = system(s:QuickOpenApp . " " . a:args)
-    if v:shell_error
-      echohl ErrorMsg
-      echo substitute(escape(res, "\""), "\n$", "", "g")
-      echohl None
-      return []
-    endif
-    return split(res, "\n", 0)
+  let res = system(s:QuickOpenApp . " " . a:args)
+  if v:shell_error
+    echohl ErrorMsg
+    echo substitute(escape(res, "\""), "\n$", "", "g")
+    echohl None
+    return []
+  endif
+  return split(res, "\n", 0)
 endfunction
 
 function! s:QuickOpenPrompt(query)
   if has("gui_running")
     return s:RunQuickOpen("prelaunch search " . a:query)
-  else
-    let resultsfile = tempname()
-
-    exe "new __quickopen__"
-    setlocal buftype=nofile
-    setlocal bufhidden=hide
-    setlocal noswapfile
-    setlocal buflisted
-
-    exec("silent! !" . s:QuickOpenApp . " search --curses --results-file=" . resultsfile . " --current-file=" . expand("%:p") . " " . a:query)
-    exe "bdel"
-
-    exec(":redraw!")
-    let b = filereadable(resultsfile)
-    if b
-        let files = readfile(resultsfile)
-        let b = delete(resultsfile)
-    else
-        let files = []
-    endif
-    return files
   endif
+
+  let resultsfile = tempname()
+
+  exe "new __quickopen__"
+  setlocal buftype=nofile
+  setlocal bufhidden=hide
+  setlocal noswapfile
+  setlocal buflisted
+
+  exec("silent! !" . s:QuickOpenApp . " search --curses --results-file=" . resultsfile . " --current-file=" . expand("%:p") . " " . a:query)
+  exe "bdel"
+
+  exec(":redraw!")
+  let b = filereadable(resultsfile)
+  if b
+    let files = readfile(resultsfile)
+    let b = delete(resultsfile)
+  else
+    let files = []
+  endif
+  return files
 endfunction
 
 function! s:QuickOpenSingle(cmd, query)

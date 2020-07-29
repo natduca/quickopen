@@ -32,6 +32,17 @@ function! s:RunQuickOpen(args)
   return split(res, "\n", 0)
 endfunction
 
+function! s:ReadResults(resultsfile)
+  let b = filereadable(a:resultsfile)
+  if b
+    let files = readfile(a:resultsfile)
+    let b = delete(a:resultsfile)
+  else
+    let files = []
+  endif
+  return files
+endfunction
+
 function! s:QuickOpenPrompt(query)
   if has("gui_running")
     return s:RunQuickOpen("prelaunch search " . a:query)
@@ -47,16 +58,8 @@ function! s:QuickOpenPrompt(query)
 
   exec("silent! !" . s:QuickOpenApp . " search --curses --results-file=" . resultsfile . " --current-file=" . expand("%:p") . " " . a:query)
   exe "bdel"
-
   exec(":redraw!")
-  let b = filereadable(resultsfile)
-  if b
-    let files = readfile(resultsfile)
-    let b = delete(resultsfile)
-  else
-    let files = []
-  endif
-  return files
+  return s:ReadResults(resultsfile)
 endfunction
 
 function! s:QuickOpenSingle(cmd, query)
@@ -68,11 +71,15 @@ function! s:QuickOpenSingle(cmd, query)
   exec(a:cmd . " " . fnameescape(res[0]))
 endfunction
 
-function! QuickFind(cmd, query)
-  let files_to_open = s:QuickOpenPrompt(a:query)
-  for f in files_to_open
+function! s:OpenFiles(cmd, files_to_open)
+  for f in a:files_to_open
     exec(a:cmd . " " . fnameescape(f))
   endfor
+endfunction
+
+function! QuickFind(cmd, query)
+  let files_to_open = s:QuickOpenPrompt(a:query)
+  call s:OpenFiles(a:cmd, l:files_to_open)
 endfunction
 
 com! -nargs=* O call QuickFind(":find", <q-args>)

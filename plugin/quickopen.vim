@@ -32,6 +32,12 @@ function! s:RunQuickOpen(args)
   return split(res, "\n", 0)
 endfunction
 
+let s:TermCallback = {}
+function! s:TermCallback.on_exit(id, code, event)
+  exe "bdel!"
+  call s:OpenFiles(self.cmd, s:ReadResults(self.resultsfile))
+endfunction
+
 function! s:ReadResults(resultsfile)
   let b = filereadable(a:resultsfile)
   if b
@@ -43,23 +49,39 @@ function! s:ReadResults(resultsfile)
   return files
 endfunction
 
-function! s:QuickOpenPrompt(query)
+function! s:QuickOpenPrompt(cmd, query)
   if has("gui_running")
     return s:RunQuickOpen("prelaunch search " . a:query)
   endif
 
   let resultsfile = tempname()
 
-  exe "new __quickopen__"
+  if !has("nvim")
+    exe "new __quickopen__"
+  else
+    exe "e __quickopen__"
+  endif
+
   setlocal buftype=nofile
   setlocal bufhidden=hide
   setlocal noswapfile
   setlocal buflisted
 
-  exec("silent! !" . s:QuickOpenApp . " search --curses --results-file=" . resultsfile . " --current-file=" . expand("%:p") . " " . a:query)
-  exe "bdel"
-  exec(":redraw!")
-  return s:ReadResults(resultsfile)
+  let quickOpenCmd = s:QuickOpenApp . " search --curses --results-file=" . resultsfile . " --current-file=" . expand("%:p") . " " . a:query
+  if !has("nvim")
+    exec("silent! !" . l:quickOpenCmd)
+    exe "bdel"
+    exec(":redraw!")
+    return s:ReadResults(resultsfile)
+  endif
+
+  setlocal statusline=quickopen
+  setlocal nonumber
+  let s:TermCallback.resultsfile = l:resultsfile
+  let s:TermCallback.cmd = a:cmd
+  call termopen(l:quickOpenCmd, s:TermCallback)
+  startinsert
+  return []
 endfunction
 
 function! s:QuickOpenSingle(cmd, query)
@@ -78,7 +100,7 @@ function! s:OpenFiles(cmd, files_to_open)
 endfunction
 
 function! QuickFind(cmd, query)
-  let files_to_open = s:QuickOpenPrompt(a:query)
+  let files_to_open = s:QuickOpenPrompt(a:cmd, a:query)
   call s:OpenFiles(a:cmd, l:files_to_open)
 endfunction
 

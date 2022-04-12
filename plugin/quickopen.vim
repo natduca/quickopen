@@ -22,15 +22,16 @@ let s:QuickOpenDir = strpart(s:QuickOpenFile, 0, strridx(s:QuickOpenFile,"/plugi
 let s:QuickOpenApp = s:QuickOpenDir . "/quickopen"
 
 function! s:GetDefaultBasePath()
-    let cwd = getcwd()
+  let cwd = getcwd()
 
-    let dirs = split(cwd, "/")
-    let ix = index(dirs, "src")
-    if ix < 0
-      return ""
+  let dirs = split(cwd, "/")
+  for ix in range(len(dirs) - 1, 0, -1)
+    let dir = "/" . join(dirs[0:ix], "/") . "/"
+    if isdirectory(dir . ".git")
+      return dir
     endif
-
-    return join(dirs[0:ix-1], "/")
+  endfor
+  return ""
 endfunction
 
 function! s:RunQuickOpen(args)
